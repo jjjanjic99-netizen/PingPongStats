@@ -1,0 +1,77 @@
+<UserControl x:Class="PingPongStats.App.Views.HeadToHeadView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <StackPanel>
+        <TextBlock Text="Head-to-Head" Style="{StaticResource HeadingText}" Margin="0,0,0,16" />
+
+        <Border Style="{StaticResource CardBorder}" Margin="0,0,0,16">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="16" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+                <StackPanel Grid.Column="0">
+                    <TextBlock Text="Spieler A" Style="{StaticResource StatLabelText}" Margin="0,0,0,4" />
+                    <ComboBox ItemsSource="{Binding AvailablePlayers}" DisplayMemberPath="DisplayName"
+                              SelectedItem="{Binding PlayerA}" />
+                </StackPanel>
+                <StackPanel Grid.Column="2">
+                    <TextBlock Text="Spieler B" Style="{StaticResource StatLabelText}" Margin="0,0,0,4" />
+                    <ComboBox ItemsSource="{Binding AvailablePlayers}" DisplayMemberPath="DisplayName"
+                              SelectedItem="{Binding PlayerB}" />
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <TextBlock Text="{Binding ErrorMessage}" Foreground="{DynamicResource Brush.Danger}"
+                   Margin="0,0,0,16" TextWrapping="Wrap"
+                   Visibility="{Binding ErrorMessage, Converter={StaticResource StringToVisibilityConverter}}" />
+
+        <StackPanel Visibility="{Binding HasResult, Converter={StaticResource BoolToVisibilityConverter}}">
+            <UniformGrid Rows="1" Columns="3" Margin="0,0,0,16">
+                <Border Style="{StaticResource CardBorder}" Margin="0,0,8,0">
+                    <StackPanel>
+                        <TextBlock Text="SPIELE GESAMT" Style="{StaticResource StatLabelText}" />
+                        <TextBlock Text="{Binding TotalGames}" Style="{StaticResource StatValueText}" />
+                    </StackPanel>
+                </Border>
+                <Border Style="{StaticResource CardBorder}" Margin="0,0,8,0">
+                    <StackPanel>
+                        <TextBlock Text="{Binding PlayerA.DisplayName}" Style="{StaticResource StatLabelText}" />
+                        <TextBlock Style="{StaticResource StatValueText}" FontSize="16">
+                            <Run Text="{Binding PlayerAWins, Mode=OneWay}" />
+                            <Run Text=" Siege (" />
+                            <Run Text="{Binding PlayerAWinRatePct, StringFormat={}{0:F0}, Mode=OneWay}" />
+                            <Run Text="%)" />
+                        </TextBlock>
+                    </StackPanel>
+                </Border>
+                <Border Style="{StaticResource CardBorder}">
+                    <StackPanel>
+                        <TextBlock Text="{Binding PlayerB.DisplayName}" Style="{StaticResource StatLabelText}" />
+                        <TextBlock Style="{StaticResource StatValueText}" FontSize="16">
+                            <Run Text="{Binding PlayerBWins, Mode=OneWay}" />
+                            <Run Text=" Siege (" />
+                            <Run Text="{Binding PlayerBWinRatePct, StringFormat={}{0:F0}, Mode=OneWay}" />
+                            <Run Text="%)" />
+                        </TextBlock>
+                    </StackPanel>
+                </Border>
+            </UniformGrid>
+
+            <Border Style="{StaticResource CardBorder}" Padding="0">
+                <StackPanel>
+                    <TextBlock Text="Spielverlauf" Style="{StaticResource SectionLabelText}" Margin="16,16,16,8" />
+                    <DataGrid ItemsSource="{Binding RecentMatches}" BorderThickness="0">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="Datum" Binding="{Binding PlayedAt, StringFormat={}{0:dd.MM.yyyy}}" Width="120" />
+                            <DataGridTextColumn Header="Ergebnis" Binding="{Binding ResultLabel}" Width="90" />
+                            <DataGridTextColumn Header="Gewinner" Binding="{Binding WinnerName}" Width="150" />
+                        </DataGrid.Columns>
+                    </DataGrid>
+                </StackPanel>
+            </Border>
+        </StackPanel>
+    </StackPanel>
+</UserControl>

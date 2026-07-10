@@ -1,0 +1,130 @@
+<UserControl x:Class="PingPongStats.App.Views.DashboardView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <StackPanel>
+        <Grid Margin="0,0,0,16">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+            <TextBlock Grid.Column="0" Text="Dashboard" Style="{StaticResource HeadingText}" />
+            <Button Grid.Column="1" Content="Aktualisieren" Style="{StaticResource SecondaryButton}"
+                    Command="{Binding RefreshCommand}" />
+        </Grid>
+
+        <UniformGrid Rows="1" Columns="6" Margin="0,0,0,16">
+            <Border Style="{StaticResource CardBorder}" Margin="0,0,8,0">
+                <StackPanel>
+                    <TextBlock Text="SPIELE TOTAL" Style="{StaticResource StatLabelText}" />
+                    <TextBlock Text="{Binding TotalMatches}" Style="{StaticResource StatValueText}" />
+                </StackPanel>
+            </Border>
+            <Border Style="{StaticResource CardBorder}" Margin="0,0,8,0">
+                <StackPanel>
+                    <TextBlock Text="AKTIVE SPIELER" Style="{StaticResource StatLabelText}" />
+                    <TextBlock Text="{Binding ActivePlayerCount}" Style="{StaticResource StatValueText}" />
+                </StackPanel>
+            </Border>
+            <Border Style="{StaticResource CardBorder}" Margin="0,0,8,0">
+                <StackPanel>
+                    <TextBlock Text="MEISTE SIEGE" Style="{StaticResource StatLabelText}" />
+                    <TextBlock Text="{Binding MostWinsLabel}" Style="{StaticResource StatValueText}" FontSize="15" TextWrapping="Wrap" />
+                </StackPanel>
+            </Border>
+            <Border Style="{StaticResource CardBorder}" Margin="0,0,8,0">
+                <StackPanel>
+                    <TextBlock Text="SIEGQUOTE OVERALL" Style="{StaticResource StatLabelText}" />
+                    <TextBlock Text="{Binding HighestOverallWinRateLabel}" Style="{StaticResource StatValueText}" FontSize="15" TextWrapping="Wrap" />
+                </StackPanel>
+            </Border>
+            <Border Style="{StaticResource CardBorder}" Margin="0,0,8,0">
+                <StackPanel>
+                    <TextBlock Text="SIEGQUOTE 30 TAGE" Style="{StaticResource StatLabelText}" />
+                    <TextBlock Text="{Binding HighestWinRateLastMonthLabel}" Style="{StaticResource StatValueText}" FontSize="15" TextWrapping="Wrap" />
+                </StackPanel>
+            </Border>
+            <Border Style="{StaticResource CardBorder}">
+                <StackPanel>
+                    <TextBlock Text="BESTE AKTUELLE SERIE" Style="{StaticResource StatLabelText}" />
+                    <TextBlock Text="{Binding BestCurrentStreakLabel}" Style="{StaticResource StatValueText}" FontSize="15" TextWrapping="Wrap" />
+                </StackPanel>
+            </Border>
+        </UniformGrid>
+
+        <Grid Margin="0,0,0,16">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="16" />
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+
+            <Border Grid.Column="0" Style="{StaticResource CardBorder}">
+                <StackPanel>
+                    <TextBlock Text="Siege pro Spieler" Style="{StaticResource SectionLabelText}" Margin="0,0,0,12" />
+                    <ItemsControl ItemsSource="{Binding WinsChart}">
+                        <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <StackPanel Orientation="Horizontal" VerticalAlignment="Bottom" Height="200" />
+                            </ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <StackPanel Width="60" Margin="4,0" VerticalAlignment="Bottom">
+                                    <TextBlock Text="{Binding DisplayValue}" HorizontalAlignment="Center"
+                                               Foreground="{DynamicResource Brush.TextSecondary}" FontSize="11" />
+                                    <Border Background="{DynamicResource Brush.Accent}" CornerRadius="3,3,0,0"
+                                            Height="{Binding NormalizedHeight, Converter={StaticResource BarHeightConverter}, ConverterParameter=140}" />
+                                    <TextBlock Text="{Binding Label}" HorizontalAlignment="Center" TextWrapping="Wrap"
+                                               FontSize="10" Foreground="{DynamicResource Brush.TextSecondary}" Margin="0,4,0,0" />
+                                </StackPanel>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </StackPanel>
+            </Border>
+
+            <Border Grid.Column="2" Style="{StaticResource CardBorder}">
+                <StackPanel>
+                    <TextBlock Text="Spiele pro Woche" Style="{StaticResource SectionLabelText}" Margin="0,0,0,12" />
+                    <ItemsControl ItemsSource="{Binding MatchesPerWeekChart}">
+                        <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <StackPanel Orientation="Horizontal" VerticalAlignment="Bottom" Height="200" />
+                            </ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <StackPanel Width="45" Margin="3,0" VerticalAlignment="Bottom">
+                                    <TextBlock Text="{Binding DisplayValue}" HorizontalAlignment="Center"
+                                               Foreground="{DynamicResource Brush.TextSecondary}" FontSize="11" />
+                                    <Border Background="{DynamicResource Brush.Accent}" CornerRadius="3,3,0,0"
+                                            Height="{Binding NormalizedHeight, Converter={StaticResource BarHeightConverter}, ConverterParameter=140}" />
+                                    <TextBlock Text="{Binding Label}" HorizontalAlignment="Center"
+                                               FontSize="10" Foreground="{DynamicResource Brush.TextSecondary}" Margin="0,4,0,0" />
+                                </StackPanel>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </StackPanel>
+            </Border>
+        </Grid>
+
+        <Border Style="{StaticResource CardBorder}" Padding="0">
+            <StackPanel>
+                <TextBlock Text="Ranking &amp; Spielerübersicht" Style="{StaticResource SectionLabelText}" Margin="16,16,16,8" />
+                <DataGrid ItemsSource="{Binding Ranking}" BorderThickness="0">
+                    <DataGrid.Columns>
+                        <DataGridTextColumn Header="Spieler" Binding="{Binding DisplayName}" Width="140" />
+                        <DataGridTextColumn Header="Elo" Binding="{Binding EloRounded}" Width="60" />
+                        <DataGridTextColumn Header="Spiele" Binding="{Binding Played}" Width="60" />
+                        <DataGridTextColumn Header="S/N" Binding="{Binding RecordLabel}" Width="70" />
+                        <DataGridTextColumn Header="Siegquote" Binding="{Binding WinRateLabel}" Width="80" />
+                        <DataGridTextColumn Header="Siegquote 30T" Binding="{Binding WinRateLast30dLabel}" Width="100" />
+                        <DataGridTextColumn Header="Serie" Binding="{Binding StreakLabel}" Width="70" />
+                        <DataGridTextColumn Header="Form (letzte 5)" Binding="{Binding RecentFormLabel}" Width="120" />
+                    </DataGrid.Columns>
+                </DataGrid>
+            </StackPanel>
+        </Border>
+    </StackPanel>
+</UserControl>

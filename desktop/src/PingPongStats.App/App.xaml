@@ -1,0 +1,20 @@
+<Application x:Class="PingPongStats.App.App"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:converters="clr-namespace:PingPongStats.App.Converters">
+    <Application.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="Themes/Light.xaml" />
+                <ResourceDictionary Source="Themes/Styles.xaml" />
+            </ResourceDictionary.MergedDictionaries>
+
+            <BooleanToVisibilityConverter x:Key="BoolToVisibilityConverter" />
+            <converters:StringToVisibilityConverter x:Key="StringToVisibilityConverter" />
+            <converters:StatusBackgroundConverter x:Key="StatusBackgroundConverter" />
+            <converters:StatusForegroundConverter x:Key="StatusForegroundConverter" />
+            <converters:BarHeightConverter x:Key="BarHeightConverter" />
+            <converters:StringEqualsConverter x:Key="StringEqualsConverter" />
+        </ResourceDictionary>
+    </Application.Resources>
+</Application>

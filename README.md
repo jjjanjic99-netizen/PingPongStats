@@ -1,5 +1,10 @@
 # PingPongStats
 
+> Hinweis: Neben dieser Web-Applikation enthält dieses Repository unter
+> [`desktop/`](desktop/README.md) zusätzlich eine eigenständige Windows-
+> Desktop-Variante (WPF/.NET 8, XML-Datenhaltung, kein Server). Beide Apps
+> sind unabhängig voneinander nutzbar.
+
 Interne Web-Applikation zur Erfassung von Tischtennis-Spielen im Büro, zur
 Verwaltung von Spielern und zur Auswertung aussagekräftiger Statistiken (BI).
 Für den lokalen Betrieb oder den Betrieb im internen Firmennetzwerk gedacht.

@@ -1,0 +1,74 @@
+<Window x:Class="PingPongStats.App.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="clr-namespace:PingPongStats.Core.ViewModels;assembly=PingPongStats.Core"
+        xmlns:views="clr-namespace:PingPongStats.App.Views"
+        Title="PingPongStats"
+        Width="1200" Height="800"
+        MinWidth="900" MinHeight="600"
+        Background="{DynamicResource Brush.Background}">
+
+    <Window.Resources>
+        <DataTemplate DataType="{x:Type vm:DashboardViewModel}">
+            <views:DashboardView />
+        </DataTemplate>
+        <DataTemplate DataType="{x:Type vm:PlayersViewModel}">
+            <views:PlayersView />
+        </DataTemplate>
+        <DataTemplate DataType="{x:Type vm:MatchesViewModel}">
+            <views:MatchesView />
+        </DataTemplate>
+        <DataTemplate DataType="{x:Type vm:MatchEditViewModel}">
+            <views:MatchEditView />
+        </DataTemplate>
+        <DataTemplate DataType="{x:Type vm:HeadToHeadViewModel}">
+            <views:HeadToHeadView />
+        </DataTemplate>
+        <DataTemplate DataType="{x:Type vm:SettingsViewModel}">
+            <views:SettingsView />
+        </DataTemplate>
+    </Window.Resources>
+
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="220" />
+            <ColumnDefinition Width="*" />
+        </Grid.ColumnDefinitions>
+
+        <!-- Sidebar navigation -->
+        <Border Grid.Column="0" Background="{DynamicResource Brush.Surface}"
+                BorderBrush="{DynamicResource Brush.Border}" BorderThickness="0,0,1,0">
+            <StackPanel Margin="12">
+                <TextBlock Text="🏓 PingPongStats" FontSize="16" FontWeight="Bold"
+                           Foreground="{DynamicResource Brush.TextPrimary}" Margin="8,8,8,20" />
+
+                <Button Content="Dashboard" Style="{StaticResource NavButton}" Command="{Binding ShowDashboardCommand}" />
+                <Button Content="Spieler" Style="{StaticResource NavButton}" Command="{Binding ShowPlayersCommand}" />
+                <Button Content="Spiele" Style="{StaticResource NavButton}" Command="{Binding ShowMatchesCommand}" />
+                <Button Content="Neues Spiel" Style="{StaticResource NavButton}" Command="{Binding ShowNewMatchCommand}" />
+                <Button Content="Head-to-Head" Style="{StaticResource NavButton}" Command="{Binding ShowHeadToHeadCommand}" />
+                <Button Content="Einstellungen" Style="{StaticResource NavButton}" Command="{Binding ShowSettingsCommand}" />
+            </StackPanel>
+        </Border>
+
+        <!-- Content area -->
+        <Grid Grid.Column="1">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="*" />
+            </Grid.RowDefinitions>
+
+            <Border Grid.Row="0"
+                    Background="{Binding IsErrorStatus, Converter={StaticResource StatusBackgroundConverter}}"
+                    Visibility="{Binding StatusMessage, Converter={StaticResource StringToVisibilityConverter}}"
+                    Padding="16,10">
+                <TextBlock Text="{Binding StatusMessage}" FontWeight="SemiBold"
+                           Foreground="{Binding IsErrorStatus, Converter={StaticResource StatusForegroundConverter}}" />
+            </Border>
+
+            <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" Padding="24">
+                <ContentControl Content="{Binding CurrentViewModel}" />
+            </ScrollViewer>
+        </Grid>
+    </Grid>
+</Window>
