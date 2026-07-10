@@ -1,0 +1,50 @@
+// Prisma schema for the PingPongStats application.
+// Datastore: SQLite file, suitable for local / internal network use.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Player {
+  id          String   @id @default(cuid())
+  displayName String
+  firstName   String?
+  lastName    String?
+  email       String?
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  matchesAsPlayerA Match[] @relation("PlayerAMatches")
+  matchesAsPlayerB Match[] @relation("PlayerBMatches")
+  matchesWon       Match[] @relation("MatchWinner")
+
+  @@index([isActive])
+}
+
+model Match {
+  id         String   @id @default(cuid())
+  playedAt   DateTime
+  playerAId  String
+  playerBId  String
+  playerASets Int
+  playerBSets Int
+  winnerId   String
+  notes      String?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  playerA Player @relation("PlayerAMatches", fields: [playerAId], references: [id], onDelete: Restrict)
+  playerB Player @relation("PlayerBMatches", fields: [playerBId], references: [id], onDelete: Restrict)
+  winner  Player @relation("MatchWinner", fields: [winnerId], references: [id], onDelete: Restrict)
+
+  @@index([playedAt])
+  @@index([playerAId])
+  @@index([playerBId])
+  @@index([winnerId])
+}
