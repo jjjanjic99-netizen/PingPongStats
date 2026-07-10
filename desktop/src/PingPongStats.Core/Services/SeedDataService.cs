@@ -29,9 +29,10 @@ public static class SeedDataService
     };
 
     private const int MatchCount = 65;
+    private const int DoubleMatchCount = 25;
     private const int DaysSpan = 120;
 
-    public static (List<Player> Players, List<Match> Matches) Generate(int randomSeed = 42)
+    public static (List<Player> Players, List<Match> Matches, List<DoubleMatch> DoubleMatches) Generate(int randomSeed = 42)
     {
         var random = new Random(randomSeed);
         var now = Clock.Now();
@@ -102,6 +103,60 @@ public static class SeedDataService
             });
         }
 
-        return (players, matches);
+        var activePlayers = players.Where(p => p.IsActive).ToList();
+        var doubleMatches = new List<DoubleMatch>();
+
+        if (activePlayers.Count >= 4)
+        {
+            var doubleDates = Enumerable.Range(0, DoubleMatchCount)
+                .Select(_ =>
+                {
+                    var daysAgo = random.Next(0, DaysSpan + 1);
+                    return now.Date.AddDays(-daysAgo)
+                        .AddHours(random.Next(8, 19))
+                        .AddMinutes(new[] { 0, 15, 30, 45 }[random.Next(4)]);
+                })
+                .OrderBy(d => d)
+                .ToList();
+
+            foreach (var playedAt in doubleDates)
+            {
+                var fourPlayers = activePlayers.OrderBy(_ => random.Next()).Take(4).ToList();
+                var teamA1 = fourPlayers[0];
+                var teamA2 = fourPlayers[1];
+                var teamB1 = fourPlayers[2];
+                var teamB2 = fourPlayers[3];
+
+                var teamASkill = (skillById[teamA1.Id] + skillById[teamA2.Id]) / 2.0;
+                var teamBSkill = (skillById[teamB1.Id] + skillById[teamB2.Id]) / 2.0;
+                var expectedA = 1.0 / (1.0 + Math.Pow(10, (teamBSkill - teamASkill) / 400.0));
+                var teamAWins = random.NextDouble() < expectedA;
+
+                var (loserSets, winnerSets) = ResultModes[random.Next(ResultModes.Length)];
+                var teamASets = teamAWins ? winnerSets : loserSets;
+                var teamBSets = teamAWins ? loserSets : winnerSets;
+
+                var winningTeam = ValidationService.ComputeWinningTeam(
+                    teamA1.Id, teamA2.Id, teamB1.Id, teamB2.Id, teamASets, teamBSets);
+
+                doubleMatches.Add(new DoubleMatch
+                {
+                    Id = Guid.NewGuid(),
+                    PlayedAt = playedAt,
+                    TeamAPlayer1Id = teamA1.Id,
+                    TeamAPlayer2Id = teamA2.Id,
+                    TeamBPlayer1Id = teamB1.Id,
+                    TeamBPlayer2Id = teamB2.Id,
+                    TeamASets = teamASets,
+                    TeamBSets = teamBSets,
+                    WinningTeam = winningTeam,
+                    Notes = string.Empty,
+                    CreatedAt = now,
+                    UpdatedAt = now,
+                });
+            }
+        }
+
+        return (players, matches, doubleMatches);
     }
 }

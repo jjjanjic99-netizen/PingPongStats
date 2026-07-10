@@ -54,13 +54,13 @@
                     <DataGridTextColumn Header="Ergebnis" Binding="{Binding ResultLabel}" Width="80" />
                     <DataGridTextColumn Header="Gewinner" Binding="{Binding WinnerName}" Width="130" />
                     <DataGridTextColumn Header="Notiz" Binding="{Binding Notes}" Width="200" />
-                    <DataGridTemplateColumn Header="Aktionen" Width="180">
+                    <DataGridTemplateColumn Header="Aktionen" Width="190">
                         <DataGridTemplateColumn.CellTemplate>
                             <DataTemplate>
-                                <StackPanel Orientation="Horizontal">
-                                    <Button Content="Bearbeiten" Style="{StaticResource SecondaryButton}" Margin="0,2,6,2"
+                                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                    <Button Content="Bearbeiten" Style="{StaticResource CompactSecondaryButton}" Margin="0,0,6,0"
                                             Click="OnEditClick" />
-                                    <Button Content="Löschen" Style="{StaticResource DangerButton}" Margin="0,2,0,2"
+                                    <Button Content="Löschen" Style="{StaticResource CompactDangerButton}"
                                             Click="OnDeleteClick" />
                                 </StackPanel>
                             </DataTemplate>

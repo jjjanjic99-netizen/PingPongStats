@@ -3,6 +3,9 @@ using PingPongStats.Core.Services;
 
 namespace PingPongStats.Core.ViewModels;
 
+/// <summary>One selectable UI scale option (e.g. Value="Small", Label="Klein").</summary>
+public record UiScaleOption(string Value, string Label);
+
 /// <summary>A single labeled value for the hand-rolled WPF bar charts.
 /// NormalizedHeight is 0..1, precomputed relative to the chart's own max value,
 /// so the View can bind bar height directly without needing chart-aware XAML converters.</summary>
@@ -46,6 +49,36 @@ public class MatchRow
     public Guid Id => Match.Id;
     public DateTime PlayedAt => Match.PlayedAt;
     public string ResultLabel => $"{Match.PlayerASets}:{Match.PlayerBSets}";
+    public string Notes => Match.Notes;
+}
+
+/// <summary>One ranked team pairing row for the Doubles dashboard.</summary>
+public class TeamPairingRow
+{
+    public required TeamPairingStats Stats { get; init; }
+    public required string Player1Name { get; init; }
+    public required string Player2Name { get; init; }
+
+    public string PairLabel => $"{Player1Name} & {Player2Name}";
+    public int Played => Stats.Played;
+    public int Wins => Stats.Wins;
+    public int Losses => Stats.Losses;
+    public string WinRateLabel => $"{Stats.WinRatePct:F1}%";
+    public bool LowSampleSize => DoublesStatsService.IsLowSampleSize(Stats.Played);
+    public string LowSampleLabel => LowSampleSize ? "< 3 Spiele" : string.Empty;
+}
+
+/// <summary>Doubles match row for the Doubles list with resolved team labels.</summary>
+public class DoubleMatchRow
+{
+    public required DoubleMatch Match { get; init; }
+    public required string TeamALabel { get; init; }
+    public required string TeamBLabel { get; init; }
+    public required string WinnerLabel { get; init; }
+
+    public Guid Id => Match.Id;
+    public DateTime PlayedAt => Match.PlayedAt;
+    public string ResultLabel => $"{Match.TeamASets}:{Match.TeamBSets}";
     public string Notes => Match.Notes;
 }
 

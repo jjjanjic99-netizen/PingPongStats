@@ -22,14 +22,28 @@ public partial class MainWindow : Window
         if (e.NewValue is MainViewModel newViewModel)
         {
             newViewModel.Settings.PropertyChanged += OnSettingsPropertyChanged;
+            ApplyUiScale(newViewModel.Settings.SelectedUiScale);
         }
     }
 
     private void OnSettingsPropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
-        if (e.PropertyName == nameof(SettingsViewModel.DarkMode) && sender is SettingsViewModel settingsViewModel)
+        if (sender is not SettingsViewModel settingsViewModel) return;
+
+        if (e.PropertyName == nameof(SettingsViewModel.DarkMode))
         {
             ThemeManager.Apply(settingsViewModel.DarkMode);
         }
+        else if (e.PropertyName == nameof(SettingsViewModel.SelectedUiScale))
+        {
+            ApplyUiScale(settingsViewModel.SelectedUiScale);
+        }
+    }
+
+    private void ApplyUiScale(string uiScale)
+    {
+        var factor = UiScaleManager.ToScaleFactor(uiScale);
+        RootScaleTransform.ScaleX = factor;
+        RootScaleTransform.ScaleY = factor;
     }
 }

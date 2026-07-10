@@ -21,6 +21,9 @@
         <DataTemplate DataType="{x:Type vm:MatchEditViewModel}">
             <views:MatchEditView />
         </DataTemplate>
+        <DataTemplate DataType="{x:Type vm:DoublesViewModel}">
+            <views:DoublesView />
+        </DataTemplate>
         <DataTemplate DataType="{x:Type vm:HeadToHeadViewModel}">
             <views:HeadToHeadView />
         </DataTemplate>
@@ -29,7 +32,11 @@
         </DataTemplate>
     </Window.Resources>
 
-    <Grid>
+    <Grid x:Name="RootScaleHost">
+        <Grid.LayoutTransform>
+            <ScaleTransform x:Name="RootScaleTransform" ScaleX="1" ScaleY="1" />
+        </Grid.LayoutTransform>
+
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="220" />
             <ColumnDefinition Width="*" />
@@ -46,6 +53,7 @@
                 <Button Content="Spieler" Style="{StaticResource NavButton}" Command="{Binding ShowPlayersCommand}" />
                 <Button Content="Spiele" Style="{StaticResource NavButton}" Command="{Binding ShowMatchesCommand}" />
                 <Button Content="Neues Spiel" Style="{StaticResource NavButton}" Command="{Binding ShowNewMatchCommand}" />
+                <Button Content="Doppel" Style="{StaticResource NavButton}" Command="{Binding ShowDoublesCommand}" />
                 <Button Content="Head-to-Head" Style="{StaticResource NavButton}" Command="{Binding ShowHeadToHeadCommand}" />
                 <Button Content="Einstellungen" Style="{StaticResource NavButton}" Command="{Binding ShowSettingsCommand}" />
             </StackPanel>
@@ -66,7 +74,7 @@
                            Foreground="{Binding IsErrorStatus, Converter={StaticResource StatusForegroundConverter}}" />
             </Border>
 
-            <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" Padding="24">
+            <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto" Padding="24">
                 <ContentControl Content="{Binding CurrentViewModel}" />
             </ScrollViewer>
         </Grid>

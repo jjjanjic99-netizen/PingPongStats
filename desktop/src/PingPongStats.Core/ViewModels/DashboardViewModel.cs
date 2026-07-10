@@ -17,26 +17,42 @@ public partial class DashboardViewModel : ObservableObject
     [ObservableProperty] private string bestCurrentStreakLabel = "–";
     [ObservableProperty] private bool hasData;
 
+    /// <summary>Shared with DoublesViewModel so changing the time range on either
+    /// dashboard page keeps both in sync.</summary>
+    public DashboardRangeFilter RangeFilter { get; }
+
+    public DashboardRangeOption[] RangeOptions => DashboardRangeFilter.Options;
+
     /// <summary>Ranked (by Elo) players with every per-player stat the dashboard
     /// requires (win rate, 30d win rate, streaks, recent form, Elo). This single
     /// table covers most required dashboard figures without needing extra charts.</summary>
     public ObservableCollection<PlayerRankingRow> Ranking { get; } = new();
 
     public ObservableCollection<ChartBarItem> WinsChart { get; } = new();
+    public ObservableCollection<ChartBarItem> WinRateChart { get; } = new();
     public ObservableCollection<ChartBarItem> MatchesPerWeekChart { get; } = new();
+    public ObservableCollection<ChartBarItem> MatchesPerMonthChart { get; } = new();
 
     public IRelayCommand RefreshCommand { get; }
 
-    public DashboardViewModel(PingPongDataService dataService)
+    public DashboardViewModel(PingPongDataService dataService, DashboardRangeFilter rangeFilter)
     {
         _dataService = dataService;
+        RangeFilter = rangeFilter;
+        RangeFilter.Changed += Load;
         RefreshCommand = new RelayCommand(Load);
         Load();
     }
 
     public void Load()
     {
-        var snapshot = DashboardService.BuildDashboard(_dataService.Players.ToList(), _dataService.Matches.ToList());
+        var now = DateTime.Now;
+        var from = RangeFilter.GetFromDate(now);
+        var matchesInRange = from is null
+            ? _dataService.Matches.ToList()
+            : _dataService.Matches.Where(m => m.PlayedAt >= from.Value).ToList();
+
+        var snapshot = DashboardService.BuildDashboard(_dataService.Players.ToList(), matchesInRange);
 
         TotalMatches = snapshot.TotalMatches;
         ActivePlayerCount = snapshot.ActivePlayerCount;
@@ -71,6 +87,13 @@ public partial class DashboardViewModel : ObservableObject
             WinsChart.Add(new ChartBarItem(p.DisplayName, p.Wins, p.Wins.ToString(), normalized));
         }
 
+        WinRateChart.Clear();
+        foreach (var p in rankedPlayers)
+        {
+            var normalized = p.WinRatePct / 100.0;
+            WinRateChart.Add(new ChartBarItem(p.DisplayName, p.WinRatePct, $"{p.WinRatePct:F0}%", normalized));
+        }
+
         var weekBuckets = snapshot.MatchesPerWeek.TakeLast(12).ToList();
         var maxWeekCount = weekBuckets.Count == 0 ? 0 : weekBuckets.Max(b => b.Count);
         MatchesPerWeekChart.Clear();
@@ -78,6 +101,15 @@ public partial class DashboardViewModel : ObservableObject
         {
             var normalized = maxWeekCount == 0 ? 0 : bucket.Count / (double)maxWeekCount;
             MatchesPerWeekChart.Add(new ChartBarItem(bucket.Label, bucket.Count, bucket.Count.ToString(), normalized));
+        }
+
+        var monthBuckets = snapshot.MatchesPerMonth.TakeLast(12).ToList();
+        var maxMonthCount = monthBuckets.Count == 0 ? 0 : monthBuckets.Max(b => b.Count);
+        MatchesPerMonthChart.Clear();
+        foreach (var bucket in monthBuckets)
+        {
+            var normalized = maxMonthCount == 0 ? 0 : bucket.Count / (double)maxMonthCount;
+            MatchesPerMonthChart.Add(new ChartBarItem(bucket.Label, bucket.Count, bucket.Count.ToString(), normalized));
         }
     }
 }

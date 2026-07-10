@@ -17,8 +17,18 @@ public partial class SettingsViewModel : ObservableObject
     private readonly IShellService _shell;
     private readonly Action _onDataPathChanged;
 
+    // Instance property (not static) so plain {Binding UiScaleOptions} resolves
+    // correctly from the DataContext instance in XAML.
+    public UiScaleOption[] UiScaleOptions { get; } =
+    {
+        new("Small", "Klein"),
+        new("Medium", "Mittel"),
+        new("Large", "Gross"),
+    };
+
     [ObservableProperty] private string currentDataPath = string.Empty;
     [ObservableProperty] private bool darkMode;
+    [ObservableProperty] private string selectedUiScale = "Medium";
 
     public IRelayCommand ChangeDataPathCommand { get; }
     public IRelayCommand ReloadCommand { get; }
@@ -57,6 +67,7 @@ public partial class SettingsViewModel : ObservableObject
         var settings = _settingsRepository.Load();
         CurrentDataPath = settings.DataPath;
         DarkMode = settings.DarkMode;
+        SelectedUiScale = string.IsNullOrWhiteSpace(settings.UiScale) ? "Medium" : settings.UiScale;
 
         ChangeDataPathCommand = new RelayCommand(ChangeDataPath);
         ReloadCommand = new RelayCommand(Reload);
@@ -72,6 +83,13 @@ public partial class SettingsViewModel : ObservableObject
     {
         var settings = _settingsRepository.Load();
         settings.DarkMode = value;
+        _settingsRepository.Save(settings);
+    }
+
+    partial void OnSelectedUiScaleChanged(string value)
+    {
+        var settings = _settingsRepository.Load();
+        settings.UiScale = value;
         _settingsRepository.Save(settings);
     }
 
@@ -154,9 +172,10 @@ public partial class SettingsViewModel : ObservableObject
     {
         try
         {
-            var (players, matches) = SeedDataService.Generate();
-            _dataService.ReplaceAllData(players, matches);
-            _notifications.NotifySuccess($"Testdaten erzeugt: {players.Count} Spieler, {matches.Count} Spiele.");
+            var (players, matches, doubleMatches) = SeedDataService.Generate();
+            _dataService.ReplaceAllData(players, matches, doubleMatches);
+            _notifications.NotifySuccess(
+                $"Testdaten erzeugt: {players.Count} Spieler, {matches.Count} Spiele, {doubleMatches.Count} Doppel-Spiele.");
         }
         catch (Exception ex)
         {

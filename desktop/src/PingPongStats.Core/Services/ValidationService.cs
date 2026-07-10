@@ -43,4 +43,43 @@ public static class ValidationService
             throw new ValidationException("Einer der ausgewählten Spieler existiert nicht.");
         }
     }
+
+    /// <summary>Validates a doubles match's raw set score and derives the winning team
+    /// ("A" or "B"). Throws <see cref="ValidationException"/> with a German message.</summary>
+    public static string ComputeWinningTeam(
+        Guid teamAPlayer1Id, Guid teamAPlayer2Id, Guid teamBPlayer1Id, Guid teamBPlayer2Id,
+        int teamASets, int teamBSets)
+    {
+        var ids = new[] { teamAPlayer1Id, teamAPlayer2Id, teamBPlayer1Id, teamBPlayer2Id };
+
+        if (ids.Any(id => id == Guid.Empty))
+        {
+            throw new ValidationException("Es müssen vier Spieler ausgewählt sein.");
+        }
+        if (ids.Distinct().Count() != 4)
+        {
+            throw new ValidationException("Alle vier Spieler eines Doppels müssen unterschiedlich sein.");
+        }
+        if (teamASets < 0 || teamBSets < 0)
+        {
+            throw new ValidationException("Satzwerte dürfen nicht negativ sein.");
+        }
+        if (teamASets == teamBSets)
+        {
+            throw new ValidationException(
+                "Ein Spiel darf nicht unentschieden enden - ein Team muss mehr Sätze gewinnen.");
+        }
+
+        return teamASets > teamBSets ? "A" : "B";
+    }
+
+    /// <summary>Ensures all four referenced players actually exist in the current player list.</summary>
+    public static void EnsurePlayersExist(IEnumerable<Guid> playerIds, IEnumerable<Player> players)
+    {
+        var existingIds = players.Select(p => p.Id).ToHashSet();
+        if (playerIds.Any(id => !existingIds.Contains(id)))
+        {
+            throw new ValidationException("Einer der ausgewählten Spieler existiert nicht.");
+        }
+    }
 }

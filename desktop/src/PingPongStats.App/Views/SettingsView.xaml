@@ -25,7 +25,12 @@
         <Border Style="{StaticResource CardBorder}" Margin="0,0,0,16">
             <StackPanel>
                 <TextBlock Text="Darstellung" Style="{StaticResource SectionLabelText}" Margin="0,0,0,8" />
-                <CheckBox Content="Dark Mode aktivieren" IsChecked="{Binding DarkMode}" />
+                <CheckBox Content="Dark Mode aktivieren" IsChecked="{Binding DarkMode}" Margin="0,0,0,12" />
+
+                <TextBlock Text="Ansichtsgrösse" Style="{StaticResource StatLabelText}" Margin="0,0,0,4" />
+                <ComboBox Width="160" HorizontalAlignment="Left"
+                          ItemsSource="{Binding UiScaleOptions}" DisplayMemberPath="Label" SelectedValuePath="Value"
+                          SelectedValue="{Binding SelectedUiScale}" />
             </StackPanel>
         </Border>
 

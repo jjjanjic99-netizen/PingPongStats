@@ -26,9 +26,11 @@ public partial class MainViewModel : ObservableObject
     [ObservableProperty] private bool isErrorStatus;
     [ObservableProperty] private string activeSection = "Dashboard";
 
+    public DashboardRangeFilter RangeFilter { get; private set; } = null!;
     public DashboardViewModel Dashboard { get; }
     public PlayersViewModel Players { get; }
     public MatchesViewModel Matches { get; }
+    public DoublesViewModel Doubles { get; }
     public HeadToHeadViewModel HeadToHead { get; }
     public SettingsViewModel Settings { get; }
 
@@ -36,6 +38,7 @@ public partial class MainViewModel : ObservableObject
     public IRelayCommand ShowPlayersCommand { get; }
     public IRelayCommand ShowMatchesCommand { get; }
     public IRelayCommand ShowNewMatchCommand { get; }
+    public IRelayCommand ShowDoublesCommand { get; }
     public IRelayCommand ShowHeadToHeadCommand { get; }
     public IRelayCommand ShowSettingsCommand { get; }
 
@@ -55,10 +58,12 @@ public partial class MainViewModel : ObservableObject
         _notifications = new NotificationService();
         _notifications.Notified += OnNotified;
 
-        Dashboard = new DashboardViewModel(_dataService);
+        RangeFilter = new DashboardRangeFilter();
+        Dashboard = new DashboardViewModel(_dataService, RangeFilter);
         Players = new PlayersViewModel(_dataService, _notifications);
         Matches = new MatchesViewModel(_dataService, _notifications);
         Matches.EditRequested += OnEditMatchRequested;
+        Doubles = new DoublesViewModel(_dataService, _notifications, RangeFilter);
         HeadToHead = new HeadToHeadViewModel(_dataService);
         Settings = new SettingsViewModel(
             _dataService, _settingsRepository, _dataPathService, _notifications,
@@ -68,6 +73,7 @@ public partial class MainViewModel : ObservableObject
         ShowPlayersCommand = new RelayCommand(() => Navigate("Spieler", Players, () => Players.Load()));
         ShowMatchesCommand = new RelayCommand(() => Navigate("Spiele", Matches, () => Matches.Load()));
         ShowNewMatchCommand = new RelayCommand(ShowNewMatch);
+        ShowDoublesCommand = new RelayCommand(() => Navigate("Doppel", Doubles, () => Doubles.Load()));
         ShowHeadToHeadCommand = new RelayCommand(() => Navigate("Head-to-Head", HeadToHead, () => HeadToHead.Load()));
         ShowSettingsCommand = new RelayCommand(() => Navigate("Einstellungen", Settings, null));
 
@@ -103,6 +109,7 @@ public partial class MainViewModel : ObservableObject
         Dashboard.Load();
         Players.Load();
         Matches.Load();
+        Doubles.Load();
         HeadToHead.Load();
     }
 

@@ -43,6 +43,7 @@ public class DataPathService
 
             new PlayerXmlRepository(dataPath).EnsureFileExists();
             new MatchXmlRepository(dataPath).EnsureFileExists();
+            new DoubleMatchXmlRepository(dataPath).EnsureFileExists();
             new AuditLogXmlRepository(dataPath).EnsureFileExists();
         }
         catch (Exception ex)

@@ -30,8 +30,16 @@ Netzwerkfreigabe).
 - **Charts**: Bewusst keine externe Chart-Bibliothek, sondern einfache,
   handgebaute Balkendiagramme (ItemsControl + Border), um das
   Single-File-Publish nicht durch zusätzliche native Abhängigkeiten zu
-  gefährden. Die ausführliche Ranking-Tabelle auf dem Dashboard deckt Elo,
-  Siegquoten, Serien und Recent Form bereits vollständig ab.
+  gefährden. Das Chart-Template ist zentral in `Themes/Styles.xaml` definiert
+  und wird von Dashboard und Doppel-Ansicht gemeinsam genutzt.
+- **Zeitraum-Filter**: `DashboardRangeFilter` ist eine einzige, geteilte
+  Instanz (erzeugt in `MainViewModel`), die sowohl vom Einzel- als auch vom
+  Doppel-Dashboard referenziert wird - eine Änderung des Zeitraums auf einer
+  Seite gilt für beide.
+- **UI-Grösse**: Statt jede Schriftgrösse/jedes Padding einzeln zu skalieren,
+  wird ein `ScaleTransform` (`LayoutTransform`) auf den gesamten
+  Fensterinhalt angewendet (`MainWindow.xaml`/`UiScaleManager`) - das skaliert
+  wirklich alle Elemente proportional mit einer einzigen Einstellung.
 
 ### Wichtiger Hinweis zur Build-Umgebung dieser Session
 
@@ -45,7 +53,7 @@ ist keine Einschränkung dieses Projekts, sondern eine generelle Grenze von
 Um trotzdem maximale Qualität zu liefern, wurde deshalb wie folgt vorgegangen:
 
 - **`PingPongStats.Core` und `PingPongStats.Tests` wurden in dieser Session
-  vollständig gebaut, alle 37 Unit-Tests laufen grün** (`dotnet test`).
+  vollständig gebaut, alle 49 Unit-Tests laufen grün** (`dotnet test`).
 - **`PingPongStats.App` (WPF) konnte nicht kompiliert werden.** Der Code wurde
   daher besonders sorgfältig von Hand geschrieben und zusätzlich statisch
   geprüft: alle XAML-Dateien sind wohlgeformtes XML, alle `x:Class`-Werte
@@ -183,7 +191,8 @@ Beispiel `appsettings.json`:
 ```json
 {
   "DataPath": "\\\\fileserver\\PingPongStats\\",
-  "DarkMode": false
+  "DarkMode": false,
+  "UiScale": "Medium"
 }
 ```
 
@@ -192,7 +201,8 @@ Beispiel `appsettings.json`:
 | Datei | Inhalt |
 |---|---|
 | `players.xml` | Alle Spieler (auch archivierte - Historie bleibt erhalten) |
-| `matches.xml` | Alle Spiele |
+| `matches.xml` | Alle Einzel-Spiele |
+| `doubles.xml` | Alle Doppel-Spiele (2 vs 2) |
 | `audit-log.xml` | Optionales Änderungsprotokoll (wer hat was geändert) |
 
 Alle XML-Dateien werden **UTF-8 ohne BOM**, eingerückt und ohne
@@ -213,6 +223,36 @@ Alle XML-Dateien werden **UTF-8 ohne BOM**, eingerückt und ohne
   </Player>
 </Players>
 ```
+
+## Doppel-Spiele (2 vs 2)
+
+Neben Einzel-Spielen können auch Doppel-Spiele erfasst werden (Nav-Eintrag
+**Doppel**): zwei Teams à zwei Spieler, Satzresultat, Gewinner wird analog zum
+Einzel serverseitig aus den Sätzen abgeleitet (`ValidationService.ComputeWinningTeam`).
+Alle vier Spieler müssen unterschiedlich sein.
+
+Datenmodell (`DoubleMatch`, persistiert in `doubles.xml`):
+
+```
+Id, PlayedAt,
+TeamAPlayer1Id, TeamAPlayer2Id, TeamBPlayer1Id, TeamBPlayer2Id,
+TeamASets, TeamBSets, WinningTeam ("A"/"B"),
+Notes, CreatedAt, UpdatedAt
+```
+
+Die **Doppel**-Seite kombiniert:
+
+- Dashboard-Kennzahlen (Anzahl Doppel-Spiele, beste Team-Konstellation) für
+  den gewählten Zeitraum (geteilter Filter mit dem Haupt-Dashboard)
+- Ein Ranking aller **Team-Konstellationen** (`DoublesStatsService.GetPairingRankings`):
+  jede Zweier-Paarung wird unabhängig davon aggregiert, auf welcher Seite und
+  in welcher Reihenfolge sie gespielt hat, und nach Siegquote sortiert - das
+  beantwortet direkt "welche Teamkonstellation ist besser als andere"
+- Ein Balkendiagramm der Siegquote pro Konstellation
+- Die chronologische Liste aller Doppel-Spiele mit Löschen-Funktion
+- Ein Formular zum Erfassen eines neuen Doppel-Spiels (analog zum
+  Einzel-Formular: Datum/Uhrzeit, 4 Spielerauswahlen, Schnellauswahl-Buttons
+  für typische Ergebnisse, manuelle Satzeingabe, Notiz)
 
 ## Backup-Konzept
 
@@ -281,8 +321,11 @@ Implementiert zentral in `PingPongStats.Core/Services/StatsService.cs` und
   (z. B. `W W L W L`)
 - **Head-to-Head**: Spiele, Siege und Siegquote zweier Spieler gegeneinander,
   unabhängig davon, wer auf welcher Seite (A/B) stand
-- Spieler mit weniger als 3 Spielen werden in der UI mit einem Hinweis
-  markiert (`LowSampleSize`)
+- **Team-Konstellation (Doppel)**: Siege/Niederlagen/Siegquote pro
+  unbenannter Zweier-Paarung, aggregiert unabhängig von Team-Seite und
+  Spielerreihenfolge (`DoublesStatsService.GetPairingRankings`)
+- Spieler bzw. Team-Konstellationen mit weniger als 3 Spielen werden in der UI
+  mit einem Hinweis markiert (`LowSampleSize` / `IsLowSampleSize`)
 
 Gewinnerberechnung und Validierung (`ValidationService.cs`): Spieler A/B
 dürfen nicht identisch sein, beide müssen existieren, Sätze dürfen nicht
@@ -302,10 +345,20 @@ abgeleitet, nie direkt vom UI gesetzt.
   Spieler verweisen (siehe `PingPongDataService.DeletePlayer`); sonst
   konsistente Fehlermeldung mit Hinweis auf "stattdessen deaktivieren".
 - **Statistik-Charts**: Auf handgebaute WPF-Balkendiagramme (Siege pro
-  Spieler, Spiele pro Woche) statt einer externen Chart-Bibliothek reduziert;
-  Elo, Siegquoten, Serien und Recent Form werden stattdessen in der
-  Ranking-Tabelle des Dashboards dargestellt (Risikominimierung fürs
-  Single-File-Publish).
+  Spieler, Siegquote pro Spieler, Spiele pro Woche/Monat, Siegquote pro
+  Doppel-Konstellation) statt einer externen Chart-Bibliothek reduziert -
+  Elo, Serien und Recent Form werden zusätzlich in der Ranking-Tabelle des
+  Dashboards dargestellt (Risikominimierung fürs Single-File-Publish).
+- **Zeitraum-Filter im Dashboard**: Feste Presets (letzte 7/30/90 Tage,
+  gesamter Zeitraum) statt eines frei wählbaren Datumsbereichs - deckt den
+  typischen Anwendungsfall ab und reduziert UI-Komplexität. Die Filterung
+  wirkt auf **alle** Kennzahlen inkl. Elo-Rating (das Elo-Rating im gefilterten
+  Zeitraum wird ab Fensteranfang neu von 1000 berechnet, nicht als Fortsetzung
+  der Gesamt-Historie - ein bewusster Kompromiss für Konsistenz "alles bezieht
+  sich auf den gewählten Zeitraum").
+- **UI-Grösse**: Drei Stufen (Klein/Mittel/Gross), persistiert pro Benutzer.
+  Skaliert per `LayoutTransform` den gesamten Fensterinhalt gleichmässig -
+  einfacher und robuster als jede Style-Grösse einzeln zu parametrisieren.
 - **Debug-/Seed-Funktion**: Sichtbar nur in Debug-Builds
   (`SettingsViewModel.IsSeedDataAvailable`), im veröffentlichten
   Release-EXE nicht vorhanden. Überschreibt beim Ausführen alle bestehenden
@@ -329,3 +382,6 @@ abgeleitet, nie direkt vom UI gesetzt.
   Backups (manuelle Wiederherstellung aus `backups\`).
 - Keine Authentifizierung/Benutzerverwaltung (wie gefordert nicht nötig);
   `Environment.UserName` wird nur fürs Audit-Log verwendet.
+- Doppel-Spiele können erfasst und gelöscht, aber (anders als Einzel-Spiele)
+  nicht nachträglich bearbeitet werden - bei einem Tippfehler: löschen und neu
+  erfassen.

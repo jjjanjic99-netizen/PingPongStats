@@ -20,15 +20,18 @@ public class PingPongDataService
 
     private readonly IPlayerRepository _playerRepository;
     private readonly IMatchRepository _matchRepository;
+    private readonly IDoubleMatchRepository _doubleMatchRepository;
     private readonly IAuditLogRepository? _auditLogRepository;
 
     public PingPongDataService(
         IPlayerRepository playerRepository,
         IMatchRepository matchRepository,
+        IDoubleMatchRepository doubleMatchRepository,
         IAuditLogRepository? auditLogRepository = null)
     {
         _playerRepository = playerRepository;
         _matchRepository = matchRepository;
+        _doubleMatchRepository = doubleMatchRepository;
         _auditLogRepository = auditLogRepository;
         Reload();
     }
@@ -37,12 +40,15 @@ public class PingPongDataService
 
     public IReadOnlyList<Match> Matches { get; private set; } = new List<Match>();
 
-    /// <summary>Re-reads both XML files from disk. Called after every mutation and can
+    public IReadOnlyList<DoubleMatch> DoubleMatches { get; private set; } = new List<DoubleMatch>();
+
+    /// <summary>Re-reads all XML files from disk. Called after every mutation and can
     /// also be triggered manually from Settings ("XML neu laden").</summary>
     public void Reload()
     {
         Players = _playerRepository.GetAll();
         Matches = _matchRepository.GetAll();
+        DoubleMatches = _doubleMatchRepository.GetAll();
     }
 
     // ----- Players -----------------------------------------------------
@@ -229,13 +235,71 @@ public class PingPongDataService
         Reload();
     }
 
-    /// <summary>Overwrites all players and matches (used only by the Debug-only seed
-    /// data tool). Never called from normal production UI flows.</summary>
-    public void ReplaceAllData(List<Player> players, List<Match> matches)
+    // ----- Doubles matches -----------------------------------------------
+
+    public DoubleMatch CreateDoubleMatch(
+        DateTime playedAt,
+        Guid teamAPlayer1Id, Guid teamAPlayer2Id, Guid teamBPlayer1Id, Guid teamBPlayer2Id,
+        int teamASets, int teamBSets, string notes)
+    {
+        var winningTeam = ValidationService.ComputeWinningTeam(
+            teamAPlayer1Id, teamAPlayer2Id, teamBPlayer1Id, teamBPlayer2Id, teamASets, teamBSets);
+        ValidationService.EnsurePlayersExist(
+            new[] { teamAPlayer1Id, teamAPlayer2Id, teamBPlayer1Id, teamBPlayer2Id }, Players);
+
+        var now = Clock.Now();
+        var match = new DoubleMatch
+        {
+            PlayedAt = playedAt,
+            TeamAPlayer1Id = teamAPlayer1Id,
+            TeamAPlayer2Id = teamAPlayer2Id,
+            TeamBPlayer1Id = teamBPlayer1Id,
+            TeamBPlayer2Id = teamBPlayer2Id,
+            TeamASets = teamASets,
+            TeamBSets = teamBSets,
+            WinningTeam = winningTeam,
+            Notes = (notes ?? string.Empty).Trim(),
+            CreatedAt = now,
+            UpdatedAt = now,
+        };
+
+        _doubleMatchRepository.Update(matches =>
+        {
+            matches.Add(match);
+            return matches;
+        });
+
+        LogAudit("DoubleMatchCreated",
+            $"{teamAPlayer1Id}+{teamAPlayer2Id} vs {teamBPlayer1Id}+{teamBPlayer2Id} ({teamASets}:{teamBSets})");
+        Reload();
+        return match;
+    }
+
+    public void DeleteDoubleMatch(Guid id)
+    {
+        _doubleMatchRepository.Update(matches =>
+        {
+            var removed = matches.RemoveAll(m => m.Id == id);
+            if (removed == 0)
+            {
+                throw new NotFoundException("Doppel-Spiel wurde nicht gefunden.");
+            }
+            return matches;
+        });
+
+        LogAudit("DoubleMatchDeleted", id.ToString());
+        Reload();
+    }
+
+    /// <summary>Overwrites all players, matches, and doubles matches (used only by the
+    /// Debug-only seed data tool). Never called from normal production UI flows.</summary>
+    public void ReplaceAllData(List<Player> players, List<Match> matches, List<DoubleMatch> doubleMatches)
     {
         _playerRepository.Update(_ => players);
         _matchRepository.Update(_ => matches);
-        LogAudit("SeedDataGenerated", $"{players.Count} Spieler, {matches.Count} Spiele");
+        _doubleMatchRepository.Update(_ => doubleMatches);
+        LogAudit("SeedDataGenerated",
+            $"{players.Count} Spieler, {matches.Count} Spiele, {doubleMatches.Count} Doppel-Spiele");
         Reload();
     }
 

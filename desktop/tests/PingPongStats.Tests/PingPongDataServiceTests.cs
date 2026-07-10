@@ -13,7 +13,8 @@ public class PingPongDataServiceTests : IDisposable
     {
         _tempDir = Path.Combine(Path.GetTempPath(), "PingPongStatsTests_" + Guid.NewGuid().ToString("N"));
         Directory.CreateDirectory(_tempDir);
-        _service = new PingPongDataService(new PlayerXmlRepository(_tempDir), new MatchXmlRepository(_tempDir));
+        _service = new PingPongDataService(
+            new PlayerXmlRepository(_tempDir), new MatchXmlRepository(_tempDir), new DoubleMatchXmlRepository(_tempDir));
     }
 
     public void Dispose()
@@ -82,5 +83,44 @@ public class PingPongDataServiceTests : IDisposable
 
         Assert.False(_service.Players.Single(p => p.Id == a.Id).IsActive);
         Assert.Single(_service.Matches);
+    }
+
+    [Fact]
+    public void CreateDoubleMatch_PersistsAndComputesWinningTeam()
+    {
+        var a1 = _service.CreatePlayer("Anna", "", "", "");
+        var a2 = _service.CreatePlayer("Ben", "", "", "");
+        var b1 = _service.CreatePlayer("Clara", "", "", "");
+        var b2 = _service.CreatePlayer("David", "", "", "");
+
+        var match = _service.CreateDoubleMatch(DateTime.Now, a1.Id, a2.Id, b1.Id, b2.Id, 3, 1, "Doppel-Testspiel");
+
+        Assert.Equal("A", match.WinningTeam);
+        Assert.Single(_service.DoubleMatches);
+    }
+
+    [Fact]
+    public void CreateDoubleMatch_RejectsDuplicatePlayerAcrossTeams()
+    {
+        var a1 = _service.CreatePlayer("Anna", "", "", "");
+        var a2 = _service.CreatePlayer("Ben", "", "", "");
+        var b1 = _service.CreatePlayer("Clara", "", "", "");
+
+        Assert.Throws<ValidationException>(() =>
+            _service.CreateDoubleMatch(DateTime.Now, a1.Id, a2.Id, b1.Id, a1.Id, 3, 1, ""));
+    }
+
+    [Fact]
+    public void DeleteDoubleMatch_RemovesEntry()
+    {
+        var a1 = _service.CreatePlayer("Anna", "", "", "");
+        var a2 = _service.CreatePlayer("Ben", "", "", "");
+        var b1 = _service.CreatePlayer("Clara", "", "", "");
+        var b2 = _service.CreatePlayer("David", "", "", "");
+        var match = _service.CreateDoubleMatch(DateTime.Now, a1.Id, a2.Id, b1.Id, b2.Id, 3, 0, "");
+
+        _service.DeleteDoubleMatch(match.Id);
+
+        Assert.Empty(_service.DoubleMatches);
     }
 }
