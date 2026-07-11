@@ -18,6 +18,24 @@
                     Command="{Binding RefreshCommand}" />
         </Grid>
 
+        <Border Style="{StaticResource CardBorder}" Margin="0,0,0,16"
+                Visibility="{Binding HasPlayerOfTheWeek, Converter={StaticResource BoolToVisibilityConverter}}">
+            <StackPanel Orientation="Horizontal">
+                <controls:AvatarControl Player="{Binding PlayerOfTheWeek}" DataPath="{Binding DataPath}" Size="L" />
+                <StackPanel VerticalAlignment="Center" Margin="16,0,0,0">
+                    <TextBlock Text="PLAYER OF THE WEEK" Style="{StaticResource StatLabelText}" />
+                    <TextBlock Text="{Binding PlayerOfTheWeek.DisplayName}" Style="{StaticResource HeadingText}" FontSize="20" Margin="0,4,0,0" />
+                    <TextBlock Text="{Binding PlayerOfTheWeekRecordLabel}" Style="{StaticResource StatLabelText}" Margin="0,4,0,0" />
+                    <TextBlock Text="{Binding PlayerOfTheWeekScoreLabel}" Style="{StaticResource StatLabelText}" />
+                </StackPanel>
+            </StackPanel>
+        </Border>
+        <Border Style="{StaticResource CardBorder}" Margin="0,0,0,16"
+                Visibility="{Binding HasPlayerOfTheWeek, Converter={StaticResource InverseBoolToVisibilityConverter}}">
+            <TextBlock Text="Player of the Week: noch niemand qualifiziert (mindestens 3 Spiele in den letzten 7 Tagen nötig)."
+                       Style="{StaticResource StatLabelText}" TextWrapping="Wrap" />
+        </Border>
+
         <UniformGrid Rows="1" Columns="6" Margin="0,0,0,16">
             <Border Style="{StaticResource CardBorder}" Margin="0,0,8,0">
                 <StackPanel>

@@ -1,6 +1,7 @@
 using System.Collections.ObjectModel;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using PingPongStats.Core.Models;
 using PingPongStats.Core.Repositories;
 using PingPongStats.Core.Services;
 
@@ -20,6 +21,14 @@ public partial class DashboardViewModel : ObservableObject
     [ObservableProperty] private string highestWinRateLastMonthLabel = "–";
     [ObservableProperty] private string bestCurrentStreakLabel = "–";
     [ObservableProperty] private bool hasData;
+
+    /// <summary>"Player of the Week": always computed over the fixed last-7-days
+    /// window per spec, independent of RangeFilter (which only affects the ranking
+    /// table and charts below it).</summary>
+    [ObservableProperty] private bool hasPlayerOfTheWeek;
+    [ObservableProperty] private Player? playerOfTheWeek;
+    [ObservableProperty] private string playerOfTheWeekRecordLabel = string.Empty;
+    [ObservableProperty] private string playerOfTheWeekScoreLabel = string.Empty;
 
     /// <summary>Shared with DoublesViewModel so changing the time range on either
     /// dashboard page keeps both in sync.</summary>
@@ -121,6 +130,24 @@ public partial class DashboardViewModel : ObservableObject
         {
             var normalized = maxMonthCount == 0 ? 0 : bucket.Count / (double)maxMonthCount;
             MatchesPerMonthChart.Add(new ChartBarItem(bucket.Label, bucket.Count, bucket.Count.ToString(), normalized));
+        }
+
+        var eloRatings = EloService.ComputeRatings(_dataService.Matches, _dataService.Players.Select(p => p.Id));
+        var potw = PlayerOfTheWeekService.Compute(
+            _dataService.Matches, _dataService.DoubleMatches, _dataService.Players.Select(p => p.Id), eloRatings);
+
+        HasPlayerOfTheWeek = potw is not null;
+        if (potw is not null)
+        {
+            PlayerOfTheWeek = playersById.GetValueOrDefault(potw.PlayerId);
+            PlayerOfTheWeekRecordLabel = $"{potw.Wins}S / {potw.Losses}N ({potw.WinRatePct:F0}%)";
+            PlayerOfTheWeekScoreLabel = $"Score: {potw.Score:F1}";
+        }
+        else
+        {
+            PlayerOfTheWeek = null;
+            PlayerOfTheWeekRecordLabel = string.Empty;
+            PlayerOfTheWeekScoreLabel = string.Empty;
         }
     }
 }
