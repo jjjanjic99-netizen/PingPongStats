@@ -50,6 +50,67 @@
             </StackPanel>
         </Border>
 
+        <Border Style="{StaticResource CardBorder}" Margin="0,0,0,16">
+            <StackPanel>
+                <TextBlock Text="Saisons" Style="{StaticResource SectionLabelText}" Margin="0,0,0,8" />
+
+                <Grid Margin="0,0,0,8">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="16" />
+                        <ColumnDefinition Width="140" />
+                        <ColumnDefinition Width="16" />
+                        <ColumnDefinition Width="140" />
+                    </Grid.ColumnDefinitions>
+                    <StackPanel Grid.Column="0">
+                        <TextBlock Text="Name" Style="{StaticResource StatLabelText}" Margin="0,0,0,4" />
+                        <TextBox Text="{Binding NewSeasonName, UpdateSourceTrigger=PropertyChanged}" />
+                    </StackPanel>
+                    <StackPanel Grid.Column="2">
+                        <TextBlock Text="Start" Style="{StaticResource StatLabelText}" Margin="0,0,0,4" />
+                        <DatePicker SelectedDate="{Binding NewSeasonStartDate}" />
+                    </StackPanel>
+                    <StackPanel Grid.Column="4">
+                        <TextBlock Text="Ende" Style="{StaticResource StatLabelText}" Margin="0,0,0,4" />
+                        <DatePicker SelectedDate="{Binding NewSeasonEndDate}" />
+                    </StackPanel>
+                </Grid>
+
+                <CheckBox Content="Sofort aktivieren" IsChecked="{Binding NewSeasonIsActive}" Margin="0,0,0,8" />
+
+                <TextBlock Text="{Binding SeasonErrorMessage}" Foreground="{DynamicResource Brush.Danger}"
+                           Margin="0,0,0,8" TextWrapping="Wrap"
+                           Visibility="{Binding SeasonErrorMessage, Converter={StaticResource StringToVisibilityConverter}}" />
+
+                <Button Content="Saison anlegen" Style="{StaticResource PrimaryButton}" HorizontalAlignment="Left"
+                        Margin="0,0,0,12" Command="{Binding CreateSeasonCommand}" />
+
+                <ItemsControl ItemsSource="{Binding Seasons}">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <Grid Margin="0,0,0,8">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <StackPanel Grid.Column="0" Orientation="Horizontal">
+                                    <TextBlock Text="{Binding Name}" FontWeight="SemiBold" VerticalAlignment="Center" />
+                                    <TextBlock Text="{Binding DateRangeLabel}" Margin="8,0,0,0" VerticalAlignment="Center"
+                                               Style="{StaticResource StatLabelText}" />
+                                    <TextBlock Text="Aktiv" Margin="8,0,0,0" VerticalAlignment="Center"
+                                               Foreground="{DynamicResource Brush.Accent}" FontWeight="SemiBold"
+                                               Visibility="{Binding IsActive, Converter={StaticResource BoolToVisibilityConverter}}" />
+                                </StackPanel>
+                                <Button Grid.Column="1" Content="Aktivieren/Deaktivieren" Style="{StaticResource CompactSecondaryButton}"
+                                        Command="{Binding DataContext.ToggleSeasonActiveCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                        CommandParameter="{Binding}" />
+                            </Grid>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </StackPanel>
+        </Border>
+
         <Border Style="{StaticResource CardBorder}"
                 Visibility="{Binding IsSeedDataAvailable, Converter={StaticResource BoolToVisibilityConverter}}">
             <StackPanel>

@@ -37,6 +37,9 @@
         <DataTemplate DataType="{x:Type vm:ProfileViewModel}">
             <views:ProfileView />
         </DataTemplate>
+        <DataTemplate DataType="{x:Type vm:LeagueViewModel}">
+            <views:LeagueView />
+        </DataTemplate>
     </Window.Resources>
 
     <Grid>
@@ -63,6 +66,7 @@
                 <Button Content="Neues Spiel" Style="{StaticResource NavButton}" Command="{Binding ShowNewMatchCommand}" />
                 <Button Content="Doppel" Style="{StaticResource NavButton}" Command="{Binding ShowDoublesCommand}" />
                 <Button Content="Head-to-Head" Style="{StaticResource NavButton}" Command="{Binding ShowHeadToHeadCommand}" />
+                <Button Content="Liga" Style="{StaticResource NavButton}" Command="{Binding ShowLeagueCommand}" />
                 <Button Content="Einstellungen" Style="{StaticResource NavButton}" Command="{Binding ShowSettingsCommand}" />
                 <Button Content="Mein Profil" Style="{StaticResource NavButton}" Command="{Binding ShowProfileCommand}"
                         Visibility="{Binding IsLoggedIn, Converter={StaticResource BoolToVisibilityConverter}}" />

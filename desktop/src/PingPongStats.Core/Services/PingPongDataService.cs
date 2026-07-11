@@ -23,19 +23,22 @@ public class PingPongDataService
     private readonly IDoubleMatchRepository _doubleMatchRepository;
     private readonly IAuditLogRepository? _auditLogRepository;
     private readonly IQuoteRepository? _quoteRepository;
+    private readonly ISeasonRepository? _seasonRepository;
 
     public PingPongDataService(
         IPlayerRepository playerRepository,
         IMatchRepository matchRepository,
         IDoubleMatchRepository doubleMatchRepository,
         IAuditLogRepository? auditLogRepository = null,
-        IQuoteRepository? quoteRepository = null)
+        IQuoteRepository? quoteRepository = null,
+        ISeasonRepository? seasonRepository = null)
     {
         _playerRepository = playerRepository;
         _matchRepository = matchRepository;
         _doubleMatchRepository = doubleMatchRepository;
         _auditLogRepository = auditLogRepository;
         _quoteRepository = quoteRepository;
+        _seasonRepository = seasonRepository;
         Reload();
     }
 
@@ -49,6 +52,13 @@ public class PingPongDataService
     /// IQuoteRepository was supplied, e.g. in tests that don't need it.</summary>
     public IReadOnlyList<Quote> Quotes { get; private set; } = new List<Quote>();
 
+    /// <summary>Manually-created league seasons (Phase 11). Empty if no
+    /// ISeasonRepository was supplied, e.g. in tests that don't need it.</summary>
+    public IReadOnlyList<Season> Seasons { get; private set; } = new List<Season>();
+
+    /// <summary>The currently active season, or null if none is active.</summary>
+    public Season? ActiveSeason => Seasons.FirstOrDefault(s => s.IsActive);
+
     /// <summary>Re-reads all XML files from disk. Called after every mutation and can
     /// also be triggered manually from Settings ("XML neu laden").</summary>
     public void Reload()
@@ -57,6 +67,7 @@ public class PingPongDataService
         Matches = _matchRepository.GetAll();
         DoubleMatches = _doubleMatchRepository.GetAll();
         Quotes = _quoteRepository?.GetAll() ?? new List<Quote>();
+        Seasons = _seasonRepository?.GetAll() ?? new List<Season>();
     }
 
     // ----- Players -----------------------------------------------------
@@ -384,6 +395,73 @@ public class PingPongDataService
         _doubleMatchRepository.Update(_ => doubleMatches);
         LogAudit("SeedDataGenerated",
             $"{players.Count} Spieler, {matches.Count} Spiele, {doubleMatches.Count} Doppel-Spiele");
+        Reload();
+    }
+
+    // ----- Seasons --------------------------------------------------------
+
+    /// <summary>Creates a new season. If isActive is true, every other season is
+    /// deactivated first so at most one season is ever active at a time.</summary>
+    public Season CreateSeason(string name, DateTime startDate, DateTime endDate, bool isActive)
+    {
+        var trimmedName = (name ?? string.Empty).Trim();
+        if (trimmedName.Length == 0)
+        {
+            throw new ValidationException("Saison-Name ist erforderlich.");
+        }
+
+        if (endDate < startDate)
+        {
+            throw new ValidationException("Das Enddatum darf nicht vor dem Startdatum liegen.");
+        }
+
+        var now = Clock.Now();
+        var season = new Season
+        {
+            Name = trimmedName,
+            StartDate = startDate,
+            EndDate = endDate,
+            IsActive = isActive,
+            CreatedAt = now,
+            UpdatedAt = now,
+        };
+
+        _seasonRepository?.Update(seasons =>
+        {
+            if (isActive)
+            {
+                foreach (var existing in seasons) existing.IsActive = false;
+            }
+
+            seasons.Add(season);
+            return seasons;
+        });
+
+        LogAudit("SeasonCreated", $"{trimmedName} ({startDate:yyyy-MM-dd} - {endDate:yyyy-MM-dd})");
+        Reload();
+        return season;
+    }
+
+    /// <summary>Activates the given season and deactivates every other one (at most
+    /// one season is ever active).</summary>
+    public void SetSeasonActive(Guid id, bool isActive)
+    {
+        _seasonRepository?.Update(seasons =>
+        {
+            var season = seasons.FirstOrDefault(s => s.Id == id)
+                ?? throw new NotFoundException("Saison wurde nicht gefunden.");
+
+            if (isActive)
+            {
+                foreach (var existing in seasons) existing.IsActive = false;
+            }
+
+            season.IsActive = isActive;
+            season.UpdatedAt = Clock.Now();
+            return seasons;
+        });
+
+        LogAudit(isActive ? "SeasonActivated" : "SeasonDeactivated", id.ToString());
         Reload();
     }
 

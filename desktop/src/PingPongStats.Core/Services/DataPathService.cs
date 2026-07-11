@@ -46,6 +46,7 @@ public class DataPathService
             new DoubleMatchXmlRepository(dataPath).EnsureFileExists();
             new AuditLogXmlRepository(dataPath).EnsureFileExists();
             new QuoteXmlRepository(dataPath).EnsureSeeded();
+            new SeasonXmlRepository(dataPath).EnsureFileExists();
         }
         catch (Exception ex)
         {

@@ -14,7 +14,8 @@ public class PingPongDataServiceTests : IDisposable
         _tempDir = Path.Combine(Path.GetTempPath(), "PingPongStatsTests_" + Guid.NewGuid().ToString("N"));
         Directory.CreateDirectory(_tempDir);
         _service = new PingPongDataService(
-            new PlayerXmlRepository(_tempDir), new MatchXmlRepository(_tempDir), new DoubleMatchXmlRepository(_tempDir));
+            new PlayerXmlRepository(_tempDir), new MatchXmlRepository(_tempDir), new DoubleMatchXmlRepository(_tempDir),
+            auditLogRepository: null, quoteRepository: null, seasonRepository: new SeasonXmlRepository(_tempDir));
     }
 
     public void Dispose()
@@ -182,5 +183,59 @@ public class PingPongDataServiceTests : IDisposable
     {
         var player = _service.CreatePlayer("Anna", "", "", "");
         Assert.False(_service.PlayerHasPin(player.Id));
+    }
+
+    [Fact]
+    public void CreateSeason_RequiresName()
+    {
+        Assert.Throws<ValidationException>(() =>
+            _service.CreateSeason("", new DateTime(2026, 1, 1), new DateTime(2026, 12, 31), isActive: true));
+    }
+
+    [Fact]
+    public void CreateSeason_RejectsEndDateBeforeStartDate()
+    {
+        Assert.Throws<ValidationException>(() =>
+            _service.CreateSeason("Saison 2026", new DateTime(2026, 6, 1), new DateTime(2026, 1, 1), isActive: true));
+    }
+
+    [Fact]
+    public void CreateSeason_PersistsAndActivates()
+    {
+        var season = _service.CreateSeason("Saison 2026", new DateTime(2026, 1, 1), new DateTime(2026, 12, 31), isActive: true);
+
+        Assert.Single(_service.Seasons);
+        Assert.True(_service.Seasons.Single(s => s.Id == season.Id).IsActive);
+        Assert.Equal(season.Id, _service.ActiveSeason?.Id);
+    }
+
+    [Fact]
+    public void CreateSeason_ActivatingNewSeasonDeactivatesPreviousOne()
+    {
+        var first = _service.CreateSeason("Saison 1", new DateTime(2026, 1, 1), new DateTime(2026, 6, 30), isActive: true);
+        var second = _service.CreateSeason("Saison 2", new DateTime(2026, 7, 1), new DateTime(2026, 12, 31), isActive: true);
+
+        Assert.False(_service.Seasons.Single(s => s.Id == first.Id).IsActive);
+        Assert.True(_service.Seasons.Single(s => s.Id == second.Id).IsActive);
+        Assert.Equal(second.Id, _service.ActiveSeason?.Id);
+    }
+
+    [Fact]
+    public void SetSeasonActive_SwitchesActiveSeason()
+    {
+        var first = _service.CreateSeason("Saison 1", new DateTime(2026, 1, 1), new DateTime(2026, 6, 30), isActive: true);
+        var second = _service.CreateSeason("Saison 2", new DateTime(2026, 7, 1), new DateTime(2026, 12, 31), isActive: false);
+
+        _service.SetSeasonActive(second.Id, true);
+
+        Assert.False(_service.Seasons.Single(s => s.Id == first.Id).IsActive);
+        Assert.True(_service.Seasons.Single(s => s.Id == second.Id).IsActive);
+    }
+
+    [Fact]
+    public void ActiveSeason_NullWhenNoSeasonIsActive()
+    {
+        _service.CreateSeason("Saison 1", new DateTime(2026, 1, 1), new DateTime(2026, 12, 31), isActive: false);
+        Assert.Null(_service.ActiveSeason);
     }
 }

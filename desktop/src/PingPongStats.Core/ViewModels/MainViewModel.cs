@@ -50,6 +50,7 @@ public partial class MainViewModel : ObservableObject
     public SettingsViewModel Settings { get; }
     public LoginViewModel Login { get; }
     public ProfileViewModel? Profile { get; private set; }
+    public LeagueViewModel League { get; }
 
     public bool IsLoggedIn => CurrentPlayer is not null;
 
@@ -64,6 +65,7 @@ public partial class MainViewModel : ObservableObject
     public IRelayCommand ShowProfileCommand { get; }
     public IRelayCommand LogoutCommand { get; }
     public IRelayCommand DismissWinAnimationCommand { get; }
+    public IRelayCommand ShowLeagueCommand { get; }
 
     public MainViewModel(
         PingPongDataService dataService,
@@ -98,6 +100,8 @@ public partial class MainViewModel : ObservableObject
             _folderPicker, _shell, OnDataPathChanged);
         Login = new LoginViewModel(_dataService, _settingsRepository);
         Login.LoggedIn += OnLoggedIn;
+        League = new LeagueViewModel(_dataService, _settingsRepository);
+        Settings.SeasonsChanged += () => League.Load();
 
         ShowDashboardCommand = new RelayCommand(() => Navigate("Dashboard", Dashboard, () => Dashboard.Load()));
         ShowPlayersCommand = new RelayCommand(() => Navigate("Spieler", Players, () => Players.Load()));
@@ -113,6 +117,7 @@ public partial class MainViewModel : ObservableObject
         });
         LogoutCommand = new RelayCommand(Logout);
         DismissWinAnimationCommand = new RelayCommand(DismissWinAnimation);
+        ShowLeagueCommand = new RelayCommand(() => Navigate("Liga", League, () => League.Load()));
 
         CurrentViewModel = Dashboard;
     }
@@ -197,6 +202,7 @@ public partial class MainViewModel : ObservableObject
         Matches.Load();
         Doubles.Load();
         HeadToHead.Load();
+        League.Load();
         CurrentPlayer = null;
         Profile = null;
         Login.Load();

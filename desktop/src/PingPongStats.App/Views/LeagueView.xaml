@@ -1,0 +1,81 @@
+<UserControl x:Class="PingPongStats.App.Views.LeagueView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:controls="clr-namespace:PingPongStats.App.Controls">
+    <StackPanel>
+        <Grid Margin="0,0,0,16">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="16" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+            <TextBlock Grid.Column="0" Text="Liga" Style="{StaticResource HeadingText}" />
+            <CheckBox Grid.Column="1" Content="Doppel anzeigen" VerticalAlignment="Center"
+                      IsChecked="{Binding IsDoublesMode}" />
+            <Button Grid.Column="3" Content="Aktualisieren" Style="{StaticResource SecondaryButton}"
+                    Command="{Binding RefreshCommand}" />
+        </Grid>
+
+        <TextBlock Text="{Binding ActiveSeasonLabel}" Style="{StaticResource StatLabelText}" Margin="0,0,0,16"
+                   Visibility="{Binding HasActiveSeason, Converter={StaticResource BoolToVisibilityConverter}}" />
+
+        <Border Style="{StaticResource CardBorder}" Margin="0,0,0,16"
+                Visibility="{Binding HasActiveSeason, Converter={StaticResource InverseBoolToVisibilityConverter}}">
+            <TextBlock Text="Keine aktive Saison. Eine Saison kann unter Einstellungen angelegt und aktiviert werden."
+                       Style="{StaticResource StatLabelText}" TextWrapping="Wrap" />
+        </Border>
+
+        <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,0,0,16"
+                    Visibility="{Binding HasActiveSeason, Converter={StaticResource BoolToVisibilityConverter}}">
+            <ItemsControl ItemsSource="{Binding Podium}">
+                <ItemsControl.ItemsPanel>
+                    <ItemsPanelTemplate>
+                        <StackPanel Orientation="Horizontal" />
+                    </ItemsPanelTemplate>
+                </ItemsControl.ItemsPanel>
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                        <Border Style="{StaticResource CardBorder}" Width="150" Margin="8,0">
+                            <StackPanel HorizontalAlignment="Center">
+                                <TextBlock Text="{Binding Rank, StringFormat='#{0}'}" Style="{StaticResource SectionLabelText}"
+                                           HorizontalAlignment="Center" Margin="0,0,0,8" />
+                                <controls:AvatarControl Player="{Binding Player}"
+                                                         DataPath="{Binding DataContext.DataPath, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                         Size="M" HorizontalAlignment="Center" />
+                                <TextBlock Text="{Binding DisplayName}" FontWeight="SemiBold" HorizontalAlignment="Center"
+                                           Margin="0,8,0,0" TextWrapping="Wrap" TextAlignment="Center" />
+                                <TextBlock Text="{Binding Points, StringFormat='{}{0} Punkte'}" Style="{StaticResource StatLabelText}"
+                                           HorizontalAlignment="Center" />
+                            </StackPanel>
+                        </Border>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+        </StackPanel>
+
+        <Border Style="{StaticResource CardBorder}" Padding="0"
+                Visibility="{Binding HasActiveSeason, Converter={StaticResource BoolToVisibilityConverter}}">
+            <DataGrid ItemsSource="{Binding Table}" BorderThickness="0">
+                <DataGrid.Columns>
+                    <DataGridTextColumn Header="#" Binding="{Binding Rank}" Width="40" />
+                    <DataGridTemplateColumn Header="Bild" Width="50">
+                        <DataGridTemplateColumn.CellTemplate>
+                            <DataTemplate>
+                                <controls:AvatarControl Player="{Binding Player}"
+                                                         DataPath="{Binding DataContext.DataPath, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                         Size="S" />
+                            </DataTemplate>
+                        </DataGridTemplateColumn.CellTemplate>
+                    </DataGridTemplateColumn>
+                    <DataGridTextColumn Header="Spieler" Binding="{Binding DisplayName}" Width="150" />
+                    <DataGridTextColumn Header="Spiele" Binding="{Binding Played}" Width="70" />
+                    <DataGridTextColumn Header="Siege" Binding="{Binding Wins}" Width="70" />
+                    <DataGridTextColumn Header="Niederlagen" Binding="{Binding Losses}" Width="100" />
+                    <DataGridTextColumn Header="Satzdifferenz" Binding="{Binding SetDifferenceLabel}" Width="100" />
+                    <DataGridTextColumn Header="Punkte" Binding="{Binding Points}" Width="80" />
+                </DataGrid.Columns>
+            </DataGrid>
+        </Border>
+    </StackPanel>
+</UserControl>

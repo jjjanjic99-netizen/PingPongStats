@@ -1,3 +1,4 @@
+using System.Collections.ObjectModel;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using PingPongStats.Core.Helpers;
@@ -31,6 +32,14 @@ public partial class SettingsViewModel : ObservableObject
     [ObservableProperty] private string selectedUiScale = "Medium";
     [ObservableProperty] private bool showWinAnimation = true;
 
+    [ObservableProperty] private string newSeasonName = string.Empty;
+    [ObservableProperty] private DateTime newSeasonStartDate = DateTime.Today;
+    [ObservableProperty] private DateTime newSeasonEndDate = DateTime.Today.AddMonths(3);
+    [ObservableProperty] private bool newSeasonIsActive = true;
+    [ObservableProperty] private string seasonErrorMessage = string.Empty;
+
+    public ObservableCollection<SeasonRow> Seasons { get; } = new();
+
     public IRelayCommand ChangeDataPathCommand { get; }
     public IRelayCommand ReloadCommand { get; }
     public IRelayCommand OpenBackupFolderCommand { get; }
@@ -39,6 +48,12 @@ public partial class SettingsViewModel : ObservableObject
     public IRelayCommand ExportMatchesCommand { get; }
     public IRelayCommand ExportStatisticsCommand { get; }
     public IRelayCommand SeedDataCommand { get; }
+    public IRelayCommand CreateSeasonCommand { get; }
+    public IRelayCommand<SeasonRow> ToggleSeasonActiveCommand { get; }
+
+    /// <summary>Raised after a season is created or (de)activated, so MainViewModel
+    /// can refresh the Liga page without requiring a manual navigation round-trip.</summary>
+    public event Action? SeasonsChanged;
 
     /// <summary>True only in Debug builds, so the seed-data button is hidden entirely
     /// in a Release/published EXE - it must never be reachable in production use.</summary>
@@ -79,6 +94,51 @@ public partial class SettingsViewModel : ObservableObject
         ExportMatchesCommand = new RelayCommand(ExportMatches);
         ExportStatisticsCommand = new RelayCommand(ExportStatistics);
         SeedDataCommand = new RelayCommand(SeedData);
+        CreateSeasonCommand = new RelayCommand(CreateSeason);
+        ToggleSeasonActiveCommand = new RelayCommand<SeasonRow>(row => { if (row is not null) ToggleSeasonActive(row); });
+
+        LoadSeasons();
+    }
+
+    private void LoadSeasons()
+    {
+        Seasons.Clear();
+        foreach (var season in _dataService.Seasons.OrderByDescending(s => s.StartDate))
+        {
+            Seasons.Add(new SeasonRow { Season = season });
+        }
+    }
+
+    private void CreateSeason()
+    {
+        SeasonErrorMessage = string.Empty;
+        try
+        {
+            _dataService.CreateSeason(NewSeasonName, NewSeasonStartDate, NewSeasonEndDate, NewSeasonIsActive);
+            _notifications.NotifySuccess("Saison wurde angelegt.");
+            NewSeasonName = string.Empty;
+            LoadSeasons();
+            SeasonsChanged?.Invoke();
+        }
+        catch (ValidationException ex)
+        {
+            SeasonErrorMessage = ex.Message;
+        }
+    }
+
+    private void ToggleSeasonActive(SeasonRow row)
+    {
+        try
+        {
+            _dataService.SetSeasonActive(row.Id, !row.IsActive);
+            LoadSeasons();
+            SeasonsChanged?.Invoke();
+        }
+        catch (Exception ex)
+        {
+            _notifications.NotifyError(ex.Message);
+            Logger.Error("ToggleSeasonActive failed", ex);
+        }
     }
 
     partial void OnDarkModeChanged(bool value)

@@ -53,7 +53,7 @@ ist keine Einschränkung dieses Projekts, sondern eine generelle Grenze von
 Um trotzdem maximale Qualität zu liefern, wurde deshalb wie folgt vorgegangen:
 
 - **`PingPongStats.Core` und `PingPongStats.Tests` wurden in dieser Session
-  vollständig gebaut, alle 184 Unit-Tests laufen grün** (`dotnet test`).
+  vollständig gebaut, alle 197 Unit-Tests laufen grün** (`dotnet test`).
 - **`PingPongStats.App` (WPF) konnte nicht kompiliert werden.** Der Code wurde
   daher besonders sorgfältig von Hand geschrieben und zusätzlich statisch
   geprüft: alle XAML-Dateien sind wohlgeformtes XML, alle `x:Class`-Werte
@@ -136,8 +136,10 @@ Trash-Talk-Sprüche (Kategorie-Priorität, "Kategorie fehlt"-Fall, Seeding/
 Nicht-Überschreiben von `quotes.xml`), die Elo-Prognoseformel (inkl.
 Symmetrie und Team-Elo-Durchschnitt), Rivalität des Monats (Zeitfenster,
 Mindest-Spiele, Tiebreak), die häufigsten-Gegner-Ermittlung fürs
-Bilanz-Countdown sowie die Tageszeit-Statistik (exakte Stunden-Grenzen aller
-fünf Blöcke, Mindest-Spiele für Anzeige vs. für den Beste-Zeit-Hinweis).
+Bilanz-Countdown, die Tageszeit-Statistik (exakte Stunden-Grenzen aller fünf
+Blöcke, Mindest-Spiele für Anzeige vs. für den Beste-Zeit-Hinweis) sowie die
+Ligatabelle (Punkteformel, Zeitfenster-basierte Saison-Zuordnung, Set-
+differenz- und direkter-Vergleich-Tiebreak, getrennte Einzel-/Doppel-Auswertung).
 
 ## Anwendung starten (Entwicklung)
 
@@ -220,6 +222,7 @@ Beispiel `appsettings.json`:
 | `doubles.xml` | Alle Doppel-Spiele (2 vs 2), optional inkl. `SetResults` |
 | `audit-log.xml` | Optionales Änderungsprotokoll (wer hat was geändert) |
 | `quotes.xml` | Trash-Talk-Sprüche fürs Gewinn-Overlay, bewusst frei editierbar |
+| `seasons.xml` | Manuell angelegte Liga-Saisons |
 | `avatars\` | Verarbeitete Profilbilder, `{PlayerId}.png`, max. 512x512 px |
 
 Alle XML-Dateien werden **UTF-8 ohne BOM**, eingerückt und ohne
@@ -441,6 +444,28 @@ nach 17 Uhr (Zuordnung über die Stunde von `Match.PlayedAt`). Blöcke mit
 weniger als 3 Spielen werden nicht ausgeblendet, sondern nur ausgegraut.
 Eine Textzeile ("Deine beste Zeit: vor 10 Uhr, 70% Siege") erscheint nur,
 wenn der stärkste Block mindestens 5 Spiele hat.
+
+### Saison / Ligatabelle
+
+Saisons (`Season`, persistiert in `seasons.xml`) werden manuell unter
+**Einstellungen** angelegt (Name, Start-/Enddatum, optional sofort aktiv) -
+es ist zu jedem Zeitpunkt höchstens eine Saison aktiv; das Aktivieren einer
+Saison deaktiviert automatisch jede andere.
+
+Spiele werden **nicht** über ein explizites Feld einer Saison zugeordnet,
+sondern rein anhand von `PlayedAt`: ein Spiel zählt für die Ligatabelle einer
+Saison, wenn sein Datum im `[StartDate, EndDate]`-Fenster liegt. Spiele
+ausserhalb jeder Saison bleiben ganz normal gültig und zählen für alle
+anderen Statistiken (Elo, Profil, Badges, ...) - nur eben nicht in die
+Liga-Tabelle.
+
+Die neue Seite **Liga** zeigt die Tabelle der aktiven Saison, mit einem
+Umschalter zwischen Einzel- und Doppel-Auswertung (`LeagueTableService` -
+beide vollständig getrennt berechnet; ein Doppel-Ergebnis zählt für beide
+Team-Mitglieder einzeln). Punktesystem: 3 Punkte pro Sieg, 0 pro Niederlage;
+Tiebreak zuerst über die Satzdifferenz, danach über den direkten Vergleich
+zwischen den betroffenen Spielern. Podest für die Top 3 plus die volle
+Tabelle mit Avataren.
 
 ### Migration alter Daten
 

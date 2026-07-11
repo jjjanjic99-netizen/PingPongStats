@@ -74,8 +74,9 @@ public partial class App : Application
         var auditLogRepository = new AuditLogXmlRepository(settings.DataPath);
         var quoteRepository = new QuoteXmlRepository(settings.DataPath);
         quoteRepository.EnsureSeeded();
+        var seasonRepository = new SeasonXmlRepository(settings.DataPath);
         var dataService = new PingPongDataService(
-            playerRepository, matchRepository, doubleMatchRepository, auditLogRepository, quoteRepository);
+            playerRepository, matchRepository, doubleMatchRepository, auditLogRepository, quoteRepository, seasonRepository);
 
         var mainViewModel = new MainViewModel(
             dataService, settingsRepository, dataPathService, folderPicker, shell, filePicker, avatarImageService);

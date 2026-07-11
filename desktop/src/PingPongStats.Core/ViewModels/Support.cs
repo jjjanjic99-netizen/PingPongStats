@@ -119,6 +119,33 @@ public class BalanceCountdownRow
 /// view to grey the bar out rather than hide it.</summary>
 public record TimeOfDayChartRow(string Label, int Played, string DisplayValue, double NormalizedHeight, bool IsLowSample);
 
+/// <summary>One ranked row of a Season's league table (Liga page), joined with the
+/// player's display data for the view.</summary>
+public class LeagueTableDisplayRow
+{
+    public required LeagueTableRow Row { get; init; }
+    public Player? Player { get; init; }
+    public int Rank { get; init; }
+
+    public string DisplayName => Player?.DisplayName ?? "?";
+    public int Played => Row.Played;
+    public int Wins => Row.Wins;
+    public int Losses => Row.Losses;
+    public int Points => Row.Points;
+    public string SetDifferenceLabel => Row.SetDifference > 0 ? $"+{Row.SetDifference}" : Row.SetDifference.ToString();
+}
+
+/// <summary>Season row for the Settings screen's season list.</summary>
+public class SeasonRow
+{
+    public required Season Season { get; init; }
+
+    public Guid Id => Season.Id;
+    public string Name => Season.Name;
+    public bool IsActive => Season.IsActive;
+    public string DateRangeLabel => $"{Season.StartDate:dd.MM.yyyy} - {Season.EndDate:dd.MM.yyyy}";
+}
+
 /// <summary>Ranking row for the Dashboard's player table.</summary>
 public class PlayerRankingRow
 {
