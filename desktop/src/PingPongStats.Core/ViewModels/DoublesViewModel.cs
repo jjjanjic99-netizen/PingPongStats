@@ -214,10 +214,27 @@ public partial class DoublesViewModel : ObservableObject
             var teamAWon = savedMatch.WinningTeam == "A";
             var winnerId1 = teamAWon ? savedMatch.TeamAPlayer1Id : savedMatch.TeamBPlayer1Id;
             var winnerId2 = teamAWon ? savedMatch.TeamAPlayer2Id : savedMatch.TeamBPlayer2Id;
+            var loserId1 = teamAWon ? savedMatch.TeamBPlayer1Id : savedMatch.TeamAPlayer1Id;
+            var loserId2 = teamAWon ? savedMatch.TeamBPlayer2Id : savedMatch.TeamAPlayer2Id;
             var winnerSets = teamAWon ? savedMatch.TeamASets : savedMatch.TeamBSets;
             var loserSets = teamAWon ? savedMatch.TeamBSets : savedMatch.TeamASets;
+            var isComeback = ComebackService.IsComebackDoubles(savedMatch);
+
+            // Elo only ever processes singles matches, so this doubles match itself
+            // never changed anyone's rating - no need to exclude it like the singles
+            // Save() does. Team Elo = average of the two players' (singles) ratings.
+            var eloRatings = EloService.ComputeRatings(_dataService.Matches, _dataService.Players.Select(p => p.Id));
+            var winnerTeamElo = (eloRatings.GetValueOrDefault(winnerId1, EloService.DefaultInitialRating)
+                + eloRatings.GetValueOrDefault(winnerId2, EloService.DefaultInitialRating)) / 2.0;
+            var loserTeamElo = (eloRatings.GetValueOrDefault(loserId1, EloService.DefaultInitialRating)
+                + eloRatings.GetValueOrDefault(loserId2, EloService.DefaultInitialRating)) / 2.0;
+            var isUnderdogWin = winnerTeamElo < loserTeamElo;
+
+            var quoteCategory = QuoteCategorySelector.SelectCategory(
+                isDoubles: true, isComeback, isUnderdogWin, winnerSets, loserSets);
+
             MatchSaved?.Invoke(new MatchSavedInfo(
-                IsDoubles: true, winnerId1, winnerId2, $"{winnerSets}:{loserSets}", ComebackService.IsComebackDoubles(savedMatch)));
+                IsDoubles: true, winnerId1, winnerId2, $"{winnerSets}:{loserSets}", isComeback, quoteCategory));
 
             IsFormOpen = false;
             Load();

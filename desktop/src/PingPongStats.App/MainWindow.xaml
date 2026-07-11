@@ -152,6 +152,11 @@
                         Visibility="{Binding WinAnimationIsComeback, Converter={StaticResource BoolToVisibilityConverter}}">
                     <TextBlock Text="COMEBACK!" FontSize="18" FontWeight="Bold" Foreground="{DynamicResource Brush.AccentText}" />
                 </Border>
+
+                <TextBlock Text="{Binding WinAnimationQuote}" FontSize="16" FontStyle="Italic" Foreground="White"
+                           HorizontalAlignment="Center" TextWrapping="Wrap" MaxWidth="480" TextAlignment="Center"
+                           Margin="0,16,0,0"
+                           Visibility="{Binding WinAnimationQuote, Converter={StaticResource StringToVisibilityConverter}}" />
             </StackPanel>
         </Grid>
     </Border>

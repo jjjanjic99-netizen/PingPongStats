@@ -186,8 +186,22 @@ public partial class MatchEditViewModel : ObservableObject
             var winnerIsPlayerA = savedMatch.WinnerId == savedMatch.PlayerAId;
             var winnerSets = winnerIsPlayerA ? savedMatch.PlayerASets : savedMatch.PlayerBSets;
             var loserSets = winnerIsPlayerA ? savedMatch.PlayerBSets : savedMatch.PlayerASets;
+            var loserId = winnerIsPlayerA ? savedMatch.PlayerBId : savedMatch.PlayerAId;
+            var isComeback = ComebackService.IsComeback(savedMatch);
+
+            // Ratings excluding this specific match, so a big upset doesn't already
+            // show the winner boosted past the loser when deciding "was this an
+            // underdog win".
+            var priorMatches = _dataService.Matches.Where(m => m.Id != savedMatch.Id).ToList();
+            var priorRatings = EloService.ComputeRatings(priorMatches, _dataService.Players.Select(p => p.Id));
+            var isUnderdogWin = priorRatings.GetValueOrDefault(savedMatch.WinnerId, EloService.DefaultInitialRating)
+                < priorRatings.GetValueOrDefault(loserId, EloService.DefaultInitialRating);
+
+            var quoteCategory = QuoteCategorySelector.SelectCategory(
+                isDoubles: false, isComeback, isUnderdogWin, winnerSets, loserSets);
+
             MatchSaved?.Invoke(new MatchSavedInfo(
-                IsDoubles: false, savedMatch.WinnerId, null, $"{winnerSets}:{loserSets}", ComebackService.IsComeback(savedMatch)));
+                IsDoubles: false, savedMatch.WinnerId, null, $"{winnerSets}:{loserSets}", isComeback, quoteCategory));
 
             Finished?.Invoke();
         }

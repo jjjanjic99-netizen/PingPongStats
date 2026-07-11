@@ -39,6 +39,7 @@ public partial class MainViewModel : ObservableObject
     [ObservableProperty] private Player? winAnimationPlayer2;
     [ObservableProperty] private string winAnimationScoreLabel = string.Empty;
     [ObservableProperty] private bool winAnimationIsComeback;
+    [ObservableProperty] private string? winAnimationQuote;
 
     public DashboardRangeFilter RangeFilter { get; private set; } = null!;
     public DashboardViewModel Dashboard { get; }
@@ -150,6 +151,7 @@ public partial class MainViewModel : ObservableObject
         WinAnimationPlayer2 = info.WinnerId2 is Guid id2 ? _dataService.Players.FirstOrDefault(p => p.Id == id2) : null;
         WinAnimationScoreLabel = info.ScoreLabel;
         WinAnimationIsComeback = info.IsComeback;
+        WinAnimationQuote = QuoteService.PickRandomQuote(_dataService.Quotes, info.QuoteCategory);
         IsWinAnimationVisible = true;
 
         _winAnimationTimer?.Dispose();

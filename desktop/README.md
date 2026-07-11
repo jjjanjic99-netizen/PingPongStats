@@ -53,7 +53,7 @@ ist keine Einschränkung dieses Projekts, sondern eine generelle Grenze von
 Um trotzdem maximale Qualität zu liefern, wurde deshalb wie folgt vorgegangen:
 
 - **`PingPongStats.Core` und `PingPongStats.Tests` wurden in dieser Session
-  vollständig gebaut, alle 123 Unit-Tests laufen grün** (`dotnet test`).
+  vollständig gebaut, alle 154 Unit-Tests laufen grün** (`dotnet test`).
 - **`PingPongStats.App` (WPF) konnte nicht kompiliert werden.** Der Code wurde
   daher besonders sorgfältig von Hand geschrieben und zusätzlich statisch
   geprüft: alle XAML-Dateien sind wohlgeformtes XML, alle `x:Class`-Werte
@@ -129,8 +129,11 @@ optionalen Felder (Migration), Datenpfad-Bootstrap, die zentrale
 `PingPongDataService`-Fassade (inkl. "Löschen nur ohne Spiele"), PIN-Hashing/
 -Verifikation, Angstgegner/Lieblingsgegner (inkl. Tiebreak und
 Mindest-Spiele-Schwelle), Player of the Week (Score-Formel, 7-Tage-Fenster,
-Einzel+Doppel-Kombination, alle Tiebreak-Stufen) sowie Bestes Comeback
-(Mindest-Rückstand, maximaler Rückstand, Tiebreak, "keine Satzdaten"-Fall).
+Einzel+Doppel-Kombination, alle Tiebreak-Stufen), Bestes Comeback
+(Mindest-Rückstand, maximaler Rückstand, Tiebreak, "keine Satzdaten"-Fall),
+alle Badge-Regeln (exakte Schwellwerte, Grenzfälle, Gleichstände) sowie
+Trash-Talk-Sprüche (Kategorie-Priorität, "Kategorie fehlt"-Fall, Seeding/
+Nicht-Überschreiben von `quotes.xml`).
 
 ## Anwendung starten (Entwicklung)
 
@@ -212,6 +215,7 @@ Beispiel `appsettings.json`:
 | `matches.xml` | Alle Einzel-Spiele, optional inkl. `SetResults` (Satzdetail) |
 | `doubles.xml` | Alle Doppel-Spiele (2 vs 2), optional inkl. `SetResults` |
 | `audit-log.xml` | Optionales Änderungsprotokoll (wer hat was geändert) |
+| `quotes.xml` | Trash-Talk-Sprüche fürs Gewinn-Overlay, bewusst frei editierbar |
 | `avatars\` | Verarbeitete Profilbilder, `{PlayerId}.png`, max. 512x512 px |
 
 Alle XML-Dateien werden **UTF-8 ohne BOM**, eingerückt und ohne
@@ -344,6 +348,67 @@ Bibliothek) und laufen über `RenderTransform`-`DoubleAnimation`s auf dem
 Compositor-Thread, blockieren also die UI nicht. Über **Einstellungen →
 Gewinn-Animation nach dem Speichern anzeigen** (`ShowWinAnimation`,
 Default: an) abschaltbar.
+
+### Titel & Badges
+
+Eine regelbasierte Badge-Engine (`Services/Badges/`) prüft für jeden Spieler
+eine feste Liste von `IBadgeRule`-Implementierungen (`BadgeEngine.AllRules`)
+gegen einen einmal aufgebauten `BadgeContext` (alle Spieler/Spiele/
+Doppel-Spiele, aktuelle Elo-Werte). Ein neues Badge hinzufügen heisst: Regel
+implementieren, in `BadgeEngine.AllRules` eintragen - keine weitere Stelle im
+Code muss angepasst werden (keine wachsende if/else-Kette).
+
+Startset an Badges:
+
+- **Der Unbesiegte** 🔥 - mindestens 10 Siege in Folge, aktuell laufend
+  (eine später gebrochene Serie zählt nicht mehr)
+- **Aschenputtel** 🥿 - Sieg gegen einen aktuell in den Elo-Top-3 platzierten
+  Spieler (nur Einzel)
+- **Stammgast** 📆 - die meisten Spiele (Einzel + Doppel kombiniert) im
+  laufenden Kalendermonat; bei Gleichstand erhalten alle Führenden das Badge
+- **Eisenmann** 🦾 - 20+ Spiele insgesamt (Einzel + Doppel kombiniert)
+- **Doppel-Spezialist** 🤝 - Doppel-Siegquote höher als Einzel-Siegquote, ab
+  mindestens 5 Doppel-Spielen
+
+Icons erscheinen neben dem Namen in der Spielerliste und im
+Dashboard-Ranking (Tooltip zeigt alle verdienten Badges); auf **Mein Profil**
+wird die volle Sammlung als Chips mit Tooltip (Beschreibung + Verdient-am-Datum)
+angezeigt.
+
+### Trash-Talk-Sprüche
+
+Eine editierbare Spruch-Sammlung liegt unter `{DataPath}\quotes.xml` und wird
+beim ersten Start mit einem Standard-Set angelegt (siehe
+`Repositories/DefaultQuotes.cs`). Kategorien: `CleanSweep` (3:0/2:0 ohne
+Satzverlust), `KnapperSieg` (Sieg mit genau 1 Satz Unterschied), `Comeback`,
+`DoppelSieg`, `UnderdogSieg` (Sieger hatte vor dem Spiel die niedrigere
+Elo-Bewertung; bei Doppel wird die durchschnittliche Team-Elo verglichen).
+
+Im Konfetti-Overlay wird nach dem Speichern ein zufälliger Spruch der
+zutreffenden Kategorie eingeblendet. Können mehrere Kategorien zutreffen
+(z. B. ein Doppel-Comeback), gilt diese Priorität: Comeback →
+Underdog-Sieg → Doppel-Sieg → Clean-Sweep → Knapper Sieg. Fehlt eine
+Kategorie in der XML (gelöscht oder Tippfehler beim Bearbeiten), wird
+einfach kein Spruch angezeigt - kein Fehler, kein Absturz.
+
+**Die Datei ist bewusst editierbar**: Einträge hinzufügen, ändern oder
+löschen wirkt sich sofort aus - `quotes.xml` wird bei jeder Spielerfassung neu
+eingelesen (`PingPongDataService.Reload()`), kein Neustart der App nötig.
+Format:
+
+```xml
+<Quotes>
+  <Quote>
+    <Category>CleanSweep</Category>
+    <Text>Nicht einen Satz abgegeben - Respekt, aber auch: autsch.</Text>
+  </Quote>
+</Quotes>
+```
+
+Gültige `Category`-Werte: `CleanSweep`, `KnapperSieg`, `Comeback`,
+`DoppelSieg`, `UnderdogSieg`. Die Datei wird nur einmal (beim ersten Start
+bzw. beim ersten Zugriff auf einen neuen Datenpfad) mit den Standard-Sprüchen
+angelegt und danach nie mehr automatisch überschrieben.
 
 ### Migration alter Daten
 

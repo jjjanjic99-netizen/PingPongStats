@@ -288,4 +288,41 @@ public class XmlRepositoryTests : IDisposable
 
         Assert.Throws<DataFileLockTimeoutException>(() => store.Update(players => players));
     }
+
+    [Fact]
+    public void QuoteRepository_EnsureSeeded_CreatesDefaultQuotesWhenFileMissing()
+    {
+        var repo = new QuoteXmlRepository(_tempDir);
+
+        repo.EnsureSeeded();
+
+        Assert.True(File.Exists(Path.Combine(_tempDir, "quotes.xml")));
+        var quotes = repo.GetAll();
+        Assert.Equal(DefaultQuotes.All.Count, quotes.Count);
+        Assert.Contains(quotes, q => q.Category == QuoteCategories.CleanSweep);
+        Assert.Contains(quotes, q => q.Category == QuoteCategories.Comeback);
+    }
+
+    [Fact]
+    public void QuoteRepository_EnsureSeeded_NeverOverwritesExistingFile()
+    {
+        // Simulate a user having hand-edited quotes.xml down to one custom quote.
+        var filePath = Path.Combine(_tempDir, "quotes.xml");
+        File.WriteAllText(filePath,
+            "<Quotes><Quote><Category>Custom</Category><Text>Nur ein Testspruch.</Text></Quote></Quotes>");
+
+        var repo = new QuoteXmlRepository(_tempDir);
+        repo.EnsureSeeded();
+
+        var quotes = repo.GetAll();
+        Assert.Single(quotes);
+        Assert.Equal("Custom", quotes[0].Category);
+    }
+
+    [Fact]
+    public void QuoteRepository_GetAll_ReturnsEmptyList_WhenFileDoesNotExist()
+    {
+        var repo = new QuoteXmlRepository(_tempDir);
+        Assert.Empty(repo.GetAll());
+    }
 }

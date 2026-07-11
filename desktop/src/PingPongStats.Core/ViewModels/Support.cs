@@ -88,8 +88,10 @@ public class DoubleMatchRow
 
 /// <summary>Raised after a match (singles or doubles) is successfully saved, so
 /// MainViewModel can show the Phase 6 win/confetti overlay. WinnerId2 is set only
-/// for doubles (the second member of the winning team).</summary>
-public record MatchSavedInfo(bool IsDoubles, Guid WinnerId1, Guid? WinnerId2, string ScoreLabel, bool IsComeback);
+/// for doubles (the second member of the winning team). QuoteCategory is the
+/// Phase 8 trash-talk category to show a random quote for (empty = none).</summary>
+public record MatchSavedInfo(
+    bool IsDoubles, Guid WinnerId1, Guid? WinnerId2, string ScoreLabel, bool IsComeback, string QuoteCategory);
 
 /// <summary>One point of a player's Elo history line chart, pre-normalized to 0..1 on
 /// both axes so the WPF view can position it on a fixed-size canvas without needing

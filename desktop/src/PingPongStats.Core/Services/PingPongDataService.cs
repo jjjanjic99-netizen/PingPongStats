@@ -22,17 +22,20 @@ public class PingPongDataService
     private readonly IMatchRepository _matchRepository;
     private readonly IDoubleMatchRepository _doubleMatchRepository;
     private readonly IAuditLogRepository? _auditLogRepository;
+    private readonly IQuoteRepository? _quoteRepository;
 
     public PingPongDataService(
         IPlayerRepository playerRepository,
         IMatchRepository matchRepository,
         IDoubleMatchRepository doubleMatchRepository,
-        IAuditLogRepository? auditLogRepository = null)
+        IAuditLogRepository? auditLogRepository = null,
+        IQuoteRepository? quoteRepository = null)
     {
         _playerRepository = playerRepository;
         _matchRepository = matchRepository;
         _doubleMatchRepository = doubleMatchRepository;
         _auditLogRepository = auditLogRepository;
+        _quoteRepository = quoteRepository;
         Reload();
     }
 
@@ -42,6 +45,10 @@ public class PingPongDataService
 
     public IReadOnlyList<DoubleMatch> DoubleMatches { get; private set; } = new List<DoubleMatch>();
 
+    /// <summary>Trash-talk quotes from quotes.xml (Phase 8). Empty if no
+    /// IQuoteRepository was supplied, e.g. in tests that don't need it.</summary>
+    public IReadOnlyList<Quote> Quotes { get; private set; } = new List<Quote>();
+
     /// <summary>Re-reads all XML files from disk. Called after every mutation and can
     /// also be triggered manually from Settings ("XML neu laden").</summary>
     public void Reload()
@@ -49,6 +56,7 @@ public class PingPongDataService
         Players = _playerRepository.GetAll();
         Matches = _matchRepository.GetAll();
         DoubleMatches = _doubleMatchRepository.GetAll();
+        Quotes = _quoteRepository?.GetAll() ?? new List<Quote>();
     }
 
     // ----- Players -----------------------------------------------------

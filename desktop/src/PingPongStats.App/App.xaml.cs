@@ -72,7 +72,10 @@ public partial class App : Application
         var matchRepository = new MatchXmlRepository(settings.DataPath);
         var doubleMatchRepository = new DoubleMatchXmlRepository(settings.DataPath);
         var auditLogRepository = new AuditLogXmlRepository(settings.DataPath);
-        var dataService = new PingPongDataService(playerRepository, matchRepository, doubleMatchRepository, auditLogRepository);
+        var quoteRepository = new QuoteXmlRepository(settings.DataPath);
+        quoteRepository.EnsureSeeded();
+        var dataService = new PingPongDataService(
+            playerRepository, matchRepository, doubleMatchRepository, auditLogRepository, quoteRepository);
 
         var mainViewModel = new MainViewModel(
             dataService, settingsRepository, dataPathService, folderPicker, shell, filePicker, avatarImageService);
