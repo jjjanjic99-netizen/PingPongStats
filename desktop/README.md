@@ -53,7 +53,7 @@ ist keine Einschränkung dieses Projekts, sondern eine generelle Grenze von
 Um trotzdem maximale Qualität zu liefern, wurde deshalb wie folgt vorgegangen:
 
 - **`PingPongStats.Core` und `PingPongStats.Tests` wurden in dieser Session
-  vollständig gebaut, alle 49 Unit-Tests laufen grün** (`dotnet test`).
+  vollständig gebaut, alle 123 Unit-Tests laufen grün** (`dotnet test`).
 - **`PingPongStats.App` (WPF) konnte nicht kompiliert werden.** Der Code wurde
   daher besonders sorgfältig von Hand geschrieben und zusätzlich statisch
   geprüft: alle XAML-Dateien sind wohlgeformtes XML, alle `x:Class`-Werte
@@ -86,10 +86,11 @@ desktop/
       Services/               Validierung, Statistik, Elo, Dashboard, CSV, Seed
       ViewModels/             MVVM-ViewModels je Bildschirm
     PingPongStats.App/        WPF: Views (XAML) + plattformspezifische Adapter
-      Views/                  DashboardView, PlayersView, MatchesView, ...
+      Views/                  DashboardView, PlayersView, MatchesView, LoginView, ProfileView, ...
+      Controls/               AvatarControl (S/M/L, überall wiederverwendet)
       Themes/                 Light.xaml, Dark.xaml, Styles.xaml
       Converters/             WPF-Value-Converter
-      Services/               IFolderPickerService-/IShellService-Implementierungen
+      Services/               IFolderPickerService-/IShellService-/IAvatarImageService-Implementierungen
   tests/
     PingPongStats.Tests/      xUnit-Tests für Core
 ```
@@ -120,10 +121,16 @@ dotnet test
 ```
 
 Deckt ab: Gewinnerberechnung, ungültige Satzresultate, Siegquote overall,
-Siegquote letzte 30 Tage, aktuelle Siegesserie, längste Siegesserie,
-Head-to-Head-Statistik, Elo-Berechnung, XML laden/speichern/Backup,
-Verhalten bei fehlenden/beschädigten XML-Dateien, Datenpfad-Bootstrap sowie
-die zentrale `PingPongDataService`-Fassade (inkl. "Löschen nur ohne Spiele").
+Siegquote letzte 30 Tage, aktuelle Siegesserie, längste Sieges-/
+Niederlagenserie, Satzdifferenz, Head-to-Head-Statistik, Elo-Berechnung
+(inkl. Verlaufs-Historie), XML laden/speichern/Backup, Verhalten bei
+fehlenden/beschädigten XML-Dateien und bei altem XML-Format ohne die neuen
+optionalen Felder (Migration), Datenpfad-Bootstrap, die zentrale
+`PingPongDataService`-Fassade (inkl. "Löschen nur ohne Spiele"), PIN-Hashing/
+-Verifikation, Angstgegner/Lieblingsgegner (inkl. Tiebreak und
+Mindest-Spiele-Schwelle), Player of the Week (Score-Formel, 7-Tage-Fenster,
+Einzel+Doppel-Kombination, alle Tiebreak-Stufen) sowie Bestes Comeback
+(Mindest-Rückstand, maximaler Rückstand, Tiebreak, "keine Satzdaten"-Fall).
 
 ## Anwendung starten (Entwicklung)
 
@@ -192,18 +199,20 @@ Beispiel `appsettings.json`:
 {
   "DataPath": "\\\\fileserver\\PingPongStats\\",
   "DarkMode": false,
-  "UiScale": "Medium"
+  "UiScale": "Medium",
+  "ShowWinAnimation": true
 }
 ```
 
 ## XML-Dateien
 
-| Datei | Inhalt |
+| Datei/Ordner | Inhalt |
 |---|---|
-| `players.xml` | Alle Spieler (auch archivierte - Historie bleibt erhalten) |
-| `matches.xml` | Alle Einzel-Spiele |
-| `doubles.xml` | Alle Doppel-Spiele (2 vs 2) |
+| `players.xml` | Alle Spieler (auch archivierte - Historie bleibt erhalten), inkl. `AvatarFileName`, `PinHash`, `PinSalt` |
+| `matches.xml` | Alle Einzel-Spiele, optional inkl. `SetResults` (Satzdetail) |
+| `doubles.xml` | Alle Doppel-Spiele (2 vs 2), optional inkl. `SetResults` |
 | `audit-log.xml` | Optionales Änderungsprotokoll (wer hat was geändert) |
+| `avatars\` | Verarbeitete Profilbilder, `{PlayerId}.png`, max. 512x512 px |
 
 Alle XML-Dateien werden **UTF-8 ohne BOM**, eingerückt und ohne
 `xmlns`/`xsi`-Rauschen geschrieben (siehe `XmlSerialization` in
@@ -253,6 +262,96 @@ Die **Doppel**-Seite kombiniert:
 - Ein Formular zum Erfassen eines neuen Doppel-Spiels (analog zum
   Einzel-Formular: Datum/Uhrzeit, 4 Spielerauswahlen, Schnellauswahl-Buttons
   für typische Ergebnisse, manuelle Satzeingabe, Notiz)
+
+## Neue Features
+
+Erweiterung dieser Session in 7 Phasen (0-6), jede Phase committet einzeln;
+alle bestehenden Tests blieben grün, keine Web-App-Änderungen. Alle
+Berechnungslogik liegt wie zuvor ausschliesslich in `PingPongStats.Core`
+(keine WPF-Abhängigkeit), jede neue Statistik-Funktion hat xUnit-Tests.
+
+### Satzergebnisse (optional)
+
+Match und DoubleMatch können pro Satz `SetNumber`/`PointsA`/`PointsB` erfassen
+(`SetResults`-Liste, `Models/SetResult.cs`). Komplett optional - alte Spiele
+ohne Satzdetail bleiben unverändert nutzbar (leere Liste statt erfundener
+Werte). Wird beim Speichern etwas eingetragen, muss die Anzahl gewonnener
+Sätze je Seite exakt zum eingegebenen Gesamt-Score passen
+(`ValidationService.ValidateSetResults`), sonst schlägt das Speichern mit
+einer klaren Fehlermeldung fehl.
+
+### Profilbilder
+
+Im Spieler-Dialog kann ein Bild (jpg/png) hochgeladen werden. Es wird
+serverseitig (im WPF-App-Projekt, hinter `IAvatarImageService`) quadratisch
+zentriert zugeschnitten, auf maximal 512x512 px skaliert und als
+`{DataPath}\avatars\{PlayerId}.png` gespeichert. Ohne Bild: ein Kreis mit den
+Initialen des Spielers und einer deterministisch aus der Spieler-ID
+abgeleiteten Farbe (`AvatarService`). Das wiederverwendbare `AvatarControl`
+(Grössen S/M/L) wird überall verwendet: Spielerliste/-dialog,
+Dashboard-Ranking, Login, Mein Profil, Gewinn-Animation.
+
+### Anmeldung & Mein Profil
+
+> **Wichtig: Das ist Bequemlichkeit, keine Sicherheit.** Der optionale
+> 4-stellige PIN pro Spieler verhindert nur das versehentliche Öffnen eines
+> fremden Profils. Die XML-Datendateien bleiben für jeden mit Zugriff auf den
+> Datenordner uneingeschränkt lesbar und editierbar - PIN oder nicht. Es gibt
+> **keine Authentifizierung** im eigentlichen Sinn, keine Zugriffskontrolle,
+> keine Verschlüsselung der Daten.
+
+Über **Anmelden** in der Seitenleiste öffnet sich eine Kachel-Auswahl aller
+aktiven Spieler (mit Avatar). Ist für einen Spieler kein PIN gesetzt, loggt
+ein Klick auf die Kachel direkt ein. Ist ein PIN gesetzt (im Spieler-Dialog
+konfigurierbar, gespeichert als PBKDF2-Hash + Salt in `Player.PinHash`/
+`PinSalt`, nie im Klartext), muss er erst korrekt eingegeben werden.
+
+Nach dem Login zeigt **Mein Profil**: Spiele/Siege/Niederlagen, Siegquote,
+Elo-Rating mit Verlaufs-Liniendiagramm (`EloService.GetRatingHistory`),
+längste Sieges-/Niederlagenserie, Satzdifferenz, sowie **Angstgegner**
+(schlechteste persönliche Siegquote) und **Lieblingsgegner** (beste
+persönliche Siegquote) - jeweils nur bei mindestens 3 gemeinsamen
+Einzel-Spielen, sonst "Noch zu wenig Spiele." (Tiebreak: mehr gemeinsame
+Spiele). Der aktive Spieler ist oben rechts sichtbar, inkl. Abmelden-Button.
+
+### Player of the Week
+
+Dashboard-Hero-Card für die letzten 7 Tage (fester Zeitraum, unabhängig vom
+sonstigen 7/30/90-Tage/gesamt-Filter): Score = (Siege × 2) − Niederlagen +
+Satzdifferenz × 0,5, Einzel **und** Doppel zählen beide (ein Doppel-Spiel
+zählt für beide Team-Mitglieder). Mindestens 3 Spiele im Zeitraum nötig,
+sonst nicht qualifiziert. Tiebreak: höhere Siegquote, dann mehr Spiele, dann
+Elo. Qualifiziert niemand, erscheint ein dezenter Platzhalter-Hinweis.
+
+### Bestes Comeback
+
+Dashboard-Karte (respektiert den normalen Zeitraum-Filter): Ein Comeback
+liegt vor, wenn der Sieger zwischenzeitlich mit mindestens 2 Sätzen im
+Rückstand lag und trotzdem gewonnen hat. Comeback-Wert = maximal
+aufgeholter Rückstand; Tiebreak: knapperer Endstand. Benötigt zwingend die
+Satzergebnisse aus Phase 0 - Spiele ohne Satzdetail werden komplett
+ignoriert, nie geschätzt oder nachträglich konstruiert.
+
+### Gewinn-Animation
+
+Nach erfolgreichem Speichern eines Spiels (Einzel oder Doppel) erscheint für
+ca. 3 Sekunden eine Vollbild-Überlagerung (jederzeit durch Klick schliessbar):
+Gewinner-Avatar (bzw. bei Doppel beide Gewinner-Avatare nebeneinander) +
+Name(n) + Endstand, plus ein "COMEBACK!"-Badge, falls
+`ComebackService.IsComeback`/`IsComebackDoubles` für genau dieses Spiel
+zutrifft. Die Konfetti-Partikel sind reines WPF/XAML (keine externe
+Bibliothek) und laufen über `RenderTransform`-`DoubleAnimation`s auf dem
+Compositor-Thread, blockieren also die UI nicht. Über **Einstellungen →
+Gewinn-Animation nach dem Speichern anzeigen** (`ShowWinAnimation`,
+Default: an) abschaltbar.
+
+### Migration alter Daten
+
+Bestehende `players.xml`/`matches.xml`/`doubles.xml` ohne die neuen Felder
+(`AvatarFileName`, `PinHash`, `PinSalt`, `SetResults`) laden weiterhin ohne
+Fehler - fehlende Felder werden als leerer String bzw. leere Liste
+interpretiert (nie als geraten/geschätzt), siehe die Migrationstests in
+`XmlRepositoryTests.cs`. Kein manueller Migrationsschritt nötig.
 
 ## Backup-Konzept
 
@@ -326,6 +425,15 @@ Implementiert zentral in `PingPongStats.Core/Services/StatsService.cs` und
   Spielerreihenfolge (`DoublesStatsService.GetPairingRankings`)
 - Spieler bzw. Team-Konstellationen mit weniger als 3 Spielen werden in der UI
   mit einem Hinweis markiert (`LowSampleSize` / `IsLowSampleSize`)
+- **Angstgegner/Lieblingsgegner** (nur Einzel) = Gegner mit der schlechtesten
+  bzw. besten persönlichen Siegquote, ab mindestens 3 gemeinsamen Spielen;
+  Tiebreak: mehr gemeinsame Spiele (`StatsService.GetNemesis`/`GetFavoriteOpponent`)
+- **Player of the Week** (letzte 7 Tage, Einzel + Doppel) = (Siege × 2) −
+  Niederlagen + Satzdifferenz × 0,5, ab mindestens 3 Spielen im Zeitraum;
+  Tiebreak: Siegquote, dann Spiele, dann Elo (`PlayerOfTheWeekService.Compute`)
+- **Bestes Comeback** (nur Einzel, benötigt Satzdetail) = maximaler
+  Satzrückstand (≥ 2), den der Sieger im Spielverlauf aufgeholt hat;
+  Tiebreak: knapperer Endstand (`ComebackService.FindBestComeback`)
 
 Gewinnerberechnung und Validierung (`ValidationService.cs`): Spieler A/B
 dürfen nicht identisch sein, beide müssen existieren, Sätze dürfen nicht
@@ -380,8 +488,11 @@ abgeleitet, nie direkt vom UI gesetzt.
   Schreibzugriffen ausreichend, für sehr hohe Parallelität nicht ausgelegt.
 - Kein Undo für gelöschte Spieler/Spiele ausser über die automatischen
   Backups (manuelle Wiederherstellung aus `backups\`).
-- Keine Authentifizierung/Benutzerverwaltung (wie gefordert nicht nötig);
-  `Environment.UserName` wird nur fürs Audit-Log verwendet.
+- Keine echte Authentifizierung/Benutzerverwaltung; `Environment.UserName`
+  wird nur fürs Audit-Log verwendet. Der optionale Spieler-PIN (siehe
+  [Anmeldung & Mein Profil](#anmeldung--mein-profil)) ist ausdrücklich nur
+  Bequemlichkeit, keine Zugriffskontrolle - die XML-Dateien bleiben für
+  jeden mit Dateizugriff uneingeschränkt lesbar/editierbar.
 - Doppel-Spiele können erfasst und gelöscht, aber (anders als Einzel-Spiele)
   nicht nachträglich bearbeitet werden - bei einem Tippfehler: löschen und neu
   erfassen.
