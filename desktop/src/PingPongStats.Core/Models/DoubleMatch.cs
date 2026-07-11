@@ -18,4 +18,8 @@ public class DoubleMatch
     public string Notes { get; set; } = string.Empty;
     public DateTime CreatedAt { get; set; }
     public DateTime UpdatedAt { get; set; }
+
+    /// <summary>Optional set-by-set score detail (PointsA/PointsB = TeamA/TeamB).
+    /// Empty for matches recorded without this detail - never guess/backfill it.</summary>
+    public List<SetResult> SetResults { get; set; } = new();
 }

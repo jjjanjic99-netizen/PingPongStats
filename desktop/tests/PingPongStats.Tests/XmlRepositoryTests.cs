@@ -73,6 +73,66 @@ public class XmlRepositoryTests : IDisposable
     }
 
     [Fact]
+    public void PlayerRepository_RoundTripsAvatarAndPinFields()
+    {
+        var repo = new PlayerXmlRepository(_tempDir);
+        var player = new Player
+        {
+            DisplayName = "Ben Hofer",
+            AvatarFileName = $"{Guid.NewGuid()}.png",
+            PinHash = "aGFzaA==",
+            PinSalt = "c2FsdA==",
+        };
+
+        repo.Update(players =>
+        {
+            players.Add(player);
+            return players;
+        });
+
+        var reloaded = repo.GetAll();
+        Assert.Single(reloaded);
+        Assert.Equal(player.AvatarFileName, reloaded[0].AvatarFileName);
+        Assert.Equal("aGFzaA==", reloaded[0].PinHash);
+        Assert.Equal("c2FsdA==", reloaded[0].PinSalt);
+    }
+
+    [Fact]
+    public void MatchRepository_RoundTripsSetResults()
+    {
+        var repo = new MatchXmlRepository(_tempDir);
+        var playerA = Guid.NewGuid();
+        var playerB = Guid.NewGuid();
+        var match = new Match
+        {
+            PlayedAt = new DateTime(2026, 7, 10, 15, 30, 0),
+            PlayerAId = playerA,
+            PlayerBId = playerB,
+            PlayerASets = 2,
+            PlayerBSets = 1,
+            WinnerId = playerA,
+            SetResults = new List<SetResult>
+            {
+                new() { SetNumber = 1, PointsA = 11, PointsB = 7 },
+                new() { SetNumber = 2, PointsA = 9, PointsB = 11 },
+                new() { SetNumber = 3, PointsA = 11, PointsB = 8 },
+            },
+        };
+
+        repo.Update(matches =>
+        {
+            matches.Add(match);
+            return matches;
+        });
+
+        var reloaded = repo.GetAll();
+        Assert.Single(reloaded);
+        Assert.Equal(3, reloaded[0].SetResults.Count);
+        Assert.Equal(11, reloaded[0].SetResults[0].PointsA);
+        Assert.Equal(8, reloaded[0].SetResults[2].PointsB);
+    }
+
+    [Fact]
     public void Update_WritesFileWithoutByteOrderMark()
     {
         var repo = new PlayerXmlRepository(_tempDir);
@@ -151,6 +211,64 @@ public class XmlRepositoryTests : IDisposable
         Assert.Equal(match.PlayerASets, reloaded[0].PlayerASets);
         Assert.Equal(match.WinnerId, reloaded[0].WinnerId);
         Assert.Equal("Gutes Spiel", reloaded[0].Notes);
+    }
+
+    [Fact]
+    public void PlayerRepository_LoadsOldFormatFile_WithoutNewOptionalFields()
+    {
+        // Exact pre-existing schema: no AvatarFileName/PinHash/PinSalt elements at all.
+        var xml =
+            "<Players>\n" +
+            "  <Player>\n" +
+            "    <Id>3fa85f64-5717-4562-b3fc-2c963f66afa6</Id>\n" +
+            "    <DisplayName>Markus</DisplayName>\n" +
+            "    <FirstName>Markus</FirstName>\n" +
+            "    <LastName>Schlegel</LastName>\n" +
+            "    <Email></Email>\n" +
+            "    <IsActive>true</IsActive>\n" +
+            "    <CreatedAt>2026-07-10T12:00:00</CreatedAt>\n" +
+            "    <UpdatedAt>2026-07-10T12:00:00</UpdatedAt>\n" +
+            "  </Player>\n" +
+            "</Players>\n";
+        File.WriteAllText(Path.Combine(_tempDir, "players.xml"), xml);
+
+        var repo = new PlayerXmlRepository(_tempDir);
+        var players = repo.GetAll();
+
+        Assert.Single(players);
+        Assert.Equal("Markus", players[0].DisplayName);
+        Assert.Equal(string.Empty, players[0].AvatarFileName);
+        Assert.Equal(string.Empty, players[0].PinHash);
+        Assert.Equal(string.Empty, players[0].PinSalt);
+    }
+
+    [Fact]
+    public void MatchRepository_LoadsOldFormatFile_WithoutSetResults()
+    {
+        // Exact pre-existing schema: no SetResults element at all.
+        var xml =
+            "<Matches>\n" +
+            "  <Match>\n" +
+            "    <Id>3fa85f64-5717-4562-b3fc-2c963f66afa6</Id>\n" +
+            "    <PlayedAt>2026-07-10T12:00:00</PlayedAt>\n" +
+            "    <PlayerAId>3fa85f64-5717-4562-b3fc-2c963f66afa7</PlayerAId>\n" +
+            "    <PlayerBId>3fa85f64-5717-4562-b3fc-2c963f66afa8</PlayerBId>\n" +
+            "    <PlayerASets>3</PlayerASets>\n" +
+            "    <PlayerBSets>1</PlayerBSets>\n" +
+            "    <WinnerId>3fa85f64-5717-4562-b3fc-2c963f66afa7</WinnerId>\n" +
+            "    <Notes>Gutes Spiel</Notes>\n" +
+            "    <CreatedAt>2026-07-10T12:00:00</CreatedAt>\n" +
+            "    <UpdatedAt>2026-07-10T12:00:00</UpdatedAt>\n" +
+            "  </Match>\n" +
+            "</Matches>\n";
+        File.WriteAllText(Path.Combine(_tempDir, "matches.xml"), xml);
+
+        var repo = new MatchXmlRepository(_tempDir);
+        var matches = repo.GetAll();
+
+        Assert.Single(matches);
+        Assert.Equal(3, matches[0].PlayerASets);
+        Assert.Empty(matches[0].SetResults);
     }
 
     [Fact]

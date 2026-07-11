@@ -33,6 +33,9 @@ public partial class DoublesViewModel : ObservableObject
     public ObservableCollection<ChartBarItem> PairingWinRateChart { get; } = new();
     public ObservableCollection<Player> AvailablePlayers { get; } = new();
 
+    /// <summary>Optional set-by-set score entry. Empty = no set detail recorded.</summary>
+    public ObservableCollection<SetResultEntryViewModel> SetEntries { get; } = new();
+
     [ObservableProperty] private bool isFormOpen;
     [ObservableProperty] private DateTime playedAtDate = DateTime.Today;
     [ObservableProperty] private string playedAtTime = DateTime.Now.ToString("HH:mm");
@@ -52,6 +55,8 @@ public partial class DoublesViewModel : ObservableObject
     public IRelayCommand SaveCommand { get; }
     public IRelayCommand<QuickResultOption> ApplyQuickResultCommand { get; }
     public IRelayCommand<DoubleMatchRow> DeleteCommand { get; }
+    public IRelayCommand AddSetCommand { get; }
+    public IRelayCommand<SetResultEntryViewModel> RemoveSetCommand { get; }
 
     public DoublesViewModel(
         PingPongDataService dataService, NotificationService notifications, DashboardRangeFilter rangeFilter)
@@ -67,8 +72,19 @@ public partial class DoublesViewModel : ObservableObject
         SaveCommand = new RelayCommand(Save);
         ApplyQuickResultCommand = new RelayCommand<QuickResultOption>(option => { if (option is not null) ApplyQuickResult(option); });
         DeleteCommand = new RelayCommand<DoubleMatchRow>(row => { if (row is not null) Delete(row); });
+        AddSetCommand = new RelayCommand(() => SetEntries.Add(new SetResultEntryViewModel { SetNumber = SetEntries.Count + 1 }));
+        RemoveSetCommand = new RelayCommand<SetResultEntryViewModel>(entry => { if (entry is not null) RemoveSet(entry); });
 
         Load();
+    }
+
+    private void RemoveSet(SetResultEntryViewModel entry)
+    {
+        SetEntries.Remove(entry);
+        for (var i = 0; i < SetEntries.Count; i++)
+        {
+            SetEntries[i].SetNumber = i + 1;
+        }
     }
 
     public void Load()
@@ -146,6 +162,7 @@ public partial class DoublesViewModel : ObservableObject
         Notes = string.Empty;
         WinnerSide = "A";
         FormErrorMessage = string.Empty;
+        SetEntries.Clear();
         IsFormOpen = true;
     }
 
@@ -180,12 +197,13 @@ public partial class DoublesViewModel : ObservableObject
         }
 
         var playedAt = DateTime.SpecifyKind(PlayedAtDate.Date + timeOfDay, DateTimeKind.Unspecified);
+        var setResults = SetEntries.Count == 0 ? null : SetEntries.Select(e => e.ToModel()).ToList();
 
         try
         {
             _dataService.CreateDoubleMatch(
                 playedAt, TeamAPlayer1.Id, TeamAPlayer2.Id, TeamBPlayer1.Id, TeamBPlayer2.Id,
-                TeamASets, TeamBSets, Notes);
+                TeamASets, TeamBSets, Notes, setResults);
 
             _notifications.NotifySuccess("Doppel-Spiel wurde erfasst.");
             IsFormOpen = false;

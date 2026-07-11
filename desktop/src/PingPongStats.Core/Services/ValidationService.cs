@@ -82,4 +82,40 @@ public static class ValidationService
             throw new ValidationException("Einer der ausgewählten Spieler existiert nicht.");
         }
     }
+
+    /// <summary>
+    /// Validates optional set-by-set score detail against the recorded overall
+    /// set score. Entering set results is optional - null or an empty list is
+    /// always valid (nothing to check). When set results ARE provided, every
+    /// individual set must have a valid (non-negative, non-tied) score, and the
+    /// number of sets won by each side must equal the recorded overall score.
+    /// Works for both singles ("A"/"B" = PlayerA/PlayerB) and doubles
+    /// ("A"/"B" = TeamA/TeamB).
+    /// </summary>
+    public static void ValidateSetResults(IReadOnlyList<SetResult>? setResults, int sideASets, int sideBSets)
+    {
+        if (setResults is null || setResults.Count == 0) return;
+
+        foreach (var set in setResults)
+        {
+            if (set.PointsA < 0 || set.PointsB < 0)
+            {
+                throw new ValidationException($"Satz {set.SetNumber}: Punkte dürfen nicht negativ sein.");
+            }
+            if (set.PointsA == set.PointsB)
+            {
+                throw new ValidationException($"Satz {set.SetNumber}: ein Satz darf nicht unentschieden enden.");
+            }
+        }
+
+        var winsA = setResults.Count(s => s.PointsA > s.PointsB);
+        var winsB = setResults.Count - winsA;
+
+        if (winsA != sideASets || winsB != sideBSets)
+        {
+            throw new ValidationException(
+                $"Die Satzergebnisse ({winsA}:{winsB} gewonnene Sätze) passen nicht zum eingegebenen " +
+                $"Gesamtstand ({sideASets}:{sideBSets}).");
+        }
+    }
 }

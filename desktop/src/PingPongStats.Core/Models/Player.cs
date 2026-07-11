@@ -16,6 +16,19 @@ public class Player
     public DateTime CreatedAt { get; set; }
     public DateTime UpdatedAt { get; set; }
 
+    /// <summary>File name (not full path) of the player's avatar image under
+    /// {DataPath}/avatars/, e.g. "&lt;PlayerId&gt;.png". Empty = no avatar, fall
+    /// back to initials.</summary>
+    public string AvatarFileName { get; set; } = string.Empty;
+
+    /// <summary>PBKDF2 hash of the optional 4-digit login PIN, Base64-encoded.
+    /// Empty = no PIN set, login for this player requires no PIN. This is a
+    /// convenience gate, not real security - see README.</summary>
+    public string PinHash { get; set; } = string.Empty;
+
+    /// <summary>Base64-encoded random salt used with PinHash. Empty if no PIN set.</summary>
+    public string PinSalt { get; set; } = string.Empty;
+
     public string FullName =>
         string.IsNullOrWhiteSpace(FirstName) && string.IsNullOrWhiteSpace(LastName)
             ? string.Empty

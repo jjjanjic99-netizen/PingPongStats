@@ -17,4 +17,11 @@ public class Match
     public string Notes { get; set; } = string.Empty;
     public DateTime CreatedAt { get; set; }
     public DateTime UpdatedAt { get; set; }
+
+    /// <summary>Optional set-by-set score detail. Empty for matches recorded
+    /// without this detail (including all data from before this field existed) -
+    /// never guess/backfill it. (XmlSerializer always instantiates List&lt;T&gt;
+    /// properties, so "empty" rather than null is the natural "no data" marker,
+    /// consistent with how other optional fields on this model default to empty.)</summary>
+    public List<SetResult> SetResults { get; set; } = new();
 }

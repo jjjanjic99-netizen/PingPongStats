@@ -163,10 +163,13 @@ public class PingPongDataService
 
     // ----- Matches -------------------------------------------------------
 
-    public Match CreateMatch(DateTime playedAt, Guid playerAId, Guid playerBId, int playerASets, int playerBSets, string notes)
+    public Match CreateMatch(
+        DateTime playedAt, Guid playerAId, Guid playerBId, int playerASets, int playerBSets, string notes,
+        List<SetResult>? setResults = null)
     {
         var winnerId = ValidationService.ComputeWinnerId(playerAId, playerBId, playerASets, playerBSets);
         ValidationService.EnsurePlayersExist(playerAId, playerBId, Players);
+        ValidationService.ValidateSetResults(setResults, playerASets, playerBSets);
 
         var now = Clock.Now();
         var match = new Match
@@ -178,6 +181,7 @@ public class PingPongDataService
             PlayerBSets = playerBSets,
             WinnerId = winnerId,
             Notes = (notes ?? string.Empty).Trim(),
+            SetResults = setResults ?? new(),
             CreatedAt = now,
             UpdatedAt = now,
         };
@@ -194,10 +198,12 @@ public class PingPongDataService
     }
 
     public void UpdateMatch(
-        Guid id, DateTime playedAt, Guid playerAId, Guid playerBId, int playerASets, int playerBSets, string notes)
+        Guid id, DateTime playedAt, Guid playerAId, Guid playerBId, int playerASets, int playerBSets, string notes,
+        List<SetResult>? setResults = null)
     {
         var winnerId = ValidationService.ComputeWinnerId(playerAId, playerBId, playerASets, playerBSets);
         ValidationService.EnsurePlayersExist(playerAId, playerBId, Players);
+        ValidationService.ValidateSetResults(setResults, playerASets, playerBSets);
 
         _matchRepository.Update(matches =>
         {
@@ -211,6 +217,7 @@ public class PingPongDataService
             match.PlayerBSets = playerBSets;
             match.WinnerId = winnerId;
             match.Notes = (notes ?? string.Empty).Trim();
+            match.SetResults = setResults ?? new();
             match.UpdatedAt = Clock.Now();
             return matches;
         });
@@ -240,12 +247,13 @@ public class PingPongDataService
     public DoubleMatch CreateDoubleMatch(
         DateTime playedAt,
         Guid teamAPlayer1Id, Guid teamAPlayer2Id, Guid teamBPlayer1Id, Guid teamBPlayer2Id,
-        int teamASets, int teamBSets, string notes)
+        int teamASets, int teamBSets, string notes, List<SetResult>? setResults = null)
     {
         var winningTeam = ValidationService.ComputeWinningTeam(
             teamAPlayer1Id, teamAPlayer2Id, teamBPlayer1Id, teamBPlayer2Id, teamASets, teamBSets);
         ValidationService.EnsurePlayersExist(
             new[] { teamAPlayer1Id, teamAPlayer2Id, teamBPlayer1Id, teamBPlayer2Id }, Players);
+        ValidationService.ValidateSetResults(setResults, teamASets, teamBSets);
 
         var now = Clock.Now();
         var match = new DoubleMatch
@@ -259,6 +267,7 @@ public class PingPongDataService
             TeamBSets = teamBSets,
             WinningTeam = winningTeam,
             Notes = (notes ?? string.Empty).Trim(),
+            SetResults = setResults ?? new(),
             CreatedAt = now,
             UpdatedAt = now,
         };

@@ -79,6 +79,11 @@
                 </StackPanel>
             </Grid>
 
+            <TextBlock Text="Satzergebnisse (optional)" Style="{StaticResource StatLabelText}" Margin="0,0,0,4" />
+            <ItemsControl ItemsSource="{Binding SetEntries}" ItemTemplate="{StaticResource SetResultEntryTemplate}" Margin="0,0,0,4" />
+            <Button Content="+ Satz hinzufügen" Style="{StaticResource SecondaryButton}" HorizontalAlignment="Left"
+                    Margin="0,0,0,12" Command="{Binding AddSetCommand}" />
+
             <TextBlock Text="Kommentar / Notiz" Style="{StaticResource StatLabelText}" Margin="0,0,0,4" />
             <TextBox Text="{Binding Notes, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,12" />
 

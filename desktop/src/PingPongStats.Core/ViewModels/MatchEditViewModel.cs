@@ -33,12 +33,18 @@ public partial class MatchEditViewModel : ObservableObject
 
     public ObservableCollection<Player> AvailablePlayers { get; } = new();
 
+    /// <summary>Optional set-by-set score entry. Empty = no set detail recorded
+    /// (matches remain fully usable without it).</summary>
+    public ObservableCollection<SetResultEntryViewModel> SetEntries { get; } = new();
+
     /// <summary>Instance wrapper around the static option list, for XAML binding convenience.</summary>
     public IReadOnlyList<QuickResultOption> QuickResults => QuickResultOptions;
 
     public IRelayCommand SaveCommand { get; }
     public IRelayCommand CancelCommand { get; }
     public IRelayCommand<QuickResultOption> ApplyQuickResultCommand { get; }
+    public IRelayCommand AddSetCommand { get; }
+    public IRelayCommand<SetResultEntryViewModel> RemoveSetCommand { get; }
 
     public bool IsEditMode => _editingMatchId is not null;
 
@@ -55,6 +61,8 @@ public partial class MatchEditViewModel : ObservableObject
         SaveCommand = new RelayCommand(Save);
         CancelCommand = new RelayCommand(() => Finished?.Invoke());
         ApplyQuickResultCommand = new RelayCommand<QuickResultOption>(option => { if (option is not null) ApplyQuickResult(option); });
+        AddSetCommand = new RelayCommand(AddSet);
+        RemoveSetCommand = new RelayCommand<SetResultEntryViewModel>(entry => { if (entry is not null) RemoveSet(entry); });
 
         LoadAvailablePlayers();
 
@@ -71,7 +79,29 @@ public partial class MatchEditViewModel : ObservableObject
                 PlayerASets = existing.PlayerASets;
                 PlayerBSets = existing.PlayerBSets;
                 Notes = existing.Notes;
+
+                if (existing.SetResults is { Count: > 0 })
+                {
+                    foreach (var set in existing.SetResults)
+                    {
+                        SetEntries.Add(SetResultEntryViewModel.FromModel(set));
+                    }
+                }
             }
+        }
+    }
+
+    private void AddSet()
+    {
+        SetEntries.Add(new SetResultEntryViewModel { SetNumber = SetEntries.Count + 1 });
+    }
+
+    private void RemoveSet(SetResultEntryViewModel entry)
+    {
+        SetEntries.Remove(entry);
+        for (var i = 0; i < SetEntries.Count; i++)
+        {
+            SetEntries[i].SetNumber = i + 1;
         }
     }
 
@@ -132,17 +162,18 @@ public partial class MatchEditViewModel : ObservableObject
         }
 
         var playedAt = DateTime.SpecifyKind(PlayedAtDate.Date + timeOfDay, DateTimeKind.Unspecified);
+        var setResults = SetEntries.Count == 0 ? null : SetEntries.Select(e => e.ToModel()).ToList();
 
         try
         {
             if (_editingMatchId is Guid id)
             {
-                _dataService.UpdateMatch(id, playedAt, PlayerA.Id, PlayerB.Id, PlayerASets, PlayerBSets, Notes);
+                _dataService.UpdateMatch(id, playedAt, PlayerA.Id, PlayerB.Id, PlayerASets, PlayerBSets, Notes, setResults);
                 _notifications.NotifySuccess("Spiel wurde aktualisiert.");
             }
             else
             {
-                _dataService.CreateMatch(playedAt, PlayerA.Id, PlayerB.Id, PlayerASets, PlayerBSets, Notes);
+                _dataService.CreateMatch(playedAt, PlayerA.Id, PlayerB.Id, PlayerASets, PlayerBSets, Notes, setResults);
                 _notifications.NotifySuccess("Spiel wurde erfasst.");
             }
 
