@@ -42,6 +42,10 @@ public partial class ProfileViewModel : ObservableObject
     public ObservableCollection<BalanceCountdownRow> BalanceCountdowns { get; } = new();
     public bool HasBalanceCountdowns => BalanceCountdowns.Count > 0;
 
+    public ObservableCollection<TimeOfDayChartRow> TimeOfDayChart { get; } = new();
+    [ObservableProperty] private bool hasBestTimeOfDay;
+    [ObservableProperty] private string bestTimeOfDayLabel = string.Empty;
+
     public IRelayCommand RefreshCommand { get; }
 
     public ProfileViewModel(PingPongDataService dataService, ISettingsRepository settingsRepository, Guid playerId)
@@ -134,5 +138,22 @@ public partial class ProfileViewModel : ObservableObject
         }
 
         OnPropertyChanged(nameof(HasBalanceCountdowns));
+
+        var timeOfDayStats = TimeOfDayService.GetStatsByBlock(matches, _playerId);
+        var maxWinRate = timeOfDayStats.Where(s => s.Played > 0).Select(s => s.WinRatePct).DefaultIfEmpty(0).Max();
+
+        TimeOfDayChart.Clear();
+        foreach (var s in timeOfDayStats)
+        {
+            var normalized = maxWinRate <= 0 ? 0 : s.WinRatePct / maxWinRate;
+            var displayValue = s.Played == 0 ? "–" : $"{s.WinRatePct:F0}%";
+            TimeOfDayChart.Add(new TimeOfDayChartRow(s.Label, s.Played, displayValue, normalized, s.Played < TimeOfDayService.MinGamesForDisplay));
+        }
+
+        var bestBlock = TimeOfDayService.GetBestBlock(timeOfDayStats);
+        HasBestTimeOfDay = bestBlock is not null;
+        BestTimeOfDayLabel = bestBlock is not null
+            ? $"Deine beste Zeit: {bestBlock.Label}, {bestBlock.WinRatePct:F0}% Siege"
+            : string.Empty;
     }
 }

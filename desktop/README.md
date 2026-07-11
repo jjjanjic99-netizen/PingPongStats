@@ -53,7 +53,7 @@ ist keine Einschränkung dieses Projekts, sondern eine generelle Grenze von
 Um trotzdem maximale Qualität zu liefern, wurde deshalb wie folgt vorgegangen:
 
 - **`PingPongStats.Core` und `PingPongStats.Tests` wurden in dieser Session
-  vollständig gebaut, alle 168 Unit-Tests laufen grün** (`dotnet test`).
+  vollständig gebaut, alle 184 Unit-Tests laufen grün** (`dotnet test`).
 - **`PingPongStats.App` (WPF) konnte nicht kompiliert werden.** Der Code wurde
   daher besonders sorgfältig von Hand geschrieben und zusätzlich statisch
   geprüft: alle XAML-Dateien sind wohlgeformtes XML, alle `x:Class`-Werte
@@ -135,8 +135,9 @@ alle Badge-Regeln (exakte Schwellwerte, Grenzfälle, Gleichstände),
 Trash-Talk-Sprüche (Kategorie-Priorität, "Kategorie fehlt"-Fall, Seeding/
 Nicht-Überschreiben von `quotes.xml`), die Elo-Prognoseformel (inkl.
 Symmetrie und Team-Elo-Durchschnitt), Rivalität des Monats (Zeitfenster,
-Mindest-Spiele, Tiebreak) sowie die häufigsten-Gegner-Ermittlung fürs
-Bilanz-Countdown.
+Mindest-Spiele, Tiebreak), die häufigsten-Gegner-Ermittlung fürs
+Bilanz-Countdown sowie die Tageszeit-Statistik (exakte Stunden-Grenzen aller
+fünf Blöcke, Mindest-Spiele für Anzeige vs. für den Beste-Zeit-Hinweis).
 
 ## Anwendung starten (Entwicklung)
 
@@ -431,6 +432,15 @@ angelegt und danach nie mehr automatisch überschrieben.
   bis zur ausgeglichenen Bilanz fehlen ("Noch 2 Siege gegen Marco"); bei
   bereits ausgeglichener oder positiver Bilanz erscheint stattdessen
   "Ausgeglichen gegen ..." bzw. "Vorsprung: N gegen ...".
+
+### Tageszeit-Statistik
+
+Auf **Mein Profil** zeigt ein Balkendiagramm (`TimeOfDayService`) die
+Siegquote in fünf festen Tageszeit-Blöcken: vor 10, 10-12, 12-14, 14-17,
+nach 17 Uhr (Zuordnung über die Stunde von `Match.PlayedAt`). Blöcke mit
+weniger als 3 Spielen werden nicht ausgeblendet, sondern nur ausgegraut.
+Eine Textzeile ("Deine beste Zeit: vor 10 Uhr, 70% Siege") erscheint nur,
+wenn der stärkste Block mindestens 5 Spiele hat.
 
 ### Migration alter Daten
 

@@ -146,6 +146,45 @@
             </StackPanel>
         </Border>
 
+        <Border Style="{StaticResource CardBorder}" Margin="0,0,0,16">
+            <StackPanel>
+                <TextBlock Text="Tageszeit-Statistik" Style="{StaticResource SectionLabelText}" Margin="0,0,0,12" />
+                <ItemsControl ItemsSource="{Binding TimeOfDayChart}">
+                    <ItemsControl.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <StackPanel Orientation="Horizontal" VerticalAlignment="Bottom" Height="160" />
+                        </ItemsPanelTemplate>
+                    </ItemsControl.ItemsPanel>
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <StackPanel Width="90" Margin="3,0" VerticalAlignment="Bottom">
+                                <TextBlock Text="{Binding DisplayValue}" HorizontalAlignment="Center"
+                                           Foreground="{DynamicResource Brush.TextSecondary}" FontSize="11" />
+                                <Border CornerRadius="3,3,0,0" Height="{Binding NormalizedHeight, Converter={StaticResource BarHeightConverter}, ConverterParameter=100}">
+                                    <Border.Style>
+                                        <Style TargetType="Border">
+                                            <Setter Property="Background" Value="{DynamicResource Brush.Accent}" />
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding IsLowSample}" Value="True">
+                                                    <Setter Property="Background" Value="{DynamicResource Brush.Border}" />
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </Border.Style>
+                                </Border>
+                                <TextBlock Text="{Binding Label}" HorizontalAlignment="Center" TextWrapping="Wrap"
+                                           FontSize="10" Foreground="{DynamicResource Brush.TextSecondary}" Margin="0,4,0,0" />
+                                <TextBlock Text="{Binding Played, StringFormat='{}{0} Spiele'}" HorizontalAlignment="Center"
+                                           FontSize="9" Foreground="{DynamicResource Brush.TextSecondary}" />
+                            </StackPanel>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+                <TextBlock Text="{Binding BestTimeOfDayLabel}" Style="{StaticResource StatLabelText}" Margin="0,12,0,0"
+                           Visibility="{Binding HasBestTimeOfDay, Converter={StaticResource BoolToVisibilityConverter}}" />
+            </StackPanel>
+        </Border>
+
         <Border Style="{StaticResource CardBorder}">
             <StackPanel>
                 <TextBlock Text="Elo-Verlauf" Style="{StaticResource SectionLabelText}" Margin="0,0,0,12" />

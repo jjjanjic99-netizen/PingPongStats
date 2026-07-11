@@ -114,6 +114,11 @@ public class BalanceCountdownRow
             : $"Vorsprung: {Wins - Losses} gegen {OpponentDisplayName}";
 }
 
+/// <summary>One bar of the "Tageszeit-Statistik" chart on Mein Profil.
+/// IsLowSample (fewer than TimeOfDayService.MinGamesForDisplay games) tells the
+/// view to grey the bar out rather than hide it.</summary>
+public record TimeOfDayChartRow(string Label, int Played, string DisplayValue, double NormalizedHeight, bool IsLowSample);
+
 /// <summary>Ranking row for the Dashboard's player table.</summary>
 public class PlayerRankingRow
 {
