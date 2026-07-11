@@ -86,6 +86,7 @@ public class DoubleMatchRow
 public class PlayerRankingRow
 {
     public required PlayerStatsSummary Stats { get; init; }
+    public Player? Player { get; init; }
 
     public string DisplayName => Stats.DisplayName;
     public bool IsActive => Stats.IsActive;

@@ -18,6 +18,8 @@ public partial class MainViewModel : ObservableObject
     private readonly NotificationService _notifications;
     private readonly IFolderPickerService _folderPicker;
     private readonly IShellService _shell;
+    private readonly IFilePickerService _filePicker;
+    private readonly IAvatarImageService _avatarImageService;
     private readonly SynchronizationContext? _uiContext;
     private System.Threading.Timer? _statusClearTimer;
 
@@ -47,20 +49,24 @@ public partial class MainViewModel : ObservableObject
         ISettingsRepository settingsRepository,
         DataPathService dataPathService,
         IFolderPickerService folderPicker,
-        IShellService shell)
+        IShellService shell,
+        IFilePickerService filePicker,
+        IAvatarImageService avatarImageService)
     {
         _dataService = dataService;
         _settingsRepository = settingsRepository;
         _dataPathService = dataPathService;
         _folderPicker = folderPicker;
         _shell = shell;
+        _filePicker = filePicker;
+        _avatarImageService = avatarImageService;
         _uiContext = SynchronizationContext.Current;
         _notifications = new NotificationService();
         _notifications.Notified += OnNotified;
 
         RangeFilter = new DashboardRangeFilter();
-        Dashboard = new DashboardViewModel(_dataService, RangeFilter);
-        Players = new PlayersViewModel(_dataService, _notifications);
+        Dashboard = new DashboardViewModel(_dataService, RangeFilter, _settingsRepository);
+        Players = new PlayersViewModel(_dataService, _notifications, _settingsRepository, _filePicker, _avatarImageService);
         Matches = new MatchesViewModel(_dataService, _notifications);
         Matches.EditRequested += OnEditMatchRequested;
         Doubles = new DoublesViewModel(_dataService, _notifications, RangeFilter);

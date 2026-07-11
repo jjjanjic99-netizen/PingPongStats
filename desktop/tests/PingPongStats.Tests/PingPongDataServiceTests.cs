@@ -123,4 +123,25 @@ public class PingPongDataServiceTests : IDisposable
 
         Assert.Empty(_service.DoubleMatches);
     }
+
+    [Fact]
+    public void SetPlayerAvatar_UpdatesAvatarFileName()
+    {
+        var player = _service.CreatePlayer("Anna", "", "", "");
+
+        _service.SetPlayerAvatar(player.Id, "avatar.png");
+
+        Assert.Equal("avatar.png", _service.Players.Single(p => p.Id == player.Id).AvatarFileName);
+    }
+
+    [Fact]
+    public void SetPlayerAvatar_EmptyStringClearsAvatar()
+    {
+        var player = _service.CreatePlayer("Anna", "", "", "");
+        _service.SetPlayerAvatar(player.Id, "avatar.png");
+
+        _service.SetPlayerAvatar(player.Id, "");
+
+        Assert.Equal(string.Empty, _service.Players.Single(p => p.Id == player.Id).AvatarFileName);
+    }
 }

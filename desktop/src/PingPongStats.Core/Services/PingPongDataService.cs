@@ -137,6 +137,24 @@ public class PingPongDataService
         Reload();
     }
 
+    /// <summary>Sets or clears (pass empty string) a player's avatar file name. The
+    /// actual image file is processed/saved separately by IAvatarImageService (WPF
+    /// side) before this is called - this just records the resulting file name.</summary>
+    public void SetPlayerAvatar(Guid id, string avatarFileName)
+    {
+        _playerRepository.Update(players =>
+        {
+            var player = players.FirstOrDefault(p => p.Id == id)
+                ?? throw new NotFoundException("Spieler wurde nicht gefunden.");
+            player.AvatarFileName = avatarFileName ?? string.Empty;
+            player.UpdatedAt = Clock.Now();
+            return players;
+        });
+
+        LogAudit("PlayerAvatarChanged", id.ToString());
+        Reload();
+    }
+
     /// <summary>Permanently deletes a player. Only allowed if no match references them.</summary>
     public void DeletePlayer(Guid id)
     {

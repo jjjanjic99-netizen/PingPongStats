@@ -26,6 +26,8 @@ public partial class App : Application
         var dataPathService = new DataPathService();
         var folderPicker = new WpfFolderPickerService();
         var shell = new WpfShellService();
+        var filePicker = new WpfFilePickerService();
+        var avatarImageService = new AvatarImageService();
 
         var settings = settingsRepository.Load();
         var dataPathReady = false;
@@ -72,7 +74,8 @@ public partial class App : Application
         var auditLogRepository = new AuditLogXmlRepository(settings.DataPath);
         var dataService = new PingPongDataService(playerRepository, matchRepository, doubleMatchRepository, auditLogRepository);
 
-        var mainViewModel = new MainViewModel(dataService, settingsRepository, dataPathService, folderPicker, shell);
+        var mainViewModel = new MainViewModel(
+            dataService, settingsRepository, dataPathService, folderPicker, shell, filePicker, avatarImageService);
 
         var mainWindow = new MainWindow { DataContext = mainViewModel };
         MainWindow = mainWindow;

@@ -3,6 +3,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using PingPongStats.Core.Helpers;
 using PingPongStats.Core.Models;
+using PingPongStats.Core.Repositories;
 using PingPongStats.Core.Services;
 
 namespace PingPongStats.Core.ViewModels;
@@ -11,6 +12,9 @@ public partial class PlayersViewModel : ObservableObject
 {
     private readonly PingPongDataService _dataService;
     private readonly NotificationService _notifications;
+    private readonly ISettingsRepository _settingsRepository;
+    private readonly IFilePickerService _filePicker;
+    private readonly IAvatarImageService _avatarImageService;
     private List<PlayerRow> _allRows = new();
     private Guid? _editingPlayerId;
 
@@ -24,6 +28,15 @@ public partial class PlayersViewModel : ObservableObject
     [ObservableProperty] private string editErrorMessage = string.Empty;
     [ObservableProperty] private string editFormTitle = string.Empty;
 
+    /// <summary>Absolute path of a newly picked (but not yet saved) avatar image, or
+    /// null if none picked this edit session. Used by AvatarControl's OverrideImagePath
+    /// to preview before Save actually processes and persists it.</summary>
+    [ObservableProperty] private string? editAvatarPendingSourcePath;
+    [ObservableProperty] private bool editAvatarRemoved;
+    [ObservableProperty] private Player editPreviewPlayer = new();
+
+    public string DataPath => _settingsRepository.Load().DataPath;
+
     public ObservableCollection<PlayerRow> Players { get; } = new();
 
     public IRelayCommand NewPlayerCommand { get; }
@@ -33,11 +46,21 @@ public partial class PlayersViewModel : ObservableObject
     public IRelayCommand<PlayerRow> ToggleActiveCommand { get; }
     public IRelayCommand<PlayerRow> DeleteCommand { get; }
     public IRelayCommand RefreshCommand { get; }
+    public IRelayCommand PickAvatarCommand { get; }
+    public IRelayCommand RemoveAvatarCommand { get; }
 
-    public PlayersViewModel(PingPongDataService dataService, NotificationService notifications)
+    public PlayersViewModel(
+        PingPongDataService dataService,
+        NotificationService notifications,
+        ISettingsRepository settingsRepository,
+        IFilePickerService filePicker,
+        IAvatarImageService avatarImageService)
     {
         _dataService = dataService;
         _notifications = notifications;
+        _settingsRepository = settingsRepository;
+        _filePicker = filePicker;
+        _avatarImageService = avatarImageService;
 
         NewPlayerCommand = new RelayCommand(BeginCreate);
         EditPlayerCommand = new RelayCommand<PlayerRow>(row => { if (row is not null) BeginEdit(row); });
@@ -46,8 +69,38 @@ public partial class PlayersViewModel : ObservableObject
         ToggleActiveCommand = new RelayCommand<PlayerRow>(row => { if (row is not null) ToggleActive(row); });
         DeleteCommand = new RelayCommand<PlayerRow>(row => { if (row is not null) Delete(row); });
         RefreshCommand = new RelayCommand(Load);
+        PickAvatarCommand = new RelayCommand(PickAvatar);
+        RemoveAvatarCommand = new RelayCommand(RemoveAvatar);
 
         Load();
+    }
+
+    private void PickAvatar()
+    {
+        var path = _filePicker.PickImageFile("Profilbild auswählen");
+        if (string.IsNullOrWhiteSpace(path)) return;
+
+        EditAvatarPendingSourcePath = path;
+        EditAvatarRemoved = false;
+    }
+
+    private void RemoveAvatar()
+    {
+        EditAvatarPendingSourcePath = null;
+        EditAvatarRemoved = true;
+        RefreshPreviewPlayer();
+    }
+
+    partial void OnEditDisplayNameChanged(string value) => RefreshPreviewPlayer();
+
+    private void RefreshPreviewPlayer()
+    {
+        EditPreviewPlayer = new Player
+        {
+            Id = EditPreviewPlayer.Id,
+            DisplayName = EditDisplayName,
+            AvatarFileName = EditAvatarRemoved ? string.Empty : EditPreviewPlayer.AvatarFileName,
+        };
     }
 
     public void Load()
@@ -111,6 +164,9 @@ public partial class PlayersViewModel : ObservableObject
         EditLastName = string.Empty;
         EditEmail = string.Empty;
         EditErrorMessage = string.Empty;
+        EditAvatarPendingSourcePath = null;
+        EditAvatarRemoved = false;
+        EditPreviewPlayer = new Player { DisplayName = string.Empty };
         IsEditFormOpen = true;
     }
 
@@ -123,6 +179,9 @@ public partial class PlayersViewModel : ObservableObject
         EditLastName = row.Player.LastName;
         EditEmail = row.Player.Email;
         EditErrorMessage = string.Empty;
+        EditAvatarPendingSourcePath = null;
+        EditAvatarRemoved = false;
+        EditPreviewPlayer = row.Player;
         IsEditFormOpen = true;
     }
 
@@ -130,16 +189,21 @@ public partial class PlayersViewModel : ObservableObject
     {
         try
         {
+            Guid playerId;
             if (_editingPlayerId is Guid id)
             {
                 _dataService.UpdatePlayer(id, EditDisplayName, EditFirstName, EditLastName, EditEmail);
+                playerId = id;
                 _notifications.NotifySuccess("Spieler wurde aktualisiert.");
             }
             else
             {
-                _dataService.CreatePlayer(EditDisplayName, EditFirstName, EditLastName, EditEmail);
+                var created = _dataService.CreatePlayer(EditDisplayName, EditFirstName, EditLastName, EditEmail);
+                playerId = created.Id;
                 _notifications.NotifySuccess("Spieler wurde angelegt.");
             }
+
+            ApplyPendingAvatarChange(playerId);
 
             IsEditFormOpen = false;
             Load();
@@ -152,6 +216,20 @@ public partial class PlayersViewModel : ObservableObject
         {
             EditErrorMessage = "Unerwarteter Fehler: " + ex.Message;
             Logger.Error("PlayersViewModel.Save failed", ex);
+        }
+    }
+
+    private void ApplyPendingAvatarChange(Guid playerId)
+    {
+        if (!string.IsNullOrWhiteSpace(EditAvatarPendingSourcePath))
+        {
+            var dataPath = DataPath;
+            var fileName = _avatarImageService.SaveAvatar(EditAvatarPendingSourcePath, dataPath, playerId);
+            _dataService.SetPlayerAvatar(playerId, fileName);
+        }
+        else if (EditAvatarRemoved)
+        {
+            _dataService.SetPlayerAvatar(playerId, string.Empty);
         }
     }
 

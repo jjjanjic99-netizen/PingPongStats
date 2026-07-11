@@ -1,6 +1,7 @@
 using System.Collections.ObjectModel;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using PingPongStats.Core.Repositories;
 using PingPongStats.Core.Services;
 
 namespace PingPongStats.Core.ViewModels;
@@ -8,6 +9,9 @@ namespace PingPongStats.Core.ViewModels;
 public partial class DashboardViewModel : ObservableObject
 {
     private readonly PingPongDataService _dataService;
+    private readonly ISettingsRepository _settingsRepository;
+
+    public string DataPath => _settingsRepository.Load().DataPath;
 
     [ObservableProperty] private int totalMatches;
     [ObservableProperty] private int activePlayerCount;
@@ -35,9 +39,11 @@ public partial class DashboardViewModel : ObservableObject
 
     public IRelayCommand RefreshCommand { get; }
 
-    public DashboardViewModel(PingPongDataService dataService, DashboardRangeFilter rangeFilter)
+    public DashboardViewModel(
+        PingPongDataService dataService, DashboardRangeFilter rangeFilter, ISettingsRepository settingsRepository)
     {
         _dataService = dataService;
+        _settingsRepository = settingsRepository;
         RangeFilter = rangeFilter;
         RangeFilter.Changed += Load;
         RefreshCommand = new RelayCommand(Load);
@@ -76,8 +82,13 @@ public partial class DashboardViewModel : ObservableObject
             .OrderByDescending(p => p.EloRating)
             .ToList();
 
+        var playersById = _dataService.Players.ToDictionary(p => p.Id);
+
         Ranking.Clear();
-        foreach (var p in rankedPlayers) Ranking.Add(new PlayerRankingRow { Stats = p });
+        foreach (var p in rankedPlayers)
+        {
+            Ranking.Add(new PlayerRankingRow { Stats = p, Player = playersById.GetValueOrDefault(p.PlayerId) });
+        }
 
         var maxWins = rankedPlayers.Count == 0 ? 0 : rankedPlayers.Max(p => p.Wins);
         WinsChart.Clear();
