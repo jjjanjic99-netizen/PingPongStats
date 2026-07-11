@@ -66,6 +66,36 @@
             </Border>
         </UniformGrid>
 
+        <Grid Margin="0,0,0,16">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="16" />
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+            <Border Grid.Column="0" Style="{StaticResource CardBorder}">
+                <StackPanel>
+                    <TextBlock Text="ANGSTGEGNER" Style="{StaticResource StatLabelText}" Margin="0,0,0,8" />
+                    <StackPanel Visibility="{Binding HasNemesis, Converter={StaticResource BoolToVisibilityConverter}}">
+                        <TextBlock Text="{Binding NemesisDisplayName}" Style="{StaticResource StatValueText}" FontSize="16" />
+                        <TextBlock Text="{Binding NemesisRecordLabel}" Style="{StaticResource StatLabelText}" Margin="0,4,0,0" />
+                    </StackPanel>
+                    <TextBlock Text="Noch zu wenig Spiele." Style="{StaticResource StatLabelText}"
+                               Visibility="{Binding HasNemesis, Converter={StaticResource InverseBoolToVisibilityConverter}}" />
+                </StackPanel>
+            </Border>
+            <Border Grid.Column="2" Style="{StaticResource CardBorder}">
+                <StackPanel>
+                    <TextBlock Text="LIEBLINGSGEGNER" Style="{StaticResource StatLabelText}" Margin="0,0,0,8" />
+                    <StackPanel Visibility="{Binding HasFavoriteOpponent, Converter={StaticResource BoolToVisibilityConverter}}">
+                        <TextBlock Text="{Binding FavoriteOpponentDisplayName}" Style="{StaticResource StatValueText}" FontSize="16" />
+                        <TextBlock Text="{Binding FavoriteOpponentRecordLabel}" Style="{StaticResource StatLabelText}" Margin="0,4,0,0" />
+                    </StackPanel>
+                    <TextBlock Text="Noch zu wenig Spiele." Style="{StaticResource StatLabelText}"
+                               Visibility="{Binding HasFavoriteOpponent, Converter={StaticResource InverseBoolToVisibilityConverter}}" />
+                </StackPanel>
+            </Border>
+        </Grid>
+
         <Border Style="{StaticResource CardBorder}">
             <StackPanel>
                 <TextBlock Text="Elo-Verlauf" Style="{StaticResource SectionLabelText}" Margin="0,0,0,12" />

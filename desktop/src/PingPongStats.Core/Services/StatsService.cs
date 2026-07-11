@@ -8,6 +8,9 @@ public record StreakInfo(StreakType Type, int Length);
 
 public record RecentFormEntry(Guid MatchId, DateTime PlayedAt, char Result, Guid OpponentId);
 
+/// <summary>A player's personal record against one specific opponent (singles only).</summary>
+public record OpponentWinRate(Guid OpponentId, int Played, int Wins, int Losses, double WinRatePct);
+
 public record HeadToHeadStats(
     Guid PlayerAId,
     Guid PlayerBId,
@@ -183,4 +186,44 @@ public static class StatsService
     }
 
     public static bool IsLowSampleSize(int played) => played < LowSampleSizeThreshold;
+
+    /// <summary>Per-opponent win/loss record for a player's singles matches only,
+    /// one entry per distinct opponent ever faced.</summary>
+    public static List<OpponentWinRate> GetOpponentWinRates(IEnumerable<Match> matches, Guid playerId)
+    {
+        return MatchesForPlayer(matches, playerId)
+            .GroupBy(m => m.PlayerAId == playerId ? m.PlayerBId : m.PlayerAId)
+            .Select(g =>
+            {
+                var played = g.Count();
+                var wins = g.Count(m => IsWin(m, playerId));
+                return new OpponentWinRate(g.Key, played, wins, played - wins, wins / (double)played * 100);
+            })
+            .ToList();
+    }
+
+    /// <summary>"Angstgegner": the opponent this player has the worst personal win
+    /// rate against, requiring at least minGames shared matches (singles only) so a
+    /// single unlucky game doesn't count. Ties broken by more games played. Returns
+    /// null if no opponent meets the minimum.</summary>
+    public static OpponentWinRate? GetNemesis(IEnumerable<Match> matches, Guid playerId, int minGames = LowSampleSizeThreshold)
+    {
+        return GetOpponentWinRates(matches, playerId)
+            .Where(o => o.Played >= minGames)
+            .OrderBy(o => o.WinRatePct)
+            .ThenByDescending(o => o.Played)
+            .FirstOrDefault();
+    }
+
+    /// <summary>"Lieblingsgegner": the opponent this player has the best personal win
+    /// rate against, requiring at least minGames shared matches (singles only). Ties
+    /// broken by more games played. Returns null if no opponent meets the minimum.</summary>
+    public static OpponentWinRate? GetFavoriteOpponent(IEnumerable<Match> matches, Guid playerId, int minGames = LowSampleSizeThreshold)
+    {
+        return GetOpponentWinRates(matches, playerId)
+            .Where(o => o.Played >= minGames)
+            .OrderByDescending(o => o.WinRatePct)
+            .ThenByDescending(o => o.Played)
+            .FirstOrDefault();
+    }
 }

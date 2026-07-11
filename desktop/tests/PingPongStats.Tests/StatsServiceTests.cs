@@ -224,4 +224,149 @@ public class StatsServiceTests
     {
         Assert.Equal(0, StatsService.GetSetDifference(new List<Match>(), Guid.NewGuid()));
     }
+
+    [Fact]
+    public void GetNemesis_ReturnsNullWhenNoOpponentMeetsMinimum()
+    {
+        var p1 = Guid.NewGuid();
+        var p2 = Guid.NewGuid();
+        var matches = new List<Match>
+        {
+            M(new DateTime(2026, 1, 1), p1, p2, 0, 3),
+            M(new DateTime(2026, 1, 2), p1, p2, 0, 3), // only 2 games vs p2
+        };
+
+        Assert.Null(StatsService.GetNemesis(matches, p1));
+    }
+
+    [Fact]
+    public void GetNemesis_ReturnsNullForPlayerWithoutMatches()
+    {
+        Assert.Null(StatsService.GetNemesis(new List<Match>(), Guid.NewGuid()));
+    }
+
+    [Fact]
+    public void GetNemesis_QualifiesAtExactlyThreeGames()
+    {
+        var p1 = Guid.NewGuid();
+        var p2 = Guid.NewGuid();
+        var matches = new List<Match>
+        {
+            M(new DateTime(2026, 1, 1), p1, p2, 0, 3),
+            M(new DateTime(2026, 1, 2), p1, p2, 0, 3),
+            M(new DateTime(2026, 1, 3), p1, p2, 0, 3), // exactly 3 games vs p2, all losses
+        };
+
+        var nemesis = StatsService.GetNemesis(matches, p1);
+
+        Assert.NotNull(nemesis);
+        Assert.Equal(p2, nemesis!.OpponentId);
+        Assert.Equal(0, nemesis.WinRatePct);
+    }
+
+    [Fact]
+    public void GetNemesis_PicksWorstWinRateOpponent()
+    {
+        var p1 = Guid.NewGuid();
+        var p2 = Guid.NewGuid(); // 0% win rate vs p1
+        var p3 = Guid.NewGuid(); // 100% win rate vs p1
+        var matches = new List<Match>
+        {
+            M(new DateTime(2026, 1, 1), p1, p2, 0, 3),
+            M(new DateTime(2026, 1, 2), p1, p2, 0, 3),
+            M(new DateTime(2026, 1, 3), p1, p2, 0, 3),
+            M(new DateTime(2026, 1, 4), p1, p3, 3, 0),
+            M(new DateTime(2026, 1, 5), p1, p3, 3, 0),
+            M(new DateTime(2026, 1, 6), p1, p3, 3, 0),
+        };
+
+        var nemesis = StatsService.GetNemesis(matches, p1);
+
+        Assert.Equal(p2, nemesis!.OpponentId);
+    }
+
+    [Fact]
+    public void GetNemesis_TiedWinRateBreaksTowardMoreGamesPlayed()
+    {
+        var p1 = Guid.NewGuid();
+        var p2 = Guid.NewGuid(); // 0/3 = 0%, 3 games
+        var p3 = Guid.NewGuid(); // 0/4 = 0%, 4 games - same rate, more games => nemesis
+        var matches = new List<Match>
+        {
+            M(new DateTime(2026, 1, 1), p1, p2, 0, 3),
+            M(new DateTime(2026, 1, 2), p1, p2, 0, 3),
+            M(new DateTime(2026, 1, 3), p1, p2, 0, 3),
+            M(new DateTime(2026, 1, 4), p1, p3, 0, 3),
+            M(new DateTime(2026, 1, 5), p1, p3, 0, 3),
+            M(new DateTime(2026, 1, 6), p1, p3, 0, 3),
+            M(new DateTime(2026, 1, 7), p1, p3, 0, 3),
+        };
+
+        var nemesis = StatsService.GetNemesis(matches, p1);
+
+        Assert.Equal(p3, nemesis!.OpponentId);
+    }
+
+    [Fact]
+    public void GetFavoriteOpponent_ReturnsNullWhenNoOpponentMeetsMinimum()
+    {
+        var p1 = Guid.NewGuid();
+        var p2 = Guid.NewGuid();
+        var matches = new List<Match>
+        {
+            M(new DateTime(2026, 1, 1), p1, p2, 3, 0),
+            M(new DateTime(2026, 1, 2), p1, p2, 3, 0),
+        };
+
+        Assert.Null(StatsService.GetFavoriteOpponent(matches, p1));
+    }
+
+    [Fact]
+    public void GetFavoriteOpponent_PicksBestWinRateOpponent()
+    {
+        var p1 = Guid.NewGuid();
+        var p2 = Guid.NewGuid(); // 0% win rate vs p1
+        var p3 = Guid.NewGuid(); // 100% win rate vs p1
+        var matches = new List<Match>
+        {
+            M(new DateTime(2026, 1, 1), p1, p2, 0, 3),
+            M(new DateTime(2026, 1, 2), p1, p2, 0, 3),
+            M(new DateTime(2026, 1, 3), p1, p2, 0, 3),
+            M(new DateTime(2026, 1, 4), p1, p3, 3, 0),
+            M(new DateTime(2026, 1, 5), p1, p3, 3, 0),
+            M(new DateTime(2026, 1, 6), p1, p3, 3, 0),
+        };
+
+        var favorite = StatsService.GetFavoriteOpponent(matches, p1);
+
+        Assert.Equal(p3, favorite!.OpponentId);
+    }
+
+    [Fact]
+    public void GetFavoriteOpponent_TiedWinRateBreaksTowardMoreGamesPlayed()
+    {
+        var p1 = Guid.NewGuid();
+        var p2 = Guid.NewGuid(); // 100% over 3 games
+        var p3 = Guid.NewGuid(); // 100% over 4 games - same rate, more games => favorite
+        var matches = new List<Match>
+        {
+            M(new DateTime(2026, 1, 1), p1, p2, 3, 0),
+            M(new DateTime(2026, 1, 2), p1, p2, 3, 0),
+            M(new DateTime(2026, 1, 3), p1, p2, 3, 0),
+            M(new DateTime(2026, 1, 4), p1, p3, 3, 0),
+            M(new DateTime(2026, 1, 5), p1, p3, 3, 0),
+            M(new DateTime(2026, 1, 6), p1, p3, 3, 0),
+            M(new DateTime(2026, 1, 7), p1, p3, 3, 0),
+        };
+
+        var favorite = StatsService.GetFavoriteOpponent(matches, p1);
+
+        Assert.Equal(p3, favorite!.OpponentId);
+    }
+
+    [Fact]
+    public void GetOpponentWinRates_ReturnsEmptyForPlayerWithoutMatches()
+    {
+        Assert.Empty(StatsService.GetOpponentWinRates(new List<Match>(), Guid.NewGuid()));
+    }
 }

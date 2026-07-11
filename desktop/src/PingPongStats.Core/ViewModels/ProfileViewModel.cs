@@ -27,6 +27,13 @@ public partial class ProfileViewModel : ObservableObject
     [ObservableProperty] private string setDifferenceLabel = "–";
     [ObservableProperty] private bool hasEloHistory;
 
+    [ObservableProperty] private bool hasNemesis;
+    [ObservableProperty] private string nemesisDisplayName = string.Empty;
+    [ObservableProperty] private string nemesisRecordLabel = string.Empty;
+    [ObservableProperty] private bool hasFavoriteOpponent;
+    [ObservableProperty] private string favoriteOpponentDisplayName = string.Empty;
+    [ObservableProperty] private string favoriteOpponentRecordLabel = string.Empty;
+
     public ObservableCollection<EloChartPoint> EloHistoryChart { get; } = new();
 
     public IRelayCommand RefreshCommand { get; }
@@ -85,5 +92,23 @@ public partial class ProfileViewModel : ObservableObject
         }
 
         HasEloHistory = EloHistoryChart.Count > 0;
+
+        var playersById = _dataService.Players.ToDictionary(p => p.Id);
+
+        var nemesis = StatsService.GetNemesis(matches, _playerId);
+        HasNemesis = nemesis is not null;
+        if (nemesis is not null)
+        {
+            NemesisDisplayName = playersById.GetValueOrDefault(nemesis.OpponentId)?.DisplayName ?? "?";
+            NemesisRecordLabel = $"{nemesis.Wins}S / {nemesis.Losses}N ({nemesis.WinRatePct:F0}%)";
+        }
+
+        var favorite = StatsService.GetFavoriteOpponent(matches, _playerId);
+        HasFavoriteOpponent = favorite is not null;
+        if (favorite is not null)
+        {
+            FavoriteOpponentDisplayName = playersById.GetValueOrDefault(favorite.OpponentId)?.DisplayName ?? "?";
+            FavoriteOpponentRecordLabel = $"{favorite.Wins}S / {favorite.Losses}N ({favorite.WinRatePct:F0}%)";
+        }
     }
 }
