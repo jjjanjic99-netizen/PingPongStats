@@ -7,11 +7,15 @@
          a ResourceDictionary cannot see sibling merged dictionaries' keys via
          StaticResource, only its own. -->
     <BooleanToVisibilityConverter x:Key="BoolToVisibilityConverter" />
+    <converters:InverseBooleanToVisibilityConverter x:Key="InverseBoolToVisibilityConverter" />
     <converters:StringToVisibilityConverter x:Key="StringToVisibilityConverter" />
     <converters:StatusBackgroundConverter x:Key="StatusBackgroundConverter" />
     <converters:StatusForegroundConverter x:Key="StatusForegroundConverter" />
     <converters:BarHeightConverter x:Key="BarHeightConverter" />
     <converters:StringEqualsConverter x:Key="StringEqualsConverter" />
+    <converters:FractionToPixelConverter x:Key="XPixelConverter" InvertForYAxis="False" />
+    <converters:FractionToPixelConverter x:Key="YPixelConverter" InvertForYAxis="True" />
+    <converters:EloPointsToPolylineConverter x:Key="EloPointsToPolylineConverter" />
 
     <!-- Shared bar-chart item template/panel, used by Dashboard and Doubles views
          so both render identical hand-rolled bar charts without duplicating XAML. -->

@@ -82,6 +82,11 @@ public class DoubleMatchRow
     public string Notes => Match.Notes;
 }
 
+/// <summary>One point of a player's Elo history line chart, pre-normalized to 0..1 on
+/// both axes so the WPF view can position it on a fixed-size canvas without needing
+/// any chart math of its own (mirrors the ChartBarItem pattern used elsewhere).</summary>
+public record EloChartPoint(DateTime PlayedAt, double Rating, double NormalizedX, double NormalizedY);
+
 /// <summary>Ranking row for the Dashboard's player table.</summary>
 public class PlayerRankingRow
 {

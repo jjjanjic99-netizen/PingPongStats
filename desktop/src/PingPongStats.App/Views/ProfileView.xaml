@@ -1,0 +1,105 @@
+<UserControl x:Class="PingPongStats.App.Views.ProfileView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:controls="clr-namespace:PingPongStats.App.Controls">
+    <StackPanel>
+        <Grid Margin="0,0,0,16">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+            <TextBlock Grid.Column="0" Text="Mein Profil" Style="{StaticResource HeadingText}" />
+            <Button Grid.Column="1" Content="Aktualisieren" Style="{StaticResource SecondaryButton}"
+                    Command="{Binding RefreshCommand}" />
+        </Grid>
+
+        <StackPanel Orientation="Horizontal" Margin="0,0,0,16">
+            <controls:AvatarControl Player="{Binding Player}" DataPath="{Binding DataPath}" Size="L" />
+            <StackPanel VerticalAlignment="Center" Margin="16,0,0,0">
+                <TextBlock Text="{Binding Player.DisplayName}" Style="{StaticResource HeadingText}" FontSize="18" />
+                <TextBlock Text="{Binding EloLabel, StringFormat='Elo: {0}'}" Style="{StaticResource StatLabelText}" Margin="0,4,0,0" />
+            </StackPanel>
+        </StackPanel>
+
+        <UniformGrid Rows="2" Columns="4" Margin="0,0,0,16">
+            <Border Style="{StaticResource CardBorder}" Margin="0,0,8,8">
+                <StackPanel>
+                    <TextBlock Text="SPIELE" Style="{StaticResource StatLabelText}" />
+                    <TextBlock Text="{Binding Played}" Style="{StaticResource StatValueText}" />
+                </StackPanel>
+            </Border>
+            <Border Style="{StaticResource CardBorder}" Margin="0,0,8,8">
+                <StackPanel>
+                    <TextBlock Text="SIEGE" Style="{StaticResource StatLabelText}" />
+                    <TextBlock Text="{Binding Wins}" Style="{StaticResource StatValueText}" />
+                </StackPanel>
+            </Border>
+            <Border Style="{StaticResource CardBorder}" Margin="0,0,8,8">
+                <StackPanel>
+                    <TextBlock Text="NIEDERLAGEN" Style="{StaticResource StatLabelText}" />
+                    <TextBlock Text="{Binding Losses}" Style="{StaticResource StatValueText}" />
+                </StackPanel>
+            </Border>
+            <Border Style="{StaticResource CardBorder}" Margin="0,0,0,8">
+                <StackPanel>
+                    <TextBlock Text="SIEGQUOTE" Style="{StaticResource StatLabelText}" />
+                    <TextBlock Text="{Binding WinRateLabel}" Style="{StaticResource StatValueText}" />
+                </StackPanel>
+            </Border>
+            <Border Style="{StaticResource CardBorder}" Margin="0,0,8,0">
+                <StackPanel>
+                    <TextBlock Text="LÄNGSTE SIEGESSERIE" Style="{StaticResource StatLabelText}" />
+                    <TextBlock Text="{Binding LongestWinStreakLabel}" Style="{StaticResource StatValueText}" />
+                </StackPanel>
+            </Border>
+            <Border Style="{StaticResource CardBorder}" Margin="0,0,8,0">
+                <StackPanel>
+                    <TextBlock Text="LÄNGSTE NIEDERLAGENSERIE" Style="{StaticResource StatLabelText}" />
+                    <TextBlock Text="{Binding LongestLossStreakLabel}" Style="{StaticResource StatValueText}" />
+                </StackPanel>
+            </Border>
+            <Border Style="{StaticResource CardBorder}">
+                <StackPanel>
+                    <TextBlock Text="SATZDIFFERENZ" Style="{StaticResource StatLabelText}" />
+                    <TextBlock Text="{Binding SetDifferenceLabel}" Style="{StaticResource StatValueText}" />
+                </StackPanel>
+            </Border>
+        </UniformGrid>
+
+        <Border Style="{StaticResource CardBorder}">
+            <StackPanel>
+                <TextBlock Text="Elo-Verlauf" Style="{StaticResource SectionLabelText}" Margin="0,0,0,12" />
+                <TextBlock Text="Noch keine Spiele mit Elo-Verlauf erfasst." Style="{StaticResource StatLabelText}"
+                           Visibility="{Binding HasEloHistory, Converter={StaticResource InverseBoolToVisibilityConverter}}" />
+                <Grid Width="600" Height="160" HorizontalAlignment="Left"
+                      Visibility="{Binding HasEloHistory, Converter={StaticResource BoolToVisibilityConverter}}">
+                    <Canvas Width="600" Height="160">
+                        <Polyline Points="{Binding EloHistoryChart, Converter={StaticResource EloPointsToPolylineConverter}, ConverterParameter='600,160'}"
+                                  Stroke="{DynamicResource Brush.Accent}" StrokeThickness="2" />
+                    </Canvas>
+                    <ItemsControl ItemsSource="{Binding EloHistoryChart}">
+                        <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <Canvas Width="600" Height="160" />
+                            </ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+                        <ItemsControl.ItemContainerStyle>
+                            <Style TargetType="ContentPresenter">
+                                <Setter Property="Canvas.Left"
+                                        Value="{Binding NormalizedX, Converter={StaticResource XPixelConverter}, ConverterParameter=600}" />
+                                <Setter Property="Canvas.Top"
+                                        Value="{Binding NormalizedY, Converter={StaticResource YPixelConverter}, ConverterParameter=160}" />
+                            </Style>
+                        </ItemsControl.ItemContainerStyle>
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Ellipse Width="6" Height="6" Fill="{DynamicResource Brush.Accent}"
+                                         Margin="-3,-3,0,0" />
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </Grid>
+            </StackPanel>
+        </Border>
+    </StackPanel>
+</UserControl>

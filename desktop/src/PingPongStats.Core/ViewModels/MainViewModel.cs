@@ -1,5 +1,6 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using PingPongStats.Core.Models;
 using PingPongStats.Core.Repositories;
 using PingPongStats.Core.Services;
 
@@ -27,6 +28,7 @@ public partial class MainViewModel : ObservableObject
     [ObservableProperty] private string statusMessage = string.Empty;
     [ObservableProperty] private bool isErrorStatus;
     [ObservableProperty] private string activeSection = "Dashboard";
+    [ObservableProperty] private Player? currentPlayer;
 
     public DashboardRangeFilter RangeFilter { get; private set; } = null!;
     public DashboardViewModel Dashboard { get; }
@@ -35,6 +37,10 @@ public partial class MainViewModel : ObservableObject
     public DoublesViewModel Doubles { get; }
     public HeadToHeadViewModel HeadToHead { get; }
     public SettingsViewModel Settings { get; }
+    public LoginViewModel Login { get; }
+    public ProfileViewModel? Profile { get; private set; }
+
+    public bool IsLoggedIn => CurrentPlayer is not null;
 
     public IRelayCommand ShowDashboardCommand { get; }
     public IRelayCommand ShowPlayersCommand { get; }
@@ -43,6 +49,9 @@ public partial class MainViewModel : ObservableObject
     public IRelayCommand ShowDoublesCommand { get; }
     public IRelayCommand ShowHeadToHeadCommand { get; }
     public IRelayCommand ShowSettingsCommand { get; }
+    public IRelayCommand ShowLoginCommand { get; }
+    public IRelayCommand ShowProfileCommand { get; }
+    public IRelayCommand LogoutCommand { get; }
 
     public MainViewModel(
         PingPongDataService dataService,
@@ -74,6 +83,8 @@ public partial class MainViewModel : ObservableObject
         Settings = new SettingsViewModel(
             _dataService, _settingsRepository, _dataPathService, _notifications,
             _folderPicker, _shell, OnDataPathChanged);
+        Login = new LoginViewModel(_dataService, _settingsRepository);
+        Login.LoggedIn += OnLoggedIn;
 
         ShowDashboardCommand = new RelayCommand(() => Navigate("Dashboard", Dashboard, () => Dashboard.Load()));
         ShowPlayersCommand = new RelayCommand(() => Navigate("Spieler", Players, () => Players.Load()));
@@ -82,6 +93,12 @@ public partial class MainViewModel : ObservableObject
         ShowDoublesCommand = new RelayCommand(() => Navigate("Doppel", Doubles, () => Doubles.Load()));
         ShowHeadToHeadCommand = new RelayCommand(() => Navigate("Head-to-Head", HeadToHead, () => HeadToHead.Load()));
         ShowSettingsCommand = new RelayCommand(() => Navigate("Einstellungen", Settings, null));
+        ShowLoginCommand = new RelayCommand(() => Navigate("Anmeldung", Login, () => Login.Load()));
+        ShowProfileCommand = new RelayCommand(() =>
+        {
+            if (Profile is not null) Navigate("Mein Profil", Profile, () => Profile.Load());
+        });
+        LogoutCommand = new RelayCommand(Logout);
 
         CurrentViewModel = Dashboard;
     }
@@ -109,6 +126,27 @@ public partial class MainViewModel : ObservableObject
         CurrentViewModel = editVm;
     }
 
+    partial void OnCurrentPlayerChanged(Player? value) => OnPropertyChanged(nameof(IsLoggedIn));
+
+    private void OnLoggedIn(Guid playerId)
+    {
+        var player = _dataService.Players.FirstOrDefault(p => p.Id == playerId);
+        if (player is null) return;
+
+        CurrentPlayer = player;
+        if (Profile is null) Profile = new ProfileViewModel(_dataService, _settingsRepository, playerId);
+        else Profile.SetPlayer(playerId);
+
+        Navigate("Mein Profil", Profile, null);
+    }
+
+    private void Logout()
+    {
+        CurrentPlayer = null;
+        Profile = null;
+        Navigate("Dashboard", Dashboard, () => Dashboard.Load());
+    }
+
     private void OnDataPathChanged()
     {
         _dataService.Reload();
@@ -117,6 +155,9 @@ public partial class MainViewModel : ObservableObject
         Matches.Load();
         Doubles.Load();
         HeadToHead.Load();
+        CurrentPlayer = null;
+        Profile = null;
+        Login.Load();
     }
 
     private void OnNotified(string message, bool isError)

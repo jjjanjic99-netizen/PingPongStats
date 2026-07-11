@@ -155,6 +155,55 @@ public class PingPongDataService
         Reload();
     }
 
+    /// <summary>Sets a player's login PIN (exactly 4 digits, stored as a PBKDF2 hash +
+    /// salt, never in plaintext), or clears it when pin is null/empty. This is a
+    /// convenience against accidentally opening someone else's profile, not real
+    /// security - the underlying XML files remain plainly readable.</summary>
+    public void SetPlayerPin(Guid id, string? pin)
+    {
+        if (!string.IsNullOrEmpty(pin) && !PinService.IsValidPinFormat(pin))
+        {
+            throw new ValidationException("Der PIN muss aus genau 4 Ziffern bestehen.");
+        }
+
+        _playerRepository.Update(players =>
+        {
+            var player = players.FirstOrDefault(p => p.Id == id)
+                ?? throw new NotFoundException("Spieler wurde nicht gefunden.");
+
+            if (string.IsNullOrEmpty(pin))
+            {
+                player.PinHash = string.Empty;
+                player.PinSalt = string.Empty;
+            }
+            else
+            {
+                var (hash, salt) = PinService.HashPin(pin);
+                player.PinHash = hash;
+                player.PinSalt = salt;
+            }
+
+            player.UpdatedAt = Clock.Now();
+            return players;
+        });
+
+        LogAudit("PlayerPinChanged", id.ToString());
+        Reload();
+    }
+
+    /// <summary>True if the player has a PIN set (login requires entering it).</summary>
+    public bool PlayerHasPin(Guid id) =>
+        Players.FirstOrDefault(p => p.Id == id) is { } player && !string.IsNullOrEmpty(player.PinHash);
+
+    /// <summary>Verifies a login PIN attempt for a player. Returns false (rather than
+    /// throwing) for a wrong PIN so the login screen can just show an error.</summary>
+    public bool VerifyPlayerPin(Guid id, string pin)
+    {
+        var player = Players.FirstOrDefault(p => p.Id == id)
+            ?? throw new NotFoundException("Spieler wurde nicht gefunden.");
+        return PinService.VerifyPin(pin, player.PinHash, player.PinSalt);
+    }
+
     /// <summary>Permanently deletes a player. Only allowed if no match references them.</summary>
     public void DeletePlayer(Guid id)
     {

@@ -104,6 +104,39 @@ public static class StatsService
         return longest;
     }
 
+    /// <summary>Longest losing streak in the player's entire history (chronological
+    /// run of consecutive losses, regardless of wins in between runs).</summary>
+    public static int GetLongestLossStreak(IEnumerable<Match> matches, Guid playerId)
+    {
+        var ordered = MatchesForPlayer(matches, playerId); // oldest first
+        var longest = 0;
+        var current = 0;
+        foreach (var match in ordered)
+        {
+            if (!IsWin(match, playerId))
+            {
+                current++;
+                longest = Math.Max(longest, current);
+            }
+            else
+            {
+                current = 0;
+            }
+        }
+
+        return longest;
+    }
+
+    /// <summary>Total sets won minus total sets lost across the player's entire
+    /// singles history.</summary>
+    public static int GetSetDifference(IEnumerable<Match> matches, Guid playerId)
+    {
+        var played = MatchesForPlayer(matches, playerId);
+        var setsWon = played.Sum(m => m.PlayerAId == playerId ? m.PlayerASets : m.PlayerBSets);
+        var setsLost = played.Sum(m => m.PlayerAId == playerId ? m.PlayerBSets : m.PlayerASets);
+        return setsWon - setsLost;
+    }
+
     /// <summary>Average number of sets won per match by this player.</summary>
     public static double GetAverageSetsWonPerMatch(IEnumerable<Match> matches, Guid playerId)
     {

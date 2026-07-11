@@ -3,6 +3,7 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:vm="clr-namespace:PingPongStats.Core.ViewModels;assembly=PingPongStats.Core"
         xmlns:views="clr-namespace:PingPongStats.App.Views"
+        xmlns:controls="clr-namespace:PingPongStats.App.Controls"
         Title="PingPongStats"
         Width="1200" Height="800"
         MinWidth="900" MinHeight="600"
@@ -30,6 +31,12 @@
         <DataTemplate DataType="{x:Type vm:SettingsViewModel}">
             <views:SettingsView />
         </DataTemplate>
+        <DataTemplate DataType="{x:Type vm:LoginViewModel}">
+            <views:LoginView />
+        </DataTemplate>
+        <DataTemplate DataType="{x:Type vm:ProfileViewModel}">
+            <views:ProfileView />
+        </DataTemplate>
     </Window.Resources>
 
     <Grid x:Name="RootScaleHost">
@@ -56,6 +63,10 @@
                 <Button Content="Doppel" Style="{StaticResource NavButton}" Command="{Binding ShowDoublesCommand}" />
                 <Button Content="Head-to-Head" Style="{StaticResource NavButton}" Command="{Binding ShowHeadToHeadCommand}" />
                 <Button Content="Einstellungen" Style="{StaticResource NavButton}" Command="{Binding ShowSettingsCommand}" />
+                <Button Content="Mein Profil" Style="{StaticResource NavButton}" Command="{Binding ShowProfileCommand}"
+                        Visibility="{Binding IsLoggedIn, Converter={StaticResource BoolToVisibilityConverter}}" />
+                <Button Content="Anmelden" Style="{StaticResource NavButton}" Command="{Binding ShowLoginCommand}"
+                        Visibility="{Binding IsLoggedIn, Converter={StaticResource InverseBoolToVisibilityConverter}}" />
             </StackPanel>
         </Border>
 
@@ -63,10 +74,27 @@
         <Grid Grid.Column="1">
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
                 <RowDefinition Height="*" />
             </Grid.RowDefinitions>
 
-            <Border Grid.Row="0"
+            <Border Grid.Row="0" Background="{DynamicResource Brush.Surface}"
+                    BorderBrush="{DynamicResource Brush.Border}" BorderThickness="0,0,0,1"
+                    Padding="16,8">
+                <Grid>
+                    <TextBlock Text="Nicht angemeldet" Style="{StaticResource StatLabelText}" HorizontalAlignment="Right"
+                               VerticalAlignment="Center"
+                               Visibility="{Binding IsLoggedIn, Converter={StaticResource InverseBoolToVisibilityConverter}}" />
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right"
+                                Visibility="{Binding IsLoggedIn, Converter={StaticResource BoolToVisibilityConverter}}">
+                        <controls:AvatarControl Player="{Binding CurrentPlayer}" DataPath="{Binding Dashboard.DataPath}" Size="S" />
+                        <TextBlock Text="{Binding CurrentPlayer.DisplayName}" VerticalAlignment="Center" Margin="8,0,12,0" />
+                        <Button Content="Abmelden" Style="{StaticResource CompactSecondaryButton}" Command="{Binding LogoutCommand}" />
+                    </StackPanel>
+                </Grid>
+            </Border>
+
+            <Border Grid.Row="1"
                     Background="{Binding IsErrorStatus, Converter={StaticResource StatusBackgroundConverter}}"
                     Visibility="{Binding StatusMessage, Converter={StaticResource StringToVisibilityConverter}}"
                     Padding="16,10">
@@ -74,7 +102,7 @@
                            Foreground="{Binding IsErrorStatus, Converter={StaticResource StatusForegroundConverter}}" />
             </Border>
 
-            <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto" Padding="24">
+            <ScrollViewer Grid.Row="2" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto" Padding="24">
                 <ContentControl Content="{Binding CurrentViewModel}" />
             </ScrollViewer>
         </Grid>

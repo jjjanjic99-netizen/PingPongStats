@@ -35,6 +35,12 @@ public partial class PlayersViewModel : ObservableObject
     [ObservableProperty] private bool editAvatarRemoved;
     [ObservableProperty] private Player editPreviewPlayer = new();
 
+    /// <summary>New 4-digit PIN to set on Save; left blank keeps the existing PIN
+    /// unchanged. See PingPongDataService.SetPlayerPin for the security disclaimer.</summary>
+    [ObservableProperty] private string editPinInput = string.Empty;
+    [ObservableProperty] private bool editRemovePin;
+    [ObservableProperty] private bool editPlayerHasPin;
+
     public string DataPath => _settingsRepository.Load().DataPath;
 
     public ObservableCollection<PlayerRow> Players { get; } = new();
@@ -167,6 +173,9 @@ public partial class PlayersViewModel : ObservableObject
         EditAvatarPendingSourcePath = null;
         EditAvatarRemoved = false;
         EditPreviewPlayer = new Player { DisplayName = string.Empty };
+        EditPinInput = string.Empty;
+        EditRemovePin = false;
+        EditPlayerHasPin = false;
         IsEditFormOpen = true;
     }
 
@@ -182,6 +191,9 @@ public partial class PlayersViewModel : ObservableObject
         EditAvatarPendingSourcePath = null;
         EditAvatarRemoved = false;
         EditPreviewPlayer = row.Player;
+        EditPinInput = string.Empty;
+        EditRemovePin = false;
+        EditPlayerHasPin = _dataService.PlayerHasPin(row.Id);
         IsEditFormOpen = true;
     }
 
@@ -204,6 +216,7 @@ public partial class PlayersViewModel : ObservableObject
             }
 
             ApplyPendingAvatarChange(playerId);
+            ApplyPendingPinChange(playerId);
 
             IsEditFormOpen = false;
             Load();
@@ -230,6 +243,18 @@ public partial class PlayersViewModel : ObservableObject
         else if (EditAvatarRemoved)
         {
             _dataService.SetPlayerAvatar(playerId, string.Empty);
+        }
+    }
+
+    private void ApplyPendingPinChange(Guid playerId)
+    {
+        if (EditRemovePin)
+        {
+            _dataService.SetPlayerPin(playerId, null);
+        }
+        else if (!string.IsNullOrWhiteSpace(EditPinInput))
+        {
+            _dataService.SetPlayerPin(playerId, EditPinInput.Trim());
         }
     }
 

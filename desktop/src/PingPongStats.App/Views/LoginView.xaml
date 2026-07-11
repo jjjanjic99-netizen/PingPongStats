@@ -1,0 +1,59 @@
+<UserControl x:Class="PingPongStats.App.Views.LoginView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:controls="clr-namespace:PingPongStats.App.Controls">
+    <StackPanel>
+        <TextBlock Text="Anmeldung" Style="{StaticResource HeadingText}" Margin="0,0,0,8" />
+        <TextBlock Text="Bequemlichkeit, kein Schutz: Die Daten bleiben für alle mit Zugriff auf den Datenordner lesbar."
+                   Style="{StaticResource StatLabelText}" TextWrapping="Wrap" Margin="0,0,0,16" MaxWidth="500" />
+
+        <Border Style="{StaticResource CardBorder}" Margin="0,0,0,16" MaxWidth="360" HorizontalAlignment="Left"
+                Visibility="{Binding IsPinPromptOpen, Converter={StaticResource BoolToVisibilityConverter}}">
+            <StackPanel HorizontalAlignment="Center">
+                <controls:AvatarControl Player="{Binding PinPromptPlayer}" DataPath="{Binding DataPath}"
+                                         Size="L" HorizontalAlignment="Center" />
+                <TextBlock Text="{Binding PinPromptPlayer.DisplayName}" Style="{StaticResource SectionLabelText}"
+                           HorizontalAlignment="Center" Margin="0,8,0,12" />
+                <TextBlock Text="PIN eingeben" Style="{StaticResource StatLabelText}" HorizontalAlignment="Center" Margin="0,0,0,4" />
+                <TextBox Text="{Binding PinInput, UpdateSourceTrigger=PropertyChanged}" MaxLength="4" Width="100"
+                         HorizontalAlignment="Center" HorizontalContentAlignment="Center" />
+                <TextBlock Text="{Binding ErrorMessage}" Foreground="{DynamicResource Brush.Danger}" HorizontalAlignment="Center"
+                           Margin="0,8,0,0"
+                           Visibility="{Binding ErrorMessage, Converter={StaticResource StringToVisibilityConverter}}" />
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,16,0,0">
+                    <Button Content="Abbrechen" Style="{StaticResource SecondaryButton}" Margin="0,0,8,0"
+                            Command="{Binding CancelPinCommand}" />
+                    <Button Content="Anmelden" Style="{StaticResource PrimaryButton}"
+                            Command="{Binding SubmitPinCommand}" />
+                </StackPanel>
+            </StackPanel>
+        </Border>
+
+        <ItemsControl ItemsSource="{Binding Tiles}"
+                      Visibility="{Binding IsPinPromptOpen, Converter={StaticResource InverseBoolToVisibilityConverter}}">
+            <ItemsControl.ItemsPanel>
+                <ItemsPanelTemplate>
+                    <WrapPanel Orientation="Horizontal" />
+                </ItemsPanelTemplate>
+            </ItemsControl.ItemsPanel>
+            <ItemsControl.ItemTemplate>
+                <DataTemplate>
+                    <Border Style="{StaticResource CardBorder}" Width="140" Margin="0,0,16,16" Cursor="Hand">
+                        <Border.InputBindings>
+                            <MouseBinding MouseAction="LeftClick"
+                                          Command="{Binding DataContext.SelectPlayerCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                          CommandParameter="{Binding}" />
+                        </Border.InputBindings>
+                        <StackPanel HorizontalAlignment="Center">
+                            <controls:AvatarControl Player="{Binding}"
+                                                     DataPath="{Binding DataContext.DataPath, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                     Size="M" HorizontalAlignment="Center" />
+                            <TextBlock Text="{Binding DisplayName}" HorizontalAlignment="Center" Margin="0,8,0,0"
+                                       TextWrapping="Wrap" TextAlignment="Center" />
+                        </StackPanel>
+                    </Border>
+                </DataTemplate>
+            </ItemsControl.ItemTemplate>
+        </ItemsControl>
+    </StackPanel>
+</UserControl>

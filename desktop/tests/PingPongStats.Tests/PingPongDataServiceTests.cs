@@ -144,4 +144,43 @@ public class PingPongDataServiceTests : IDisposable
 
         Assert.Equal(string.Empty, _service.Players.Single(p => p.Id == player.Id).AvatarFileName);
     }
+
+    [Fact]
+    public void SetPlayerPin_RejectsNonFourDigitPin()
+    {
+        var player = _service.CreatePlayer("Anna", "", "", "");
+
+        Assert.Throws<ValidationException>(() => _service.SetPlayerPin(player.Id, "12"));
+        Assert.False(_service.PlayerHasPin(player.Id));
+    }
+
+    [Fact]
+    public void SetPlayerPin_ThenVerifyPlayerPin_AcceptsCorrectPinOnly()
+    {
+        var player = _service.CreatePlayer("Anna", "", "", "");
+
+        _service.SetPlayerPin(player.Id, "1234");
+
+        Assert.True(_service.PlayerHasPin(player.Id));
+        Assert.True(_service.VerifyPlayerPin(player.Id, "1234"));
+        Assert.False(_service.VerifyPlayerPin(player.Id, "0000"));
+    }
+
+    [Fact]
+    public void SetPlayerPin_NullClearsExistingPin()
+    {
+        var player = _service.CreatePlayer("Anna", "", "", "");
+        _service.SetPlayerPin(player.Id, "1234");
+
+        _service.SetPlayerPin(player.Id, null);
+
+        Assert.False(_service.PlayerHasPin(player.Id));
+    }
+
+    [Fact]
+    public void PlayerHasPin_FalseByDefault()
+    {
+        var player = _service.CreatePlayer("Anna", "", "", "");
+        Assert.False(_service.PlayerHasPin(player.Id));
+    }
 }

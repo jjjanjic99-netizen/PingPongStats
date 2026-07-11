@@ -75,6 +75,26 @@
                     </StackPanel>
                 </Grid>
 
+                <Grid Margin="0,0,0,8">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="16" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+                    <StackPanel Grid.Column="0">
+                        <TextBlock Text="PIN ist aktuell gesetzt." Style="{StaticResource StatLabelText}" Margin="0,0,0,4"
+                                   Visibility="{Binding EditPlayerHasPin, Converter={StaticResource BoolToVisibilityConverter}}" />
+                        <TextBlock Text="Neuer PIN (4 Ziffern, optional)" Style="{StaticResource StatLabelText}" Margin="0,0,0,4" />
+                        <TextBox Text="{Binding EditPinInput, UpdateSourceTrigger=PropertyChanged}" MaxLength="4" Width="100" HorizontalAlignment="Left" />
+                        <TextBlock Text="Login ohne PIN möglich, solange keiner gesetzt ist. PIN leer lassen, um den bestehenden PIN zu behalten."
+                                   Style="{StaticResource StatLabelText}" TextWrapping="Wrap" Margin="0,4,0,0" MaxWidth="320" />
+                    </StackPanel>
+                    <StackPanel Grid.Column="2" VerticalAlignment="Bottom">
+                        <CheckBox Content="Bestehenden PIN entfernen" IsChecked="{Binding EditRemovePin}"
+                                  Visibility="{Binding EditPlayerHasPin, Converter={StaticResource BoolToVisibilityConverter}}" />
+                    </StackPanel>
+                </Grid>
+
                 <TextBlock Text="{Binding EditErrorMessage}" Foreground="{DynamicResource Brush.Danger}"
                            Margin="0,4,0,8" TextWrapping="Wrap"
                            Visibility="{Binding EditErrorMessage, Converter={StaticResource StringToVisibilityConverter}}" />

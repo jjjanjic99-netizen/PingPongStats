@@ -180,4 +180,48 @@ public class StatsServiceTests
         Assert.True(StatsService.IsLowSampleSize(2));
         Assert.False(StatsService.IsLowSampleSize(3));
     }
+
+    [Fact]
+    public void GetLongestLossStreak_FindsLongestHistoricalRun()
+    {
+        var p1 = Guid.NewGuid();
+        var p2 = Guid.NewGuid();
+        var matches = new List<Match>
+        {
+            M(new DateTime(2026, 1, 1), p1, p2, 0, 3), // L
+            M(new DateTime(2026, 1, 2), p1, p2, 3, 0), // W - breaks streak
+            M(new DateTime(2026, 1, 3), p1, p2, 0, 3), // L
+            M(new DateTime(2026, 1, 4), p1, p2, 0, 3), // L
+            M(new DateTime(2026, 1, 5), p1, p2, 0, 3), // L (longest run: 3)
+            M(new DateTime(2026, 1, 6), p1, p2, 3, 0), // W
+        };
+
+        Assert.Equal(3, StatsService.GetLongestLossStreak(matches, p1));
+    }
+
+    [Fact]
+    public void GetLongestLossStreak_ReturnsZeroForPlayerWithoutMatches()
+    {
+        Assert.Equal(0, StatsService.GetLongestLossStreak(new List<Match>(), Guid.NewGuid()));
+    }
+
+    [Fact]
+    public void GetSetDifference_SumsSetsWonMinusSetsLostAcrossBothSides()
+    {
+        var p1 = Guid.NewGuid();
+        var p2 = Guid.NewGuid();
+        var matches = new List<Match>
+        {
+            M(new DateTime(2026, 1, 1), p1, p2, 3, 1), // +2 as side A
+            M(new DateTime(2026, 1, 2), p2, p1, 3, 2), // p1 won 2, lost 3 as side B => -1
+        };
+
+        Assert.Equal(1, StatsService.GetSetDifference(matches, p1));
+    }
+
+    [Fact]
+    public void GetSetDifference_ReturnsZeroForPlayerWithoutMatches()
+    {
+        Assert.Equal(0, StatsService.GetSetDifference(new List<Match>(), Guid.NewGuid()));
+    }
 }
