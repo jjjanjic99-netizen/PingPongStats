@@ -30,6 +30,15 @@ public partial class DashboardViewModel : ObservableObject
     [ObservableProperty] private string playerOfTheWeekRecordLabel = string.Empty;
     [ObservableProperty] private string playerOfTheWeekScoreLabel = string.Empty;
 
+    /// <summary>"Bestes Comeback": respects RangeFilter like the ranking table below,
+    /// unlike Player of the Week which is always a fixed 7-day window.</summary>
+    [ObservableProperty] private bool hasBestComeback;
+    [ObservableProperty] private Player? comebackWinner;
+    [ObservableProperty] private string comebackOpponentName = string.Empty;
+    [ObservableProperty] private string comebackSetProgressionLabel = string.Empty;
+    [ObservableProperty] private string comebackDateLabel = string.Empty;
+    [ObservableProperty] private string comebackValueLabel = string.Empty;
+
     /// <summary>Shared with DoublesViewModel so changing the time range on either
     /// dashboard page keeps both in sync.</summary>
     public DashboardRangeFilter RangeFilter { get; }
@@ -148,6 +157,27 @@ public partial class DashboardViewModel : ObservableObject
             PlayerOfTheWeek = null;
             PlayerOfTheWeekRecordLabel = string.Empty;
             PlayerOfTheWeekScoreLabel = string.Empty;
+        }
+
+        var comeback = ComebackService.FindBestComeback(matchesInRange);
+        HasBestComeback = comeback is not null;
+        if (comeback is not null)
+        {
+            ComebackWinner = playersById.GetValueOrDefault(comeback.WinnerId);
+            ComebackOpponentName = playersById.GetValueOrDefault(comeback.LoserId)?.DisplayName ?? "?";
+            ComebackDateLabel = comeback.PlayedAt.ToString("dd.MM.yyyy");
+            ComebackValueLabel = $"Aufgeholter Rückstand: {comeback.ComebackValue} Sätze";
+            ComebackSetProgressionLabel = string.Join("  ", comeback.SetResults.Select(s => comeback.WinnerIsPlayerA
+                ? $"{s.PointsA}:{s.PointsB}"
+                : $"{s.PointsB}:{s.PointsA}"));
+        }
+        else
+        {
+            ComebackWinner = null;
+            ComebackOpponentName = string.Empty;
+            ComebackDateLabel = string.Empty;
+            ComebackValueLabel = string.Empty;
+            ComebackSetProgressionLabel = string.Empty;
         }
     }
 }

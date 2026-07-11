@@ -36,6 +36,33 @@
                        Style="{StaticResource StatLabelText}" TextWrapping="Wrap" />
         </Border>
 
+        <Border Style="{StaticResource CardBorder}" Margin="0,0,0,16"
+                Visibility="{Binding HasBestComeback, Converter={StaticResource BoolToVisibilityConverter}}">
+            <StackPanel>
+                <TextBlock Text="BESTES COMEBACK" Style="{StaticResource StatLabelText}" Margin="0,0,0,8" />
+                <StackPanel Orientation="Horizontal">
+                    <controls:AvatarControl Player="{Binding ComebackWinner}" DataPath="{Binding DataPath}" Size="M" />
+                    <StackPanel VerticalAlignment="Center" Margin="12,0,0,0">
+                        <TextBlock>
+                            <Run Text="{Binding ComebackWinner.DisplayName, Mode=OneWay}" FontWeight="SemiBold" />
+                            <Run Text=" gegen " />
+                            <Run Text="{Binding ComebackOpponentName, Mode=OneWay}" />
+                        </TextBlock>
+                        <TextBlock Text="{Binding ComebackSetProgressionLabel}" Style="{StaticResource StatLabelText}" Margin="0,4,0,0" />
+                        <StackPanel Orientation="Horizontal" Margin="0,4,0,0">
+                            <TextBlock Text="{Binding ComebackValueLabel}" Style="{StaticResource StatLabelText}" Margin="0,0,16,0" />
+                            <TextBlock Text="{Binding ComebackDateLabel}" Style="{StaticResource StatLabelText}" />
+                        </StackPanel>
+                    </StackPanel>
+                </StackPanel>
+            </StackPanel>
+        </Border>
+        <Border Style="{StaticResource CardBorder}" Margin="0,0,0,16"
+                Visibility="{Binding HasBestComeback, Converter={StaticResource InverseBoolToVisibilityConverter}}">
+            <TextBlock Text="Bestes Comeback: keine Spiele mit Satzdetails und mindestens 2 Sätzen Rückstand im gewählten Zeitraum."
+                       Style="{StaticResource StatLabelText}" TextWrapping="Wrap" />
+        </Border>
+
         <UniformGrid Rows="1" Columns="6" Margin="0,0,0,16">
             <Border Style="{StaticResource CardBorder}" Margin="0,0,8,0">
                 <StackPanel>
