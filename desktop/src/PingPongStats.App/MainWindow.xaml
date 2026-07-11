@@ -39,6 +39,7 @@
         </DataTemplate>
     </Window.Resources>
 
+    <Grid>
     <Grid x:Name="RootScaleHost">
         <Grid.LayoutTransform>
             <ScaleTransform x:Name="RootScaleTransform" ScaleX="1" ScaleY="1" />
@@ -106,5 +107,53 @@
                 <ContentControl Content="{Binding CurrentViewModel}" />
             </ScrollViewer>
         </Grid>
+    </Grid>
+
+    <!-- Phase 6 win/confetti overlay: sits above everything else in this outer
+         Grid, dismissible by clicking anywhere, auto-hidden after ~3s by
+         MainViewModel.IsWinAnimationVisible. -->
+    <Border x:Name="WinAnimationOverlay" Background="#CC0F172A"
+            Visibility="{Binding IsWinAnimationVisible, Converter={StaticResource BoolToVisibilityConverter}}"
+            IsVisibleChanged="OnWinAnimationOverlayIsVisibleChanged"
+            MouseLeftButtonDown="OnWinAnimationOverlayClick">
+        <Grid>
+            <Canvas x:Name="ConfettiCanvas" IsHitTestVisible="False" ClipToBounds="True" />
+
+            <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
+                <StackPanel HorizontalAlignment="Center"
+                            Visibility="{Binding WinAnimationIsDoubles, Converter={StaticResource InverseBoolToVisibilityConverter}}">
+                    <controls:AvatarControl Player="{Binding WinAnimationPlayer1}" DataPath="{Binding Dashboard.DataPath}"
+                                             Size="L" HorizontalAlignment="Center" />
+                    <TextBlock Text="{Binding WinAnimationPlayer1.DisplayName}" FontSize="24" FontWeight="Bold"
+                               Foreground="White" HorizontalAlignment="Center" Margin="0,16,0,0" />
+                </StackPanel>
+
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Center"
+                            Visibility="{Binding WinAnimationIsDoubles, Converter={StaticResource BoolToVisibilityConverter}}">
+                    <StackPanel Margin="0,0,24,0">
+                        <controls:AvatarControl Player="{Binding WinAnimationPlayer1}" DataPath="{Binding Dashboard.DataPath}"
+                                                 Size="L" HorizontalAlignment="Center" />
+                        <TextBlock Text="{Binding WinAnimationPlayer1.DisplayName}" FontSize="18" FontWeight="Bold"
+                                   Foreground="White" HorizontalAlignment="Center" Margin="0,12,0,0" />
+                    </StackPanel>
+                    <StackPanel>
+                        <controls:AvatarControl Player="{Binding WinAnimationPlayer2}" DataPath="{Binding Dashboard.DataPath}"
+                                                 Size="L" HorizontalAlignment="Center" />
+                        <TextBlock Text="{Binding WinAnimationPlayer2.DisplayName}" FontSize="18" FontWeight="Bold"
+                                   Foreground="White" HorizontalAlignment="Center" Margin="0,12,0,0" />
+                    </StackPanel>
+                </StackPanel>
+
+                <TextBlock Text="{Binding WinAnimationScoreLabel}" FontSize="32" FontWeight="Bold"
+                           Foreground="White" HorizontalAlignment="Center" Margin="0,16,0,0" />
+
+                <Border Background="{DynamicResource Brush.Accent}" CornerRadius="6" Padding="16,6" Margin="0,16,0,0"
+                        HorizontalAlignment="Center"
+                        Visibility="{Binding WinAnimationIsComeback, Converter={StaticResource BoolToVisibilityConverter}}">
+                    <TextBlock Text="COMEBACK!" FontSize="18" FontWeight="Bold" Foreground="{DynamicResource Brush.AccentText}" />
+                </Border>
+            </StackPanel>
+        </Grid>
+    </Border>
     </Grid>
 </Window>

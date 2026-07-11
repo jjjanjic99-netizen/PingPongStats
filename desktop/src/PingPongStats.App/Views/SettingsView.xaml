@@ -30,7 +30,9 @@
                 <TextBlock Text="Ansichtsgrösse" Style="{StaticResource StatLabelText}" Margin="0,0,0,4" />
                 <ComboBox Width="160" HorizontalAlignment="Left"
                           ItemsSource="{Binding UiScaleOptions}" DisplayMemberPath="Label" SelectedValuePath="Value"
-                          SelectedValue="{Binding SelectedUiScale}" />
+                          SelectedValue="{Binding SelectedUiScale}" Margin="0,0,0,12" />
+
+                <CheckBox Content="Gewinn-Animation nach dem Speichern anzeigen" IsChecked="{Binding ShowWinAnimation}" />
             </StackPanel>
         </Border>
 

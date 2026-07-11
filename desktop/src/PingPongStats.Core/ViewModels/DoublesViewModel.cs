@@ -58,6 +58,10 @@ public partial class DoublesViewModel : ObservableObject
     public IRelayCommand AddSetCommand { get; }
     public IRelayCommand<SetResultEntryViewModel> RemoveSetCommand { get; }
 
+    /// <summary>Raised after a successful save, so MainViewModel can show the win
+    /// animation overlay.</summary>
+    public event Action<MatchSavedInfo>? MatchSaved;
+
     public DoublesViewModel(
         PingPongDataService dataService, NotificationService notifications, DashboardRangeFilter rangeFilter)
     {
@@ -201,11 +205,20 @@ public partial class DoublesViewModel : ObservableObject
 
         try
         {
-            _dataService.CreateDoubleMatch(
+            var savedMatch = _dataService.CreateDoubleMatch(
                 playedAt, TeamAPlayer1.Id, TeamAPlayer2.Id, TeamBPlayer1.Id, TeamBPlayer2.Id,
                 TeamASets, TeamBSets, Notes, setResults);
 
             _notifications.NotifySuccess("Doppel-Spiel wurde erfasst.");
+
+            var teamAWon = savedMatch.WinningTeam == "A";
+            var winnerId1 = teamAWon ? savedMatch.TeamAPlayer1Id : savedMatch.TeamBPlayer1Id;
+            var winnerId2 = teamAWon ? savedMatch.TeamAPlayer2Id : savedMatch.TeamBPlayer2Id;
+            var winnerSets = teamAWon ? savedMatch.TeamASets : savedMatch.TeamBSets;
+            var loserSets = teamAWon ? savedMatch.TeamBSets : savedMatch.TeamASets;
+            MatchSaved?.Invoke(new MatchSavedInfo(
+                IsDoubles: true, winnerId1, winnerId2, $"{winnerSets}:{loserSets}", ComebackService.IsComebackDoubles(savedMatch)));
+
             IsFormOpen = false;
             Load();
         }

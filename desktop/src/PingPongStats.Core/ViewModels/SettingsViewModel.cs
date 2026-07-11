@@ -29,6 +29,7 @@ public partial class SettingsViewModel : ObservableObject
     [ObservableProperty] private string currentDataPath = string.Empty;
     [ObservableProperty] private bool darkMode;
     [ObservableProperty] private string selectedUiScale = "Medium";
+    [ObservableProperty] private bool showWinAnimation = true;
 
     public IRelayCommand ChangeDataPathCommand { get; }
     public IRelayCommand ReloadCommand { get; }
@@ -68,6 +69,7 @@ public partial class SettingsViewModel : ObservableObject
         CurrentDataPath = settings.DataPath;
         DarkMode = settings.DarkMode;
         SelectedUiScale = string.IsNullOrWhiteSpace(settings.UiScale) ? "Medium" : settings.UiScale;
+        ShowWinAnimation = settings.ShowWinAnimation;
 
         ChangeDataPathCommand = new RelayCommand(ChangeDataPath);
         ReloadCommand = new RelayCommand(Reload);
@@ -90,6 +92,13 @@ public partial class SettingsViewModel : ObservableObject
     {
         var settings = _settingsRepository.Load();
         settings.UiScale = value;
+        _settingsRepository.Save(settings);
+    }
+
+    partial void OnShowWinAnimationChanged(bool value)
+    {
+        var settings = _settingsRepository.Load();
+        settings.ShowWinAnimation = value;
         _settingsRepository.Save(settings);
     }
 

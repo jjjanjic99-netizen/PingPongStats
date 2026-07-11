@@ -23,12 +23,22 @@ public partial class MainViewModel : ObservableObject
     private readonly IAvatarImageService _avatarImageService;
     private readonly SynchronizationContext? _uiContext;
     private System.Threading.Timer? _statusClearTimer;
+    private System.Threading.Timer? _winAnimationTimer;
 
     [ObservableProperty] private ObservableObject? currentViewModel;
     [ObservableProperty] private string statusMessage = string.Empty;
     [ObservableProperty] private bool isErrorStatus;
     [ObservableProperty] private string activeSection = "Dashboard";
     [ObservableProperty] private Player? currentPlayer;
+
+    /// <summary>Phase 6 win/confetti overlay state, shown for ~3s after a
+    /// successful match save (singles or doubles) when enabled in Settings.</summary>
+    [ObservableProperty] private bool isWinAnimationVisible;
+    [ObservableProperty] private bool winAnimationIsDoubles;
+    [ObservableProperty] private Player? winAnimationPlayer1;
+    [ObservableProperty] private Player? winAnimationPlayer2;
+    [ObservableProperty] private string winAnimationScoreLabel = string.Empty;
+    [ObservableProperty] private bool winAnimationIsComeback;
 
     public DashboardRangeFilter RangeFilter { get; private set; } = null!;
     public DashboardViewModel Dashboard { get; }
@@ -52,6 +62,7 @@ public partial class MainViewModel : ObservableObject
     public IRelayCommand ShowLoginCommand { get; }
     public IRelayCommand ShowProfileCommand { get; }
     public IRelayCommand LogoutCommand { get; }
+    public IRelayCommand DismissWinAnimationCommand { get; }
 
     public MainViewModel(
         PingPongDataService dataService,
@@ -79,6 +90,7 @@ public partial class MainViewModel : ObservableObject
         Matches = new MatchesViewModel(_dataService, _notifications);
         Matches.EditRequested += OnEditMatchRequested;
         Doubles = new DoublesViewModel(_dataService, _notifications, RangeFilter);
+        Doubles.MatchSaved += OnMatchSaved;
         HeadToHead = new HeadToHeadViewModel(_dataService);
         Settings = new SettingsViewModel(
             _dataService, _settingsRepository, _dataPathService, _notifications,
@@ -99,6 +111,7 @@ public partial class MainViewModel : ObservableObject
             if (Profile is not null) Navigate("Mein Profil", Profile, () => Profile.Load());
         });
         LogoutCommand = new RelayCommand(Logout);
+        DismissWinAnimationCommand = new RelayCommand(DismissWinAnimation);
 
         CurrentViewModel = Dashboard;
     }
@@ -114,6 +127,7 @@ public partial class MainViewModel : ObservableObject
     {
         var editVm = new MatchEditViewModel(_dataService, _notifications);
         editVm.Finished += () => Navigate("Spiele", Matches, () => Matches.Load());
+        editVm.MatchSaved += OnMatchSaved;
         ActiveSection = "Neues Spiel";
         CurrentViewModel = editVm;
     }
@@ -122,8 +136,34 @@ public partial class MainViewModel : ObservableObject
     {
         var editVm = new MatchEditViewModel(_dataService, _notifications, matchId);
         editVm.Finished += () => Navigate("Spiele", Matches, () => Matches.Load());
+        editVm.MatchSaved += OnMatchSaved;
         ActiveSection = "Spiel bearbeiten";
         CurrentViewModel = editVm;
+    }
+
+    private void OnMatchSaved(MatchSavedInfo info)
+    {
+        if (!_settingsRepository.Load().ShowWinAnimation) return;
+
+        WinAnimationIsDoubles = info.IsDoubles;
+        WinAnimationPlayer1 = _dataService.Players.FirstOrDefault(p => p.Id == info.WinnerId1);
+        WinAnimationPlayer2 = info.WinnerId2 is Guid id2 ? _dataService.Players.FirstOrDefault(p => p.Id == id2) : null;
+        WinAnimationScoreLabel = info.ScoreLabel;
+        WinAnimationIsComeback = info.IsComeback;
+        IsWinAnimationVisible = true;
+
+        _winAnimationTimer?.Dispose();
+        _winAnimationTimer = new System.Threading.Timer(_ =>
+        {
+            if (_uiContext is not null) _uiContext.Post(_ => IsWinAnimationVisible = false, null);
+            else IsWinAnimationVisible = false;
+        }, null, TimeSpan.FromSeconds(3), Timeout.InfiniteTimeSpan);
+    }
+
+    private void DismissWinAnimation()
+    {
+        _winAnimationTimer?.Dispose();
+        IsWinAnimationVisible = false;
     }
 
     partial void OnCurrentPlayerChanged(Player? value) => OnPropertyChanged(nameof(IsLoggedIn));

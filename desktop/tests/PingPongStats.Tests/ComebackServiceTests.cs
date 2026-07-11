@@ -141,4 +141,88 @@ public class ComebackServiceTests
     {
         Assert.Null(ComebackService.FindBestComeback(new List<Match>()));
     }
+
+    [Fact]
+    public void IsComeback_TrueWhenDeficitReachesTwo()
+    {
+        var p1 = Guid.NewGuid();
+        var p2 = Guid.NewGuid();
+        var match = WithSets(
+            M(new DateTime(2026, 1, 1), p1, p2, 3, 2),
+            (5, 11), (5, 11), (11, 5), (11, 5), (11, 5));
+
+        Assert.True(ComebackService.IsComeback(match));
+    }
+
+    [Fact]
+    public void IsComeback_FalseWhenDeficitNeverReachesTwo()
+    {
+        var p1 = Guid.NewGuid();
+        var p2 = Guid.NewGuid();
+        var match = WithSets(
+            M(new DateTime(2026, 1, 1), p1, p2, 3, 1),
+            (11, 5), (5, 11), (11, 5), (11, 5));
+
+        Assert.False(ComebackService.IsComeback(match));
+    }
+
+    [Fact]
+    public void IsComeback_FalseWithoutSetData()
+    {
+        var p1 = Guid.NewGuid();
+        var p2 = Guid.NewGuid();
+        var match = M(new DateTime(2026, 1, 1), p1, p2, 3, 0);
+
+        Assert.False(ComebackService.IsComeback(match));
+    }
+
+    [Fact]
+    public void IsComebackDoubles_TrueWhenDeficitReachesTwo()
+    {
+        var a1 = Guid.NewGuid();
+        var a2 = Guid.NewGuid();
+        var b1 = Guid.NewGuid();
+        var b2 = Guid.NewGuid();
+        var match = new DoubleMatch
+        {
+            Id = Guid.NewGuid(),
+            PlayedAt = new DateTime(2026, 1, 1),
+            TeamAPlayer1Id = a1,
+            TeamAPlayer2Id = a2,
+            TeamBPlayer1Id = b1,
+            TeamBPlayer2Id = b2,
+            TeamASets = 3,
+            TeamBSets = 2,
+            WinningTeam = "A",
+            SetResults = new List<SetResult>
+            {
+                new() { SetNumber = 1, PointsA = 5, PointsB = 11 },
+                new() { SetNumber = 2, PointsA = 5, PointsB = 11 },
+                new() { SetNumber = 3, PointsA = 11, PointsB = 5 },
+                new() { SetNumber = 4, PointsA = 11, PointsB = 5 },
+                new() { SetNumber = 5, PointsA = 11, PointsB = 5 },
+            },
+        };
+
+        Assert.True(ComebackService.IsComebackDoubles(match));
+    }
+
+    [Fact]
+    public void IsComebackDoubles_FalseWithoutSetData()
+    {
+        var match = new DoubleMatch
+        {
+            Id = Guid.NewGuid(),
+            PlayedAt = new DateTime(2026, 1, 1),
+            TeamAPlayer1Id = Guid.NewGuid(),
+            TeamAPlayer2Id = Guid.NewGuid(),
+            TeamBPlayer1Id = Guid.NewGuid(),
+            TeamBPlayer2Id = Guid.NewGuid(),
+            TeamASets = 3,
+            TeamBSets = 0,
+            WinningTeam = "A",
+        };
+
+        Assert.False(ComebackService.IsComebackDoubles(match));
+    }
 }

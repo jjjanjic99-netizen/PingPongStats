@@ -52,6 +52,10 @@ public partial class MatchEditViewModel : ObservableObject
     /// hosting navigation can return to the matches list.</summary>
     public event Action? Finished;
 
+    /// <summary>Raised after a successful save (create or update), so MainViewModel
+    /// can show the win animation overlay.</summary>
+    public event Action<MatchSavedInfo>? MatchSaved;
+
     public MatchEditViewModel(PingPongDataService dataService, NotificationService notifications, Guid? matchIdToEdit = null)
     {
         _dataService = dataService;
@@ -166,16 +170,24 @@ public partial class MatchEditViewModel : ObservableObject
 
         try
         {
+            Match savedMatch;
             if (_editingMatchId is Guid id)
             {
                 _dataService.UpdateMatch(id, playedAt, PlayerA.Id, PlayerB.Id, PlayerASets, PlayerBSets, Notes, setResults);
+                savedMatch = _dataService.Matches.First(m => m.Id == id);
                 _notifications.NotifySuccess("Spiel wurde aktualisiert.");
             }
             else
             {
-                _dataService.CreateMatch(playedAt, PlayerA.Id, PlayerB.Id, PlayerASets, PlayerBSets, Notes, setResults);
+                savedMatch = _dataService.CreateMatch(playedAt, PlayerA.Id, PlayerB.Id, PlayerASets, PlayerBSets, Notes, setResults);
                 _notifications.NotifySuccess("Spiel wurde erfasst.");
             }
+
+            var winnerIsPlayerA = savedMatch.WinnerId == savedMatch.PlayerAId;
+            var winnerSets = winnerIsPlayerA ? savedMatch.PlayerASets : savedMatch.PlayerBSets;
+            var loserSets = winnerIsPlayerA ? savedMatch.PlayerBSets : savedMatch.PlayerASets;
+            MatchSaved?.Invoke(new MatchSavedInfo(
+                IsDoubles: false, savedMatch.WinnerId, null, $"{winnerSets}:{loserSets}", ComebackService.IsComeback(savedMatch)));
 
             Finished?.Invoke();
         }

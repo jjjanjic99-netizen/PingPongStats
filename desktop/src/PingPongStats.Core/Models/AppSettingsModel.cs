@@ -13,4 +13,8 @@ public class AppSettingsModel
     /// <summary>One of "Small", "Medium", "Large". Controls the app-wide UI scale
     /// (see PingPongStats.App.UiScaleManager). Defaults to "Medium".</summary>
     public string UiScale { get; set; } = "Medium";
+
+    /// <summary>Whether to show the fullscreen confetti/win overlay after saving a
+    /// match. Defaults to on.</summary>
+    public bool ShowWinAnimation { get; set; } = true;
 }

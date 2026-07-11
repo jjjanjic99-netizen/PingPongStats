@@ -38,30 +38,18 @@ public static class ComebackService
 
             var winnerId = match.WinnerId;
             var loserId = winnerId == match.PlayerAId ? match.PlayerBId : match.PlayerAId;
+            var winnerIsPlayerA = winnerId == match.PlayerAId;
 
             var orderedSets = match.SetResults.OrderBy(s => s.SetNumber).ToList();
-            var winnerSetsWon = 0;
-            var loserSetsWon = 0;
-            var maxDeficit = 0;
-
-            foreach (var set in orderedSets)
-            {
-                var winnerWonThisSet = winnerId == match.PlayerAId ? set.PointsA > set.PointsB : set.PointsB > set.PointsA;
-                if (winnerWonThisSet) winnerSetsWon++;
-                else loserSetsWon++;
-
-                var deficit = loserSetsWon - winnerSetsWon;
-                if (deficit > maxDeficit) maxDeficit = deficit;
-            }
-
+            var maxDeficit = ComputeMaxDeficit(orderedSets, winnerIsPlayerA);
             if (maxDeficit < MinDeficitForComeback) continue;
 
-            var winnerFinalSets = match.PlayerAId == winnerId ? match.PlayerASets : match.PlayerBSets;
-            var loserFinalSets = match.PlayerAId == winnerId ? match.PlayerBSets : match.PlayerASets;
+            var winnerFinalSets = winnerIsPlayerA ? match.PlayerASets : match.PlayerBSets;
+            var loserFinalSets = winnerIsPlayerA ? match.PlayerBSets : match.PlayerASets;
 
             candidates.Add(new ComebackResult(
                 match.Id, winnerId, loserId, maxDeficit, winnerFinalSets, loserFinalSets, match.PlayedAt, orderedSets,
-                WinnerIsPlayerA: winnerId == match.PlayerAId));
+                winnerIsPlayerA));
         }
 
         if (candidates.Count == 0) return null;
@@ -70,5 +58,42 @@ public static class ComebackService
             .OrderByDescending(c => c.ComebackValue)
             .ThenBy(c => c.WinnerFinalSets - c.LoserFinalSets)
             .First();
+    }
+
+    /// <summary>Whether this specific singles match was a comeback (false, never
+    /// guessed, if it has no set-by-set detail). Used right after saving a match to
+    /// decide whether to show the "COMEBACK!" badge on the win animation.</summary>
+    public static bool IsComeback(Match match)
+    {
+        if (match.SetResults.Count == 0) return false;
+        var winnerIsPlayerA = match.WinnerId == match.PlayerAId;
+        return ComputeMaxDeficit(match.SetResults, winnerIsPlayerA) >= MinDeficitForComeback;
+    }
+
+    /// <summary>Doubles equivalent of <see cref="IsComeback"/>.</summary>
+    public static bool IsComebackDoubles(DoubleMatch match)
+    {
+        if (match.SetResults.Count == 0) return false;
+        var winnerIsTeamA = match.WinningTeam == "A";
+        return ComputeMaxDeficit(match.SetResults, winnerIsTeamA) >= MinDeficitForComeback;
+    }
+
+    private static int ComputeMaxDeficit(IEnumerable<SetResult> setResults, bool winnerIsSideA)
+    {
+        var maxDeficit = 0;
+        var winnerSetsWon = 0;
+        var loserSetsWon = 0;
+
+        foreach (var set in setResults.OrderBy(s => s.SetNumber))
+        {
+            var winnerWonThisSet = winnerIsSideA ? set.PointsA > set.PointsB : set.PointsB > set.PointsA;
+            if (winnerWonThisSet) winnerSetsWon++;
+            else loserSetsWon++;
+
+            var deficit = loserSetsWon - winnerSetsWon;
+            if (deficit > maxDeficit) maxDeficit = deficit;
+        }
+
+        return maxDeficit;
     }
 }
