@@ -226,4 +226,17 @@ public static class StatsService
             .ThenByDescending(o => o.Played)
             .FirstOrDefault();
     }
+
+    /// <summary>The player's most frequent opponents (singles only), most games
+    /// first, used for the "Bilanz-Countdown" on the profile page. Ties broken by
+    /// win rate, then by opponent id for a fully deterministic order.</summary>
+    public static List<OpponentWinRate> GetMostFrequentOpponents(IEnumerable<Match> matches, Guid playerId, int topN = 3)
+    {
+        return GetOpponentWinRates(matches, playerId)
+            .OrderByDescending(o => o.Played)
+            .ThenByDescending(o => o.WinRatePct)
+            .ThenBy(o => o.OpponentId)
+            .Take(topN)
+            .ToList();
+    }
 }

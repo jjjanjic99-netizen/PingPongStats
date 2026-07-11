@@ -130,6 +130,22 @@
             </Border>
         </Grid>
 
+        <Border Style="{StaticResource CardBorder}" Margin="0,0,0,16">
+            <StackPanel>
+                <TextBlock Text="Bilanz-Countdown" Style="{StaticResource SectionLabelText}" Margin="0,0,0,8" />
+                <TextBlock Text="Noch keine Gegner mit genügend Spielen." Style="{StaticResource StatLabelText}"
+                           Visibility="{Binding HasBalanceCountdowns, Converter={StaticResource InverseBoolToVisibilityConverter}}" />
+                <ItemsControl ItemsSource="{Binding BalanceCountdowns}"
+                              Visibility="{Binding HasBalanceCountdowns, Converter={StaticResource BoolToVisibilityConverter}}">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <TextBlock Text="{Binding StatusLabel}" Margin="0,0,0,4" />
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </StackPanel>
+        </Border>
+
         <Border Style="{StaticResource CardBorder}">
             <StackPanel>
                 <TextBlock Text="Elo-Verlauf" Style="{StaticResource SectionLabelText}" Margin="0,0,0,12" />

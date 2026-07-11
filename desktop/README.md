@@ -53,7 +53,7 @@ ist keine Einschränkung dieses Projekts, sondern eine generelle Grenze von
 Um trotzdem maximale Qualität zu liefern, wurde deshalb wie folgt vorgegangen:
 
 - **`PingPongStats.Core` und `PingPongStats.Tests` wurden in dieser Session
-  vollständig gebaut, alle 154 Unit-Tests laufen grün** (`dotnet test`).
+  vollständig gebaut, alle 168 Unit-Tests laufen grün** (`dotnet test`).
 - **`PingPongStats.App` (WPF) konnte nicht kompiliert werden.** Der Code wurde
   daher besonders sorgfältig von Hand geschrieben und zusätzlich statisch
   geprüft: alle XAML-Dateien sind wohlgeformtes XML, alle `x:Class`-Werte
@@ -131,9 +131,12 @@ optionalen Felder (Migration), Datenpfad-Bootstrap, die zentrale
 Mindest-Spiele-Schwelle), Player of the Week (Score-Formel, 7-Tage-Fenster,
 Einzel+Doppel-Kombination, alle Tiebreak-Stufen), Bestes Comeback
 (Mindest-Rückstand, maximaler Rückstand, Tiebreak, "keine Satzdaten"-Fall),
-alle Badge-Regeln (exakte Schwellwerte, Grenzfälle, Gleichstände) sowie
+alle Badge-Regeln (exakte Schwellwerte, Grenzfälle, Gleichstände),
 Trash-Talk-Sprüche (Kategorie-Priorität, "Kategorie fehlt"-Fall, Seeding/
-Nicht-Überschreiben von `quotes.xml`).
+Nicht-Überschreiben von `quotes.xml`), die Elo-Prognoseformel (inkl.
+Symmetrie und Team-Elo-Durchschnitt), Rivalität des Monats (Zeitfenster,
+Mindest-Spiele, Tiebreak) sowie die häufigsten-Gegner-Ermittlung fürs
+Bilanz-Countdown.
 
 ## Anwendung starten (Entwicklung)
 
@@ -409,6 +412,25 @@ Gültige `Category`-Werte: `CleanSweep`, `KnapperSieg`, `Comeback`,
 `DoppelSieg`, `UnderdogSieg`. Die Datei wird nur einmal (beim ersten Start
 bzw. beim ersten Zugriff auf einen neuen Datenpfad) mit den Standard-Sprüchen
 angelegt und danach nie mehr automatisch überschrieben.
+
+### Prognose, Rivalität des Monats, Bilanz-Countdown
+
+- **Prognose**: Sobald im Spiel-Erfassungsdialog (Einzel oder Doppel) alle
+  Spieler gewählt sind, wird die Elo-basierte Gewinnwahrscheinlichkeit
+  angezeigt - Standardformel `1 / (1 + 10^((EloB - EloA) / 400))`
+  (`EloPredictionService.ComputeWinProbability`). Bei Doppel wird pro Team
+  der Durchschnitt der beiden Spieler-Elos verwendet
+  (`ComputeTeamElo`) - ein separates Doppel-Elo gibt es nicht.
+- **Rivalität des Monats** (Dashboard-Karte, immer feste 30-Tage-Fensicht,
+  unabhängig vom 7/30/90-Tage/gesamt-Filter): die Einzel-Paarung mit den
+  meisten gemeinsamen Spielen in den letzten 30 Tagen, ab mindestens 3
+  Spielen; Tiebreak: knappere Bilanz (`RivalryService.FindRivalryOfTheMonth`).
+  Zeigt beide Avatare + Bilanz.
+- **Bilanz-Countdown** (Mein Profil): für die 3 häufigsten Gegner
+  (`StatsService.GetMostFrequentOpponents`) wird angezeigt, wie viele Siege
+  bis zur ausgeglichenen Bilanz fehlen ("Noch 2 Siege gegen Marco"); bei
+  bereits ausgeglichener oder positiver Bilanz erscheint stattdessen
+  "Ausgeglichen gegen ..." bzw. "Vorsprung: N gegen ...".
 
 ### Migration alter Daten
 

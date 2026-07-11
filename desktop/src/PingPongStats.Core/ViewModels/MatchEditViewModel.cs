@@ -31,6 +31,12 @@ public partial class MatchEditViewModel : ObservableObject
     [ObservableProperty] private string winnerSide = "A";
     [ObservableProperty] private string title = "Neues Spiel erfassen";
 
+    /// <summary>Elo-based pre-match win probability (Phase 9), shown once both
+    /// players are selected.</summary>
+    [ObservableProperty] private bool hasPrediction;
+    [ObservableProperty] private string predictionPlayerALabel = string.Empty;
+    [ObservableProperty] private string predictionPlayerBLabel = string.Empty;
+
     public ObservableCollection<Player> AvailablePlayers { get; } = new();
 
     /// <summary>Optional set-by-set score entry. Empty = no set detail recorded
@@ -93,6 +99,30 @@ public partial class MatchEditViewModel : ObservableObject
                 }
             }
         }
+    }
+
+    partial void OnPlayerAChanged(Player? value) => UpdatePrediction();
+
+    partial void OnPlayerBChanged(Player? value) => UpdatePrediction();
+
+    private void UpdatePrediction()
+    {
+        if (PlayerA is null || PlayerB is null || PlayerA.Id == PlayerB.Id)
+        {
+            HasPrediction = false;
+            PredictionPlayerALabel = string.Empty;
+            PredictionPlayerBLabel = string.Empty;
+            return;
+        }
+
+        var eloRatings = EloService.ComputeRatings(_dataService.Matches, _dataService.Players.Select(p => p.Id));
+        var eloA = eloRatings.GetValueOrDefault(PlayerA.Id, EloService.DefaultInitialRating);
+        var eloB = eloRatings.GetValueOrDefault(PlayerB.Id, EloService.DefaultInitialRating);
+        var probabilityAPercent = EloPredictionService.ComputeWinProbability(eloA, eloB) * 100;
+
+        HasPrediction = true;
+        PredictionPlayerALabel = $"{PlayerA.DisplayName}: {probabilityAPercent:F0}%";
+        PredictionPlayerBLabel = $"{PlayerB.DisplayName}: {100 - probabilityAPercent:F0}%";
     }
 
     private void AddSet()

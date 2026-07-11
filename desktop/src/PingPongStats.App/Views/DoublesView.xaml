@@ -92,6 +92,17 @@
                               SelectedItem="{Binding TeamBPlayer2}" />
                 </Grid>
 
+                <Border Style="{StaticResource CardBorder}" Margin="0,0,0,12" Padding="10"
+                        Visibility="{Binding HasPrediction, Converter={StaticResource BoolToVisibilityConverter}}">
+                    <StackPanel>
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="Prognose:" Style="{StaticResource StatLabelText}" VerticalAlignment="Center" Margin="0,0,8,0" />
+                            <TextBlock Text="{Binding PredictionTeamALabel}" VerticalAlignment="Center" />
+                        </StackPanel>
+                        <TextBlock Text="{Binding PredictionTeamBLabel}" Margin="0,4,0,0" />
+                    </StackPanel>
+                </Border>
+
                 <TextBlock Text="Gewinner (für Schnellauswahl)" Style="{StaticResource StatLabelText}" Margin="0,0,0,4" />
                 <StackPanel Orientation="Horizontal" Margin="0,0,0,12">
                     <RadioButton Content="Team A" GroupName="DoublesWinnerSide" Margin="0,0,16,0" VerticalAlignment="Center"

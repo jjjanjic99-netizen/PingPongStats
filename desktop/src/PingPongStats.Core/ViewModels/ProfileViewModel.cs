@@ -39,6 +39,9 @@ public partial class ProfileViewModel : ObservableObject
     public ObservableCollection<BadgeAward> Badges { get; } = new();
     public bool HasBadges => Badges.Count > 0;
 
+    public ObservableCollection<BalanceCountdownRow> BalanceCountdowns { get; } = new();
+    public bool HasBalanceCountdowns => BalanceCountdowns.Count > 0;
+
     public IRelayCommand RefreshCommand { get; }
 
     public ProfileViewModel(PingPongDataService dataService, ISettingsRepository settingsRepository, Guid playerId)
@@ -118,5 +121,18 @@ public partial class ProfileViewModel : ObservableObject
         Badges.Clear();
         foreach (var award in BadgeEngine.EvaluateForPlayer(_playerId, badgeContext)) Badges.Add(award);
         OnPropertyChanged(nameof(HasBadges));
+
+        BalanceCountdowns.Clear();
+        foreach (var opponent in StatsService.GetMostFrequentOpponents(matches, _playerId, topN: 3))
+        {
+            BalanceCountdowns.Add(new BalanceCountdownRow
+            {
+                OpponentDisplayName = playersById.GetValueOrDefault(opponent.OpponentId)?.DisplayName ?? "?",
+                Wins = opponent.Wins,
+                Losses = opponent.Losses,
+            });
+        }
+
+        OnPropertyChanged(nameof(HasBalanceCountdowns));
     }
 }

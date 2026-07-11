@@ -98,6 +98,22 @@ public record MatchSavedInfo(
 /// any chart math of its own (mirrors the ChartBarItem pattern used elsewhere).</summary>
 public record EloChartPoint(DateTime PlayedAt, double Rating, double NormalizedX, double NormalizedY);
 
+/// <summary>One row of the "Bilanz-Countdown" (Phase 9) on Mein Profil: how many
+/// more wins are needed to reach an even head-to-head record against this
+/// opponent, or - if already even or ahead - the current lead instead.</summary>
+public class BalanceCountdownRow
+{
+    public required string OpponentDisplayName { get; init; }
+    public required int Wins { get; init; }
+    public required int Losses { get; init; }
+
+    public string StatusLabel => Wins < Losses
+        ? $"Noch {Losses - Wins} Siege gegen {OpponentDisplayName}"
+        : Wins == Losses
+            ? $"Ausgeglichen gegen {OpponentDisplayName}"
+            : $"Vorsprung: {Wins - Losses} gegen {OpponentDisplayName}";
+}
+
 /// <summary>Ranking row for the Dashboard's player table.</summary>
 public class PlayerRankingRow
 {

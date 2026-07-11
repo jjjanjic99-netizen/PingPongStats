@@ -49,6 +49,12 @@ public partial class DoublesViewModel : ObservableObject
     [ObservableProperty] private string winnerSide = "A";
     [ObservableProperty] private string formErrorMessage = string.Empty;
 
+    /// <summary>Elo-based pre-match win probability (Phase 9): team Elo is the
+    /// average of both players' ratings. Shown once all four players are picked.</summary>
+    [ObservableProperty] private bool hasPrediction;
+    [ObservableProperty] private string predictionTeamALabel = string.Empty;
+    [ObservableProperty] private string predictionTeamBLabel = string.Empty;
+
     public IRelayCommand RefreshCommand { get; }
     public IRelayCommand NewMatchCommand { get; }
     public IRelayCommand CancelFormCommand { get; }
@@ -89,6 +95,35 @@ public partial class DoublesViewModel : ObservableObject
         {
             SetEntries[i].SetNumber = i + 1;
         }
+    }
+
+    partial void OnTeamAPlayer1Changed(Player? value) => UpdatePrediction();
+    partial void OnTeamAPlayer2Changed(Player? value) => UpdatePrediction();
+    partial void OnTeamBPlayer1Changed(Player? value) => UpdatePrediction();
+    partial void OnTeamBPlayer2Changed(Player? value) => UpdatePrediction();
+
+    private void UpdatePrediction()
+    {
+        if (TeamAPlayer1 is null || TeamAPlayer2 is null || TeamBPlayer1 is null || TeamBPlayer2 is null)
+        {
+            HasPrediction = false;
+            PredictionTeamALabel = string.Empty;
+            PredictionTeamBLabel = string.Empty;
+            return;
+        }
+
+        var eloRatings = EloService.ComputeRatings(_dataService.Matches, _dataService.Players.Select(p => p.Id));
+        var teamAElo = EloPredictionService.ComputeTeamElo(
+            eloRatings.GetValueOrDefault(TeamAPlayer1.Id, EloService.DefaultInitialRating),
+            eloRatings.GetValueOrDefault(TeamAPlayer2.Id, EloService.DefaultInitialRating));
+        var teamBElo = EloPredictionService.ComputeTeamElo(
+            eloRatings.GetValueOrDefault(TeamBPlayer1.Id, EloService.DefaultInitialRating),
+            eloRatings.GetValueOrDefault(TeamBPlayer2.Id, EloService.DefaultInitialRating));
+        var probabilityAPercent = EloPredictionService.ComputeWinProbability(teamAElo, teamBElo) * 100;
+
+        HasPrediction = true;
+        PredictionTeamALabel = $"{TeamAPlayer1.DisplayName} & {TeamAPlayer2.DisplayName}: {probabilityAPercent:F0}%";
+        PredictionTeamBLabel = $"{TeamBPlayer1.DisplayName} & {TeamBPlayer2.DisplayName}: {100 - probabilityAPercent:F0}%";
     }
 
     public void Load()

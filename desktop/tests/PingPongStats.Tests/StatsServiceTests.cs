@@ -369,4 +369,44 @@ public class StatsServiceTests
     {
         Assert.Empty(StatsService.GetOpponentWinRates(new List<Match>(), Guid.NewGuid()));
     }
+
+    [Fact]
+    public void GetMostFrequentOpponents_OrdersByGamesPlayedDescending()
+    {
+        var p1 = Guid.NewGuid();
+        var p2 = Guid.NewGuid(); // 3 games
+        var p3 = Guid.NewGuid(); // 1 game
+        var p4 = Guid.NewGuid(); // 2 games
+        var matches = new List<Match>
+        {
+            M(new DateTime(2026, 1, 1), p1, p2, 3, 0),
+            M(new DateTime(2026, 1, 2), p1, p2, 3, 0),
+            M(new DateTime(2026, 1, 3), p1, p2, 3, 0),
+            M(new DateTime(2026, 1, 4), p1, p3, 3, 0),
+            M(new DateTime(2026, 1, 5), p1, p4, 3, 0),
+            M(new DateTime(2026, 1, 6), p1, p4, 3, 0),
+        };
+
+        var result = StatsService.GetMostFrequentOpponents(matches, p1, topN: 3);
+
+        Assert.Equal(new[] { p2, p4, p3 }, result.Select(o => o.OpponentId));
+    }
+
+    [Fact]
+    public void GetMostFrequentOpponents_RespectsTopNLimit()
+    {
+        var p1 = Guid.NewGuid();
+        var opponents = Enumerable.Range(0, 5).Select(_ => Guid.NewGuid()).ToList();
+        var matches = opponents.Select((opp, i) => M(new DateTime(2026, 1, 1).AddDays(i), p1, opp, 3, 0)).ToList();
+
+        var result = StatsService.GetMostFrequentOpponents(matches, p1, topN: 3);
+
+        Assert.Equal(3, result.Count);
+    }
+
+    [Fact]
+    public void GetMostFrequentOpponents_ReturnsEmptyForPlayerWithoutMatches()
+    {
+        Assert.Empty(StatsService.GetMostFrequentOpponents(new List<Match>(), Guid.NewGuid()));
+    }
 }

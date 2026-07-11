@@ -40,6 +40,13 @@ public partial class DashboardViewModel : ObservableObject
     [ObservableProperty] private string comebackDateLabel = string.Empty;
     [ObservableProperty] private string comebackValueLabel = string.Empty;
 
+    /// <summary>"Rivalität des Monats": always a fixed 30-day window (Phase 9),
+    /// independent of RangeFilter, like Player of the Week's fixed 7-day window.</summary>
+    [ObservableProperty] private bool hasRivalryOfTheMonth;
+    [ObservableProperty] private Player? rivalryPlayer1;
+    [ObservableProperty] private Player? rivalryPlayer2;
+    [ObservableProperty] private string rivalryRecordLabel = string.Empty;
+
     /// <summary>Shared with DoublesViewModel so changing the time range on either
     /// dashboard page keeps both in sync.</summary>
     public DashboardRangeFilter RangeFilter { get; }
@@ -185,6 +192,23 @@ public partial class DashboardViewModel : ObservableObject
             ComebackDateLabel = string.Empty;
             ComebackValueLabel = string.Empty;
             ComebackSetProgressionLabel = string.Empty;
+        }
+
+        var rivalry = RivalryService.FindRivalryOfTheMonth(_dataService.Matches);
+        HasRivalryOfTheMonth = rivalry is not null;
+        if (rivalry is not null)
+        {
+            RivalryPlayer1 = playersById.GetValueOrDefault(rivalry.Player1Id);
+            RivalryPlayer2 = playersById.GetValueOrDefault(rivalry.Player2Id);
+            var name1 = RivalryPlayer1?.DisplayName ?? "?";
+            var name2 = RivalryPlayer2?.DisplayName ?? "?";
+            RivalryRecordLabel = $"{name1} {rivalry.Player1Wins}:{rivalry.Player2Wins} {name2} ({rivalry.TotalGames} Spiele)";
+        }
+        else
+        {
+            RivalryPlayer1 = null;
+            RivalryPlayer2 = null;
+            RivalryRecordLabel = string.Empty;
         }
     }
 }
