@@ -1,5 +1,6 @@
 using PingPongStats.Core.Models;
 using PingPongStats.Core.Services;
+using PingPongStats.Core.Services.Badges;
 
 namespace PingPongStats.Core.ViewModels;
 
@@ -23,6 +24,7 @@ public class PlayerRow
 {
     public required Player Player { get; init; }
     public required PlayerStatsSummary Stats { get; init; }
+    public List<BadgeAward> Badges { get; init; } = new();
 
     public Guid Id => Player.Id;
     public string DisplayName => Player.DisplayName;
@@ -36,6 +38,8 @@ public class PlayerRow
     public string WinRateLabel => $"{Stats.WinRatePct:F1}%";
     public string EloLabel => Stats.EloRating.ToString("F0");
     public bool LowSampleSize => Stats.LowSampleSize;
+    public string BadgeIconsLabel => string.Join(" ", Badges.Select(b => b.Icon));
+    public string? BadgeNamesTooltip => Badges.Count == 0 ? null : string.Join("\n", Badges.Select(b => $"{b.Icon} {b.BadgeName}: {b.Description}"));
 }
 
 /// <summary>Match row for the Matches screen with resolved player display names.</summary>
@@ -97,7 +101,10 @@ public class PlayerRankingRow
 {
     public required PlayerStatsSummary Stats { get; init; }
     public Player? Player { get; init; }
+    public List<BadgeAward> Badges { get; init; } = new();
 
+    public string BadgeIconsLabel => string.Join(" ", Badges.Select(b => b.Icon));
+    public string? BadgeNamesTooltip => Badges.Count == 0 ? null : string.Join("\n", Badges.Select(b => $"{b.Icon} {b.BadgeName}: {b.Description}"));
     public string DisplayName => Stats.DisplayName;
     public bool IsActive => Stats.IsActive;
     public int EloRounded => (int)Math.Round(Stats.EloRating);

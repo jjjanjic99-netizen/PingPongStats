@@ -21,6 +21,40 @@
             </StackPanel>
         </StackPanel>
 
+        <Border Style="{StaticResource CardBorder}" Margin="0,0,0,16">
+            <StackPanel>
+                <TextBlock Text="Abzeichen" Style="{StaticResource SectionLabelText}" Margin="0,0,0,8" />
+                <TextBlock Text="Noch keine Abzeichen verdient." Style="{StaticResource StatLabelText}"
+                           Visibility="{Binding HasBadges, Converter={StaticResource InverseBoolToVisibilityConverter}}" />
+                <ItemsControl ItemsSource="{Binding Badges}"
+                              Visibility="{Binding HasBadges, Converter={StaticResource BoolToVisibilityConverter}}">
+                    <ItemsControl.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <WrapPanel Orientation="Horizontal" />
+                        </ItemsPanelTemplate>
+                    </ItemsControl.ItemsPanel>
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <Border Background="{DynamicResource Brush.NavHover}" CornerRadius="14" Padding="10,6" Margin="0,0,8,8">
+                                <Border.ToolTip>
+                                    <TextBlock MaxWidth="280" TextWrapping="Wrap">
+                                        <Run Text="{Binding Description, Mode=OneWay}" />
+                                        <LineBreak />
+                                        <Run Text="Verdient am: " FontWeight="SemiBold" />
+                                        <Run Text="{Binding EarnedAt, StringFormat='dd.MM.yyyy', Mode=OneWay}" />
+                                    </TextBlock>
+                                </Border.ToolTip>
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock Text="{Binding Icon}" FontSize="16" VerticalAlignment="Center" />
+                                    <TextBlock Text="{Binding BadgeName}" Margin="6,0,0,0" VerticalAlignment="Center" />
+                                </StackPanel>
+                            </Border>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </StackPanel>
+        </Border>
+
         <UniformGrid Rows="2" Columns="4" Margin="0,0,0,16">
             <Border Style="{StaticResource CardBorder}" Margin="0,0,8,8">
                 <StackPanel>

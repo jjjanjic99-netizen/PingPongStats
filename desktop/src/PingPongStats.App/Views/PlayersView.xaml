@@ -120,7 +120,16 @@
                             </DataTemplate>
                         </DataGridTemplateColumn.CellTemplate>
                     </DataGridTemplateColumn>
-                    <DataGridTextColumn Header="Anzeigename" Binding="{Binding DisplayName}" Width="150" />
+                    <DataGridTemplateColumn Header="Anzeigename" Width="170">
+                        <DataGridTemplateColumn.CellTemplate>
+                            <DataTemplate>
+                                <StackPanel Orientation="Horizontal" ToolTip="{Binding BadgeNamesTooltip}">
+                                    <TextBlock Text="{Binding DisplayName}" VerticalAlignment="Center" />
+                                    <TextBlock Text="{Binding BadgeIconsLabel}" Margin="6,0,0,0" VerticalAlignment="Center" FontSize="13" />
+                                </StackPanel>
+                            </DataTemplate>
+                        </DataGridTemplateColumn.CellTemplate>
+                    </DataGridTemplateColumn>
                     <DataGridTextColumn Header="Name" Binding="{Binding FullName}" Width="150" />
                     <DataGridTextColumn Header="E-Mail" Binding="{Binding Email}" Width="180" />
                     <DataGridCheckBoxColumn Header="Aktiv" Binding="{Binding IsActive, Mode=OneWay}" Width="60" IsReadOnly="True" />

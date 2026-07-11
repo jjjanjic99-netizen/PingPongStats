@@ -164,7 +164,16 @@
                                 </DataTemplate>
                             </DataGridTemplateColumn.CellTemplate>
                         </DataGridTemplateColumn>
-                        <DataGridTextColumn Header="Spieler" Binding="{Binding DisplayName}" Width="140" />
+                        <DataGridTemplateColumn Header="Spieler" Width="160">
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate>
+                                    <StackPanel Orientation="Horizontal" ToolTip="{Binding BadgeNamesTooltip}">
+                                        <TextBlock Text="{Binding DisplayName}" VerticalAlignment="Center" />
+                                        <TextBlock Text="{Binding BadgeIconsLabel}" Margin="6,0,0,0" VerticalAlignment="Center" FontSize="13" />
+                                    </StackPanel>
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
                         <DataGridTextColumn Header="Elo" Binding="{Binding EloRounded}" Width="60" />
                         <DataGridTextColumn Header="Spiele" Binding="{Binding Played}" Width="60" />
                         <DataGridTextColumn Header="S/N" Binding="{Binding RecordLabel}" Width="70" />

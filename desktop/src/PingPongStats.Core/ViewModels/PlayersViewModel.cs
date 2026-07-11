@@ -5,6 +5,7 @@ using PingPongStats.Core.Helpers;
 using PingPongStats.Core.Models;
 using PingPongStats.Core.Repositories;
 using PingPongStats.Core.Services;
+using PingPongStats.Core.Services.Badges;
 
 namespace PingPongStats.Core.ViewModels;
 
@@ -114,12 +115,14 @@ public partial class PlayersViewModel : ObservableObject
         var players = _dataService.Players;
         var matches = _dataService.Matches.ToList();
         var eloRatings = EloService.ComputeRatings(matches, players.Select(p => p.Id));
+        var badgeContext = BadgeEngine.BuildContext(players, matches, _dataService.DoubleMatches.ToList());
 
         _allRows = players
             .Select(p => new PlayerRow
             {
                 Player = p,
                 Stats = BuildSummary(p, matches, eloRatings),
+                Badges = BadgeEngine.EvaluateForPlayer(p.Id, badgeContext),
             })
             .OrderBy(r => r.DisplayName)
             .ToList();

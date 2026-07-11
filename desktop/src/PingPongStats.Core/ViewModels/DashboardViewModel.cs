@@ -4,6 +4,7 @@ using CommunityToolkit.Mvvm.Input;
 using PingPongStats.Core.Models;
 using PingPongStats.Core.Repositories;
 using PingPongStats.Core.Services;
+using PingPongStats.Core.Services.Badges;
 
 namespace PingPongStats.Core.ViewModels;
 
@@ -101,11 +102,17 @@ public partial class DashboardViewModel : ObservableObject
             .ToList();
 
         var playersById = _dataService.Players.ToDictionary(p => p.Id);
+        var badgeContext = BadgeEngine.BuildContext(_dataService.Players, _dataService.Matches, _dataService.DoubleMatches);
 
         Ranking.Clear();
         foreach (var p in rankedPlayers)
         {
-            Ranking.Add(new PlayerRankingRow { Stats = p, Player = playersById.GetValueOrDefault(p.PlayerId) });
+            Ranking.Add(new PlayerRankingRow
+            {
+                Stats = p,
+                Player = playersById.GetValueOrDefault(p.PlayerId),
+                Badges = BadgeEngine.EvaluateForPlayer(p.PlayerId, badgeContext),
+            });
         }
 
         var maxWins = rankedPlayers.Count == 0 ? 0 : rankedPlayers.Max(p => p.Wins);

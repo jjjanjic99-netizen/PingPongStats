@@ -4,6 +4,7 @@ using CommunityToolkit.Mvvm.Input;
 using PingPongStats.Core.Models;
 using PingPongStats.Core.Repositories;
 using PingPongStats.Core.Services;
+using PingPongStats.Core.Services.Badges;
 
 namespace PingPongStats.Core.ViewModels;
 
@@ -35,6 +36,8 @@ public partial class ProfileViewModel : ObservableObject
     [ObservableProperty] private string favoriteOpponentRecordLabel = string.Empty;
 
     public ObservableCollection<EloChartPoint> EloHistoryChart { get; } = new();
+    public ObservableCollection<BadgeAward> Badges { get; } = new();
+    public bool HasBadges => Badges.Count > 0;
 
     public IRelayCommand RefreshCommand { get; }
 
@@ -110,5 +113,10 @@ public partial class ProfileViewModel : ObservableObject
             FavoriteOpponentDisplayName = playersById.GetValueOrDefault(favorite.OpponentId)?.DisplayName ?? "?";
             FavoriteOpponentRecordLabel = $"{favorite.Wins}S / {favorite.Losses}N ({favorite.WinRatePct:F0}%)";
         }
+
+        var badgeContext = BadgeEngine.BuildContext(_dataService.Players, _dataService.Matches, _dataService.DoubleMatches);
+        Badges.Clear();
+        foreach (var award in BadgeEngine.EvaluateForPlayer(_playerId, badgeContext)) Badges.Add(award);
+        OnPropertyChanged(nameof(HasBadges));
     }
 }
