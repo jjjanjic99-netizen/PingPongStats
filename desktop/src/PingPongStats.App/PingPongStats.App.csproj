@@ -35,4 +35,13 @@
     </Content>
   </ItemGroup>
 
+  <!-- Phase D1 design fonts (see Assets/Fonts/README.md for exact file names/
+       source). Embedded as assembly resources so Themes/DesignTokens.xaml can
+       reference them via pack://application:,,,/Assets/Fonts/#<Family Name>.
+       The glob matches nothing (and the app runs fine on the Segoe UI
+       fallback) until the font files are actually added under Assets/Fonts/. -->
+  <ItemGroup>
+    <Resource Include="Assets\Fonts\*.ttf" />
+  </ItemGroup>
+
 </Project>

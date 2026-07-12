@@ -617,6 +617,48 @@ Fehler - fehlende Felder werden als leerer String bzw. leere Liste
 interpretiert (nie als geraten/geschätzt), siehe die Migrationstests in
 `XmlRepositoryTests.cs`. Kein manueller Migrationsschritt nötig.
 
+## Design-System (Phasen D1–D4)
+
+Die komplette visuelle Gestaltung folgt verbindlich `desktop/design/mockup.html`
+(ein statisches HTML/CSS-Mockup, kein Teil der Anwendung selbst). Abweichungen,
+bei denen eine Mockup-Eigenschaft in WPF nicht 1:1 umsetzbar war, stehen
+ausführlich in `desktop/design/ABWEICHUNGEN.md`.
+
+### Design-Tokens (`Themes/DesignTokens.xaml`)
+
+Alle Farben, Fonts, die Typo-Skala, Eck-Radien und Abstände sind exakt aus dem
+Mockup übernommene Werte, als WPF-Ressourcen (`Brush.*`, `Font.*`, `Typo.*`,
+`Radius.*`, `Spacing.*`). Bestehende `Brush.*`-Aliasnamen (`Brush.Background`,
+`Brush.Accent`, ...) bleiben erhalten und zeigen jetzt auf die neuen
+Mockup-Farben, damit auch nicht individuell überarbeitete Views automatisch die
+neue Palette erhalten.
+
+### Schriften
+
+Big Shoulders Display (Überschriften/Kennzahlen), Space Grotesk (Fliesstext)
+und JetBrains Mono (Zahlen/Eyebrow-Labels) - Google Fonts, SIL Open Font
+License. Die Dateien selbst sind **nicht** im Repo (nicht heruntergeladen);
+`desktop/src/PingPongStats.App/Assets/Fonts/README.md` dokumentiert exakt,
+welche Dateien mit welchem Namen dort abzulegen sind. Ohne diese Dateien
+läuft die App normal weiter und fällt automatisch auf Segoe UI zurück (WPFs
+eingebauter Fallback über eine kommagetrennte `FontFamily`-Liste) - kein
+Absturz.
+
+### Bausteine
+
+Wiederverwendbare Controls (`Controls/`): `AvatarControl` (Grössen S/M/L/XL,
+deterministische Farbe aus der Spieler-Id), `CardControl` (Panel-Fläche mit
+1px-Rahmen und der Signatur-"Tischmittellinie" als 2px-Verlaufslinie am
+unteren Rand), `EyebrowLabel`, `Pill`, `StatTile`, `BarRow`, `RowItem`. Jede
+Ansicht verwendet ausschliesslich diese Bausteine statt handgemalter
+Ein-Weg-Layouts.
+
+### Reduced Motion
+
+Alle Animationen (Konfetti/Ping-Pong-Bälle im Sieg-Overlay, Übergänge) prüfen
+die bestehende Einstellung und lassen sich global abschalten - siehe
+Settings.
+
 ## Backup-Konzept
 
 Vor **jedem** Schreibvorgang wird die bestehende Datei nach

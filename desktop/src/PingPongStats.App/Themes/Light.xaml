@@ -1,22 +1,14 @@
 <ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
 
-    <SolidColorBrush x:Key="Brush.Background" Color="#F8FAFC" />
-    <SolidColorBrush x:Key="Brush.Surface" Color="#FFFFFF" />
-    <SolidColorBrush x:Key="Brush.Border" Color="#E2E8F0" />
-    <SolidColorBrush x:Key="Brush.TextPrimary" Color="#0F172A" />
-    <SolidColorBrush x:Key="Brush.TextSecondary" Color="#64748B" />
-    <SolidColorBrush x:Key="Brush.Accent" Color="#2563EB" />
-    <SolidColorBrush x:Key="Brush.AccentHover" Color="#1D4ED8" />
-    <SolidColorBrush x:Key="Brush.AccentText" Color="#FFFFFF" />
-    <SolidColorBrush x:Key="Brush.Success" Color="#16A34A" />
-    <SolidColorBrush x:Key="Brush.SuccessSurface" Color="#DCFCE7" />
-    <SolidColorBrush x:Key="Brush.Danger" Color="#DC2626" />
-    <SolidColorBrush x:Key="Brush.DangerSurface" Color="#FEE2E2" />
-    <SolidColorBrush x:Key="Brush.Warning" Color="#D97706" />
-    <SolidColorBrush x:Key="Brush.WarningSurface" Color="#FEF3C7" />
-    <SolidColorBrush x:Key="Brush.NavHover" Color="#EEF2FF" />
-    <SolidColorBrush x:Key="Brush.InputBackground" Color="#FFFFFF" />
-    <SolidColorBrush x:Key="Brush.RowAlternate" Color="#F8FAFC" />
+    <!-- Phase D1: the mockup (desktop/design/mockup.html) defines a single,
+         fixed dark palette with no light variant. All actual colors now live
+         in DesignTokens.xaml; this dictionary only merges it so the existing
+         Settings "Dark Mode" toggle and ThemeManager plumbing keep working
+         (see desktop/design/ABWEICHUNGEN.md) without behaving any
+         differently from Dark.xaml. -->
+    <ResourceDictionary.MergedDictionaries>
+        <ResourceDictionary Source="DesignTokens.xaml" />
+    </ResourceDictionary.MergedDictionaries>
 
 </ResourceDictionary>

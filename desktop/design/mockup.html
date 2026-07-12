@@ -1,0 +1,921 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PingPongStats — Mockup</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;700;800&family=Space+Grotesk:wght@400;500;700&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --deep:#071B24;
+  --panel:#0D2B37;
+  --panel-2:#113745;
+  --table:#0D5A6E;
+  --line:#1E5265;
+  --ball:#FF7A1A;
+  --rubber:#D8342A;
+  --chalk:#EEF4F3;
+  --muted:#79A2AF;
+  --win:#3FCF8E;
+  --lose:#E4675E;
+  --display:'Big Shoulders Display',sans-serif;
+  --body:'Space Grotesk',sans-serif;
+  --mono:'JetBrains Mono',monospace;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{
+  background:var(--deep);
+  color:var(--chalk);
+  font-family:var(--body);
+  font-size:15px;
+  -webkit-font-smoothing:antialiased;
+  overflow-x:hidden;
+}
+button{font-family:inherit;cursor:pointer;border:none;background:none;color:inherit}
+
+/* ── App chrome ─────────────────────────────── */
+.app{display:flex;min-height:100vh}
+
+.rail{
+  width:212px;flex:0 0 212px;
+  background:var(--panel);
+  border-right:1px solid var(--line);
+  display:flex;flex-direction:column;
+  padding:20px 14px;
+  position:sticky;top:0;height:100vh;
+}
+.brand{display:flex;align-items:center;gap:9px;padding:0 6px 22px}
+.brand-ball{
+  width:22px;height:22px;border-radius:50%;
+  background:radial-gradient(circle at 32% 30%, #FFC48A, var(--ball) 62%);
+  box-shadow:0 0 14px rgba(255,122,26,.5);flex:0 0 22px;
+}
+.brand-name{font-family:var(--display);font-weight:800;font-size:23px;letter-spacing:.4px;line-height:1}
+.brand-name span{color:var(--ball)}
+
+.nav{display:flex;flex-direction:column;gap:2px}
+.nav-item{
+  display:flex;align-items:center;gap:10px;
+  padding:10px 11px;border-radius:8px;
+  color:var(--muted);font-weight:500;font-size:14px;
+  text-align:left;width:100%;
+  transition:background .15s,color .15s;
+}
+.nav-item:hover{background:var(--panel-2);color:var(--chalk)}
+.nav-item.on{background:var(--table);color:#fff}
+.nav-item.on .nav-ico{opacity:1}
+.nav-ico{width:16px;text-align:center;opacity:.7;font-size:14px}
+
+.rail-foot{margin-top:auto;padding-top:16px;border-top:1px solid var(--line)}
+.me{display:flex;align-items:center;gap:9px;padding:6px 4px}
+.me-name{font-weight:700;font-size:13.5px;line-height:1.2}
+.me-elo{font-family:var(--mono);font-size:11px;color:var(--ball)}
+.logout{font-size:11.5px;color:var(--muted);padding:6px 4px;text-decoration:underline}
+
+/* ── Main ───────────────────────────────────── */
+main{flex:1;min-width:0;display:flex;flex-direction:column}
+.topbar{
+  display:flex;align-items:center;gap:14px;flex-wrap:wrap;
+  padding:18px 26px;
+  border-bottom:1px solid var(--line);
+  background:linear-gradient(var(--deep),rgba(7,27,36,.85));
+  position:sticky;top:0;z-index:20;backdrop-filter:blur(8px);
+}
+.page-title{font-family:var(--display);font-weight:700;font-size:30px;letter-spacing:.5px;line-height:1;flex:1}
+.range{display:flex;gap:2px;background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:3px}
+.range button{
+  font-family:var(--mono);font-size:11.5px;padding:5px 10px;border-radius:5px;color:var(--muted);
+}
+.range button.on{background:var(--table);color:#fff}
+.cta{
+  background:var(--ball);color:#08222C;font-weight:700;font-size:13.5px;
+  padding:10px 16px;border-radius:8px;letter-spacing:.2px;
+  box-shadow:0 4px 16px rgba(255,122,26,.28);
+  transition:transform .12s;
+}
+.cta:hover{transform:translateY(-1px)}
+
+.view{display:none;padding:22px 26px 60px}
+.view.on{display:block}
+
+/* ── Signature: the table line ──────────────── */
+.card{
+  background:var(--panel);
+  border:1px solid var(--line);
+  border-radius:12px;
+  padding:16px 18px;
+  position:relative;
+  overflow:hidden;
+}
+.card::after{ /* white center line of a ping pong table */
+  content:"";position:absolute;left:0;right:0;bottom:0;height:2px;
+  background:linear-gradient(90deg,transparent,rgba(238,244,243,.16) 12%,rgba(238,244,243,.16) 88%,transparent);
+}
+.eyebrow{
+  font-family:var(--mono);font-size:10.5px;letter-spacing:1.6px;
+  text-transform:uppercase;color:var(--muted);margin-bottom:12px;
+}
+.grid{display:grid;gap:14px}
+.g2{grid-template-columns:repeat(2,1fr)}
+.g3{grid-template-columns:repeat(3,1fr)}
+
+/* ── Avatars ────────────────────────────────── */
+.av{
+  border-radius:50%;display:grid;place-items:center;
+  font-family:var(--display);font-weight:700;color:#08222C;
+  flex:0 0 auto;line-height:1;
+}
+.av.s{width:30px;height:30px;font-size:14px}
+.av.m{width:44px;height:44px;font-size:19px}
+.av.l{width:76px;height:76px;font-size:33px;border:3px solid rgba(255,255,255,.16)}
+.av.xl{width:118px;height:118px;font-size:50px;border:4px solid var(--ball)}
+
+/* ── Hero: Player of the Week ───────────────── */
+.hero{
+  background:
+    radial-gradient(120% 140% at 88% 8%, rgba(255,122,26,.20), transparent 55%),
+    var(--table);
+  border:1px solid #1B7186;
+  border-radius:14px;
+  padding:22px;
+  display:flex;align-items:center;gap:22px;
+  margin-bottom:14px;
+  position:relative;overflow:hidden;
+}
+.hero::before{
+  content:"";position:absolute;inset:0;
+  background:repeating-linear-gradient(115deg,transparent 0 22px,rgba(255,255,255,.025) 22px 44px);
+  pointer-events:none;
+}
+.hero-body{flex:1;min-width:0;position:relative}
+.hero-kicker{
+  font-family:var(--mono);font-size:10.5px;letter-spacing:1.8px;text-transform:uppercase;
+  color:var(--ball);margin-bottom:5px;
+}
+.hero-name{font-family:var(--display);font-weight:800;font-size:44px;line-height:.95;letter-spacing:.5px}
+.hero-line{color:#CDE6EC;font-size:13.5px;margin-top:7px}
+.hero-score{
+  font-family:var(--mono);font-weight:700;font-size:15px;color:#08222C;
+  background:var(--ball);border-radius:7px;padding:6px 12px;display:inline-block;margin-top:11px;
+}
+
+/* ── Lists / rows ───────────────────────────── */
+.row{display:flex;align-items:center;gap:11px;padding:9px 0;border-bottom:1px solid rgba(30,82,101,.5)}
+.row:last-child{border-bottom:none}
+.row-name{flex:1;min-width:0;font-weight:500;font-size:14px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.row-val{font-family:var(--mono);font-size:13px}
+.pos{font-family:var(--mono);font-size:12px;color:var(--muted);width:20px;flex:0 0 20px}
+
+.streak{
+  display:flex;align-items:center;gap:11px;
+  background:var(--panel-2);border-radius:9px;padding:10px 12px;margin-bottom:8px;
+  border-left:3px solid var(--ball);
+}
+.streak:last-child{margin-bottom:0}
+.streak.hot{border-left-color:var(--rubber);background:linear-gradient(90deg,rgba(216,52,42,.18),var(--panel-2) 60%)}
+.streak-txt{flex:1;font-size:13.5px}
+.streak-n{font-family:var(--display);font-weight:800;font-size:26px;color:var(--ball);line-height:1}
+.streak.hot .streak-n{color:var(--rubber)}
+
+.pill{
+  font-family:var(--mono);font-size:10.5px;padding:3px 8px;border-radius:20px;
+  background:var(--panel-2);color:var(--muted);border:1px solid var(--line);
+}
+.pill.win{color:var(--win);border-color:rgba(63,207,142,.35)}
+.pill.bad{color:var(--lose);border-color:rgba(228,103,94,.35)}
+.up{color:var(--win)}
+.down{color:var(--lose)}
+
+.vs{
+  display:flex;align-items:center;justify-content:center;gap:16px;padding:8px 0 4px;
+}
+.vs-score{font-family:var(--display);font-weight:800;font-size:38px;letter-spacing:1px}
+.vs-mid{font-family:var(--mono);font-size:11px;color:var(--muted)}
+.center{text-align:center}
+.mut{color:var(--muted);font-size:12.5px}
+.small{font-size:12.5px}
+
+/* ── Bars ───────────────────────────────────── */
+.bar-row{display:flex;align-items:center;gap:10px;margin-bottom:9px}
+.bar-lab{font-family:var(--mono);font-size:11px;color:var(--muted);width:62px;flex:0 0 62px}
+.bar-track{flex:1;height:9px;background:var(--panel-2);border-radius:6px;overflow:hidden}
+.bar-fill{height:100%;background:linear-gradient(90deg,var(--table),var(--ball));border-radius:6px}
+.bar-val{font-family:var(--mono);font-size:11.5px;width:36px;text-align:right}
+.bar-row.dim{opacity:.35}
+
+/* ── Badges ─────────────────────────────────── */
+.badges{display:flex;flex-wrap:wrap;gap:8px}
+.badge{
+  display:flex;align-items:center;gap:7px;
+  background:var(--panel-2);border:1px solid var(--line);
+  border-radius:20px;padding:6px 12px 6px 8px;font-size:12.5px;
+}
+.badge .b-ico{font-size:14px}
+.badge.locked{opacity:.4}
+
+/* ── Podium ─────────────────────────────────── */
+.podium{display:flex;align-items:flex-end;justify-content:center;gap:14px;padding:8px 0 16px}
+.pod{display:flex;flex-direction:column;align-items:center;gap:7px}
+.pod-block{
+  width:82px;border-radius:9px 9px 0 0;
+  background:linear-gradient(var(--panel-2),var(--panel));
+  border:1px solid var(--line);border-bottom:none;
+  display:grid;place-items:center;
+  font-family:var(--display);font-weight:800;font-size:28px;color:var(--muted);
+}
+.pod.p1 .pod-block{height:92px;background:linear-gradient(rgba(255,122,26,.28),var(--panel));border-color:var(--ball);color:var(--ball)}
+.pod.p2 .pod-block{height:66px}
+.pod.p3 .pod-block{height:50px}
+.pod-name{font-size:12.5px;font-weight:500}
+
+/* ── Bracket ────────────────────────────────── */
+.bracket{display:flex;gap:20px;overflow-x:auto;padding:6px 2px 12px}
+.br-col{display:flex;flex-direction:column;justify-content:space-around;gap:12px;min-width:186px}
+.br-head{
+  font-family:var(--mono);font-size:10.5px;letter-spacing:1.4px;text-transform:uppercase;
+  color:var(--muted);margin-bottom:2px;
+}
+.match{
+  background:var(--panel);border:1px solid var(--line);border-radius:9px;overflow:hidden;
+  transition:border-color .15s;
+}
+.match:hover{border-color:var(--ball)}
+.side{display:flex;align-items:center;gap:8px;padding:8px 10px;font-size:13px}
+.side + .side{border-top:1px solid rgba(30,82,101,.6)}
+.side.w{background:rgba(63,207,142,.09);font-weight:700}
+.side.w .s-score{color:var(--win)}
+.side .s-name{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.s-score{font-family:var(--mono);font-size:13px;color:var(--muted)}
+.match.next .side{color:var(--muted);font-style:italic}
+.match.live{border-color:var(--ball);box-shadow:0 0 0 1px rgba(255,122,26,.3)}
+
+/* ── Records ────────────────────────────────── */
+.rec{display:flex;align-items:center;gap:12px;padding:11px 0;border-bottom:1px solid rgba(30,82,101,.5)}
+.rec:last-child{border-bottom:none}
+.rec-lab{flex:1;font-size:13.5px}
+.rec-lab b{display:block;font-weight:500}
+.rec-date{font-family:var(--mono);font-size:10.5px;color:var(--muted);margin-top:2px}
+.rec-val{font-family:var(--display);font-weight:800;font-size:26px;color:var(--ball);line-height:1}
+
+/* ── Dialog ─────────────────────────────────── */
+.scrim{
+  position:fixed;inset:0;background:rgba(3,12,17,.78);
+  display:none;place-items:center;z-index:60;padding:18px;
+  backdrop-filter:blur(3px);
+}
+.scrim.on{display:grid}
+.dialog{
+  width:100%;max-width:430px;
+  background:var(--panel);border:1px solid var(--line);border-radius:14px;
+  padding:20px;
+}
+.dlg-title{font-family:var(--display);font-weight:700;font-size:26px;margin-bottom:16px}
+.field{margin-bottom:13px}
+.field label{display:block;font-family:var(--mono);font-size:10.5px;letter-spacing:1.2px;text-transform:uppercase;color:var(--muted);margin-bottom:6px}
+.field select,.field input{
+  width:100%;background:var(--deep);border:1px solid var(--line);border-radius:8px;
+  color:var(--chalk);padding:10px 11px;font-family:var(--body);font-size:14px;
+}
+.sets{display:flex;gap:10px}
+.sets .field{flex:1}
+.prognose{
+  background:var(--panel-2);border:1px solid var(--line);border-radius:9px;
+  padding:11px 13px;margin:14px 0;
+}
+.prog-head{display:flex;justify-content:space-between;font-family:var(--mono);font-size:11px;color:var(--muted);margin-bottom:8px}
+.prog-track{height:8px;border-radius:6px;background:var(--rubber);overflow:hidden}
+.prog-fill{height:100%;background:var(--table);border-radius:6px 0 0 6px;transition:width .3s}
+.dlg-actions{display:flex;gap:9px;margin-top:6px}
+.btn-ghost{flex:0 0 auto;padding:11px 15px;border-radius:8px;border:1px solid var(--line);color:var(--muted);font-size:13.5px}
+.btn-primary{flex:1;padding:11px;border-radius:8px;background:var(--ball);color:#08222C;font-weight:700;font-size:14px}
+
+/* ── Win overlay + ping pong ball confetti ──── */
+.win{
+  position:fixed;inset:0;z-index:80;display:none;
+  place-items:center;background:rgba(4,17,23,.9);
+  overflow:hidden;text-align:center;
+}
+.win.on{display:grid}
+.win-inner{position:relative;z-index:2;animation:pop .45s cubic-bezier(.2,1.4,.4,1)}
+@keyframes pop{from{transform:scale(.7);opacity:0}to{transform:scale(1);opacity:1}}
+.win-avs{display:flex;justify-content:center;gap:14px;margin-bottom:16px}
+.win-kicker{font-family:var(--mono);font-size:11px;letter-spacing:3px;text-transform:uppercase;color:var(--ball);margin-bottom:8px}
+.win-name{font-family:var(--display);font-weight:800;font-size:52px;line-height:1;letter-spacing:1px}
+.win-score{font-family:var(--mono);font-size:20px;color:var(--chalk);margin-top:8px}
+.win-quote{
+  font-size:15px;color:#BEDCE4;margin-top:16px;font-style:italic;
+  max-width:330px;margin-left:auto;margin-right:auto;line-height:1.5;
+}
+.win-comeback{
+  display:inline-block;margin-top:14px;
+  font-family:var(--display);font-weight:800;font-size:17px;letter-spacing:2px;
+  background:var(--rubber);color:#fff;padding:5px 14px;border-radius:6px;
+}
+.win-hint{font-family:var(--mono);font-size:10.5px;color:var(--muted);margin-top:26px;letter-spacing:1px}
+.pball{
+  position:absolute;top:-8%;border-radius:50%;
+  background:radial-gradient(circle at 32% 30%,#FFD7AC,var(--ball) 65%);
+  animation:fall linear forwards;z-index:1;
+}
+@keyframes fall{
+  to{transform:translateY(112vh) rotate(720deg);opacity:.85}
+}
+
+.ribbon{
+  position:fixed;right:-40px;top:15px;z-index:90;
+  background:var(--rubber);color:#fff;
+  font-family:var(--mono);font-size:10px;letter-spacing:1.6px;
+  padding:5px 46px;transform:rotate(45deg);pointer-events:none;
+}
+
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+
+/* ── Mobile ─────────────────────────────────── */
+@media (max-width:860px){
+  .app{flex-direction:column}
+  .rail{
+    width:100%;flex:none;height:auto;position:sticky;top:0;z-index:30;
+    flex-direction:row;align-items:center;gap:10px;
+    padding:11px 14px;border-right:none;border-bottom:1px solid var(--line);
+  }
+  .brand{padding:0;flex:0 0 auto}
+  .brand-name{font-size:19px}
+  .nav{flex-direction:row;overflow-x:auto;gap:4px;flex:1;scrollbar-width:none}
+  .nav::-webkit-scrollbar{display:none}
+  .nav-item{padding:7px 11px;white-space:nowrap;font-size:12.5px}
+  .nav-ico{display:none}
+  .rail-foot{display:none}
+  .topbar{padding:13px 14px;top:57px}
+  .page-title{font-size:23px;flex:1 0 100%}
+  .view{padding:14px}
+  .g2,.g3{grid-template-columns:1fr}
+  .hero{flex-direction:column;text-align:center;padding:20px 16px}
+  .hero-name{font-size:34px}
+  .av.xl{width:96px;height:96px;font-size:40px}
+  .win-name{font-size:36px}
+  .ribbon{display:none}
+}
+</style>
+</head>
+<body>
+
+<div class="ribbon">MOCKUP</div>
+
+<div class="app">
+  <aside class="rail">
+    <div class="brand">
+      <div class="brand-ball"></div>
+      <div class="brand-name">PING<span>PONG</span></div>
+    </div>
+    <nav class="nav">
+      <button class="nav-item on" data-view="dash"><span class="nav-ico">◧</span>Dashboard</button>
+      <button class="nav-item" data-view="profil"><span class="nav-ico">◉</span>Mein Profil</button>
+      <button class="nav-item" data-view="liga"><span class="nav-ico">▤</span>Liga</button>
+      <button class="nav-item" data-view="turnier"><span class="nav-ico">⑂</span>Turnier</button>
+      <button class="nav-item" data-view="hof"><span class="nav-ico">★</span>Hall of Fame</button>
+      <button class="nav-item" data-view="tipp"><span class="nav-ico">◆</span>Tippspiel</button>
+    </nav>
+    <div class="rail-foot">
+      <div class="me">
+        <div class="av s" style="background:#7ED0C0">MB</div>
+        <div>
+          <div class="me-name">Marco Brunner</div>
+          <div class="me-elo">Elo 1287 ▲</div>
+        </div>
+      </div>
+      <button class="logout">Abmelden</button>
+    </div>
+  </aside>
+
+  <main>
+    <header class="topbar">
+      <h1 class="page-title" id="ptitle">Dashboard</h1>
+      <div class="range">
+        <button>7T</button>
+        <button class="on">30T</button>
+        <button>90T</button>
+        <button>Alle</button>
+      </div>
+      <button class="cta" onclick="openDialog()">+ Spiel erfassen</button>
+    </header>
+
+    <!-- ══ DASHBOARD ══ -->
+    <section class="view on" id="v-dash">
+      <div class="hero">
+        <div class="av xl" style="background:#F2B25C">LV</div>
+        <div class="hero-body">
+          <div class="hero-kicker">Spieler der Woche</div>
+          <div class="hero-name">Lena Vogt</div>
+          <div class="hero-line">7 Siege, 2 Niederlagen · Satzdifferenz +11 · Elo 1342 ▲ 24</div>
+          <div class="hero-score">Score 15.5</div>
+        </div>
+      </div>
+
+      <div class="grid g2" style="margin-bottom:14px">
+        <div class="card">
+          <div class="eyebrow">Streak-Alarm</div>
+          <div class="streak hot">
+            <div class="streak-n">6</div>
+            <div class="streak-txt"><b>Timo Rüegg</b><br><span class="mut">6 Siege in Folge — wer stoppt ihn?</span></div>
+            <span style="font-size:19px">🔥</span>
+          </div>
+          <div class="streak">
+            <div class="streak-n">4</div>
+            <div class="streak-txt"><b>Lena Vogt</b><br><span class="mut">4 Siege in Folge</span></div>
+          </div>
+          <div class="streak">
+            <div class="streak-n">3</div>
+            <div class="streak-txt"><b>Sandra Keller</b><br><span class="mut">3 Siege in Folge</span></div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="eyebrow">Bestes Comeback</div>
+          <div class="vs">
+            <div class="av m" style="background:#7ED0C0">MB</div>
+            <div class="center">
+              <div class="vs-score">3:2</div>
+              <div class="vs-mid">nach 0:2 Rückstand</div>
+            </div>
+            <div class="av m" style="background:#C6A0F5">DF</div>
+          </div>
+          <div class="center small" style="margin-top:6px">
+            <b>Marco Brunner</b> <span class="mut">schlägt</span> <b>Dario Frei</b>
+          </div>
+          <div class="center mut" style="margin-top:4px;font-family:var(--mono);font-size:11px">
+            9:11 · 7:11 · 11:8 · 12:10 · 11:9 &nbsp;·&nbsp; 04.07.
+          </div>
+        </div>
+      </div>
+
+      <div class="grid g2" style="margin-bottom:14px">
+        <div class="card">
+          <div class="eyebrow">Rivalität des Monats</div>
+          <div class="vs">
+            <div class="av m" style="background:#F2B25C">LV</div>
+            <div class="center">
+              <div class="vs-score">5:4</div>
+              <div class="vs-mid">9 Spiele in 30 Tagen</div>
+            </div>
+            <div class="av m" style="background:#8FB8F0">TR</div>
+          </div>
+          <div class="center small" style="margin-top:6px">Lena Vogt <span class="mut">vs.</span> Timo Rüegg</div>
+        </div>
+
+        <div class="card">
+          <div class="eyebrow">Match of the Day</div>
+          <div class="vs">
+            <div class="av m" style="background:#F0A0B4">NB</div>
+            <div class="center">
+              <div class="vs-score">3:2</div>
+              <div class="vs-mid">knappste Partie heute</div>
+            </div>
+            <div class="av m" style="background:#9FD98C">PH</div>
+          </div>
+          <div class="center small" style="margin-top:6px">Nina Baumann <span class="mut">vs.</span> Pascal Huber</div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="eyebrow">Elo-Rangliste · Form (letzte 10)</div>
+        <div class="row"><span class="pos">1</span><div class="av s" style="background:#F2B25C">LV</div><span class="row-name">Lena Vogt</span><span class="pill">🏆 3</span><span class="row-val up">1342 ▲</span></div>
+        <div class="row"><span class="pos">2</span><div class="av s" style="background:#8FB8F0">TR</div><span class="row-name">Timo Rüegg</span><span class="pill">🔥 6</span><span class="row-val up">1318 ▲</span></div>
+        <div class="row"><span class="pos">3</span><div class="av s" style="background:#7ED0C0">MB</div><span class="row-name">Marco Brunner</span><span class="pill">👤 du</span><span class="row-val up">1287 ▲</span></div>
+        <div class="row"><span class="pos">4</span><div class="av s" style="background:#C6A0F5">DF</div><span class="row-name">Dario Frei</span><span class="pill">—</span><span class="row-val down">1244 ▼</span></div>
+        <div class="row"><span class="pos">5</span><div class="av s" style="background:#F0A0B4">NB</div><span class="row-name">Nina Baumann</span><span class="pill">—</span><span class="row-val up">1230 ▲</span></div>
+        <div class="row"><span class="pos">6</span><div class="av s" style="background:#9FD98C">PH</div><span class="row-name">Pascal Huber</span><span class="pill">—</span><span class="row-val down">1198 ▼</span></div>
+        <div class="row"><span class="pos">7</span><div class="av s" style="background:#EFD07A">SK</div><span class="row-name">Sandra Keller</span><span class="pill">🏆 3</span><span class="row-val up">1176 ▲</span></div>
+        <div class="row"><span class="pos">8</span><div class="av s" style="background:#A8BCC4">YM</div><span class="row-name">Yves Meier</span><span class="pill">—</span><span class="row-val down">1151 ▼</span></div>
+      </div>
+    </section>
+
+    <!-- ══ PROFIL ══ -->
+    <section class="view" id="v-profil">
+      <div class="card" style="display:flex;align-items:center;gap:18px;margin-bottom:14px">
+        <div class="av l" style="background:#7ED0C0">MB</div>
+        <div style="flex:1">
+          <div style="font-family:var(--display);font-weight:800;font-size:32px;line-height:1">Marco Brunner</div>
+          <div class="mut" style="margin-top:4px">Elo 1287 · Rang 3 von 8 · 47 Spiele</div>
+          <div class="badges" style="margin-top:10px">
+            <div class="badge"><span class="b-ico">🛡️</span>Eisenmann</div>
+            <div class="badge"><span class="b-ico">👥</span>Doppel-Spezialist</div>
+            <div class="badge"><span class="b-ico">🥂</span>Aschenputtel</div>
+            <div class="badge locked"><span class="b-ico">🔒</span>Der Unbesiegte · 4/10</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="grid g3" style="margin-bottom:14px">
+        <div class="card center">
+          <div class="eyebrow">Siegquote</div>
+          <div style="font-family:var(--display);font-weight:800;font-size:42px;line-height:1;color:var(--ball)">62%</div>
+          <div class="mut small" style="margin-top:5px">29 S · 18 N</div>
+        </div>
+        <div class="card center">
+          <div class="eyebrow">Längste Serie</div>
+          <div style="font-family:var(--display);font-weight:800;font-size:42px;line-height:1">5</div>
+          <div class="mut small" style="margin-top:5px">aktuell: 2 Siege</div>
+        </div>
+        <div class="card center">
+          <div class="eyebrow">Satzdifferenz</div>
+          <div style="font-family:var(--display);font-weight:800;font-size:42px;line-height:1;color:var(--win)">+23</div>
+          <div class="mut small" style="margin-top:5px">104 : 81 Sätze</div>
+        </div>
+      </div>
+
+      <div class="grid g2" style="margin-bottom:14px">
+        <div class="card">
+          <div class="eyebrow">Angstgegner</div>
+          <div style="display:flex;align-items:center;gap:12px">
+            <div class="av m" style="background:#8FB8F0">TR</div>
+            <div style="flex:1">
+              <div style="font-weight:700">Timo Rüegg</div>
+              <div class="mut small">Bilanz 2:7 · 22% Siege</div>
+            </div>
+            <span class="pill bad">😰</span>
+          </div>
+          <div style="height:1px;background:var(--line);margin:14px 0"></div>
+          <div class="eyebrow">Lieblingsgegner</div>
+          <div style="display:flex;align-items:center;gap:12px">
+            <div class="av m" style="background:#A8BCC4">YM</div>
+            <div style="flex:1">
+              <div style="font-weight:700">Yves Meier</div>
+              <div class="mut small">Bilanz 8:1 · 89% Siege</div>
+            </div>
+            <span class="pill win">😎</span>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="eyebrow">Bilanz-Countdown</div>
+          <div class="row"><div class="av s" style="background:#8FB8F0">TR</div><span class="row-name">Timo Rüegg</span><span class="small mut">noch <b style="color:var(--ball)">5 Siege</b></span></div>
+          <div class="row"><div class="av s" style="background:#C6A0F5">DF</div><span class="row-name">Dario Frei</span><span class="small mut">noch <b style="color:var(--ball)">1 Sieg</b></span></div>
+          <div class="row"><div class="av s" style="background:#F2B25C">LV</div><span class="row-name">Lena Vogt</span><span class="small"><b class="up">+3 Vorsprung</b></span></div>
+          <div class="mut small" style="margin-top:12px;line-height:1.5">
+            Noch 1 Sieg gegen Dario, dann ist die Bilanz ausgeglichen.
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="eyebrow">Siegquote nach Tageszeit</div>
+        <div class="bar-row"><span class="bar-lab">vor 10:00</span><div class="bar-track"><div class="bar-fill" style="width:78%"></div></div><span class="bar-val">78%</span></div>
+        <div class="bar-row"><span class="bar-lab">10–12</span><div class="bar-track"><div class="bar-fill" style="width:64%"></div></div><span class="bar-val">64%</span></div>
+        <div class="bar-row"><span class="bar-lab">12–14</span><div class="bar-track"><div class="bar-fill" style="width:55%"></div></div><span class="bar-val">55%</span></div>
+        <div class="bar-row"><span class="bar-lab">14–17</span><div class="bar-track"><div class="bar-fill" style="width:41%"></div></div><span class="bar-val">41%</span></div>
+        <div class="bar-row dim"><span class="bar-lab">nach 17:00</span><div class="bar-track"><div class="bar-fill" style="width:20%"></div></div><span class="bar-val">—</span></div>
+        <div class="mut small" style="margin-top:8px">Deine beste Zeit: <b style="color:var(--ball)">vor 10 Uhr</b> — 78% Siege aus 14 Spielen.<br><span style="opacity:.7">„nach 17:00" hat zu wenig Spiele für eine Aussage.</span></div>
+      </div>
+    </section>
+
+    <!-- ══ LIGA ══ -->
+    <section class="view" id="v-liga">
+      <div class="card" style="margin-bottom:14px">
+        <div class="eyebrow">Saison Q3 2026 · 12.07. – 30.09. · 63 Spiele</div>
+        <div class="podium">
+          <div class="pod p2">
+            <div class="av m" style="background:#8FB8F0">TR</div>
+            <div class="pod-name">Timo Rüegg</div>
+            <div class="pod-block">2</div>
+          </div>
+          <div class="pod p1">
+            <div class="av l" style="background:#F2B25C">LV</div>
+            <div class="pod-name" style="font-weight:700">Lena Vogt</div>
+            <div class="pod-block">1</div>
+          </div>
+          <div class="pod p3">
+            <div class="av m" style="background:#7ED0C0">MB</div>
+            <div class="pod-name">Marco Brunner</div>
+            <div class="pod-block">3</div>
+          </div>
+        </div>
+        <div class="range" style="width:fit-content;margin:0 auto 14px">
+          <button class="on">Einzel</button>
+          <button>Doppel</button>
+        </div>
+        <div class="row" style="border-bottom:1px solid var(--line)">
+          <span class="pos"></span><span class="row-name mut small" style="font-family:var(--mono)">Spieler</span>
+          <span class="row-val mut" style="width:34px;text-align:right;font-size:10.5px">SP</span>
+          <span class="row-val mut" style="width:34px;text-align:right;font-size:10.5px">S/N</span>
+          <span class="row-val mut" style="width:34px;text-align:right;font-size:10.5px">SD</span>
+          <span class="row-val mut" style="width:34px;text-align:right;font-size:10.5px">PKT</span>
+        </div>
+        <div class="row"><span class="pos">1</span><div class="av s" style="background:#F2B25C">LV</div><span class="row-name">Lena Vogt</span><span class="row-val" style="width:34px;text-align:right">18</span><span class="row-val" style="width:34px;text-align:right">13/5</span><span class="row-val up" style="width:34px;text-align:right">+19</span><span class="row-val" style="width:34px;text-align:right;color:var(--ball);font-weight:700">39</span></div>
+        <div class="row"><span class="pos">2</span><div class="av s" style="background:#8FB8F0">TR</div><span class="row-name">Timo Rüegg</span><span class="row-val" style="width:34px;text-align:right">17</span><span class="row-val" style="width:34px;text-align:right">12/5</span><span class="row-val up" style="width:34px;text-align:right">+16</span><span class="row-val" style="width:34px;text-align:right;color:var(--ball);font-weight:700">36</span></div>
+        <div class="row"><span class="pos">3</span><div class="av s" style="background:#7ED0C0">MB</div><span class="row-name">Marco Brunner</span><span class="row-val" style="width:34px;text-align:right">19</span><span class="row-val" style="width:34px;text-align:right">11/8</span><span class="row-val up" style="width:34px;text-align:right">+8</span><span class="row-val" style="width:34px;text-align:right;color:var(--ball);font-weight:700">33</span></div>
+        <div class="row"><span class="pos">4</span><div class="av s" style="background:#EFD07A">SK</div><span class="row-name">Sandra Keller</span><span class="row-val" style="width:34px;text-align:right">15</span><span class="row-val" style="width:34px;text-align:right">8/7</span><span class="row-val up" style="width:34px;text-align:right">+2</span><span class="row-val" style="width:34px;text-align:right;color:var(--ball);font-weight:700">24</span></div>
+        <div class="row"><span class="pos">5</span><div class="av s" style="background:#C6A0F5">DF</div><span class="row-name">Dario Frei</span><span class="row-val" style="width:34px;text-align:right">16</span><span class="row-val" style="width:34px;text-align:right">7/9</span><span class="row-val down" style="width:34px;text-align:right">−4</span><span class="row-val" style="width:34px;text-align:right;color:var(--ball);font-weight:700">21</span></div>
+        <div class="row"><span class="pos">6</span><div class="av s" style="background:#F0A0B4">NB</div><span class="row-name">Nina Baumann</span><span class="row-val" style="width:34px;text-align:right">14</span><span class="row-val" style="width:34px;text-align:right">6/8</span><span class="row-val down" style="width:34px;text-align:right">−5</span><span class="row-val" style="width:34px;text-align:right;color:var(--ball);font-weight:700">18</span></div>
+        <div class="row"><span class="pos">7</span><div class="av s" style="background:#9FD98C">PH</div><span class="row-name">Pascal Huber</span><span class="row-val" style="width:34px;text-align:right">13</span><span class="row-val" style="width:34px;text-align:right">4/9</span><span class="row-val down" style="width:34px;text-align:right">−11</span><span class="row-val" style="width:34px;text-align:right;color:var(--ball);font-weight:700">12</span></div>
+        <div class="row"><span class="pos">8</span><div class="av s" style="background:#A8BCC4">YM</div><span class="row-name">Yves Meier</span><span class="row-val" style="width:34px;text-align:right">12</span><span class="row-val" style="width:34px;text-align:right">3/9</span><span class="row-val down" style="width:34px;text-align:right">−14</span><span class="row-val" style="width:34px;text-align:right;color:var(--ball);font-weight:700">9</span></div>
+        <div class="mut small" style="margin-top:12px">3 Punkte pro Sieg · Gleichstand entschieden über Satzdifferenz, dann direkter Vergleich</div>
+      </div>
+    </section>
+
+    <!-- ══ TURNIER ══ -->
+    <section class="view" id="v-turnier">
+      <div class="card" style="margin-bottom:14px;display:flex;align-items:center;gap:14px;flex-wrap:wrap">
+        <div style="flex:1;min-width:200px">
+          <div class="eyebrow" style="margin-bottom:5px">Laufendes Turnier</div>
+          <div style="font-family:var(--display);font-weight:800;font-size:26px;line-height:1">Sommer-Cup · Einzel</div>
+          <div class="mut small" style="margin-top:5px">8 Teilnehmer · Seeding nach Elo · Halbfinal läuft</div>
+        </div>
+        <button class="btn-ghost">Turnier abbrechen</button>
+      </div>
+
+      <div class="card">
+        <div class="bracket">
+          <div class="br-col">
+            <div class="br-head">Viertelfinal</div>
+            <div class="match">
+              <div class="side w"><div class="av s" style="background:#F2B25C">LV</div><span class="s-name">Lena Vogt</span><span class="s-score">3</span></div>
+              <div class="side"><div class="av s" style="background:#A8BCC4">YM</div><span class="s-name">Yves Meier</span><span class="s-score">0</span></div>
+            </div>
+            <div class="match">
+              <div class="side w"><div class="av s" style="background:#7ED0C0">MB</div><span class="s-name">Marco Brunner</span><span class="s-score">3</span></div>
+              <div class="side"><div class="av s" style="background:#9FD98C">PH</div><span class="s-name">Pascal Huber</span><span class="s-score">2</span></div>
+            </div>
+            <div class="match">
+              <div class="side w"><div class="av s" style="background:#8FB8F0">TR</div><span class="s-name">Timo Rüegg</span><span class="s-score">3</span></div>
+              <div class="side"><div class="av s" style="background:#EFD07A">SK</div><span class="s-name">Sandra Keller</span><span class="s-score">1</span></div>
+            </div>
+            <div class="match">
+              <div class="side w"><div class="av s" style="background:#C6A0F5">DF</div><span class="s-name">Dario Frei</span><span class="s-score">3</span></div>
+              <div class="side"><div class="av s" style="background:#F0A0B4">NB</div><span class="s-name">Nina Baumann</span><span class="s-score">2</span></div>
+            </div>
+          </div>
+
+          <div class="br-col">
+            <div class="br-head">Halbfinal</div>
+            <div class="match live">
+              <div class="side"><div class="av s" style="background:#F2B25C">LV</div><span class="s-name">Lena Vogt</span><span class="s-score">–</span></div>
+              <div class="side"><div class="av s" style="background:#7ED0C0">MB</div><span class="s-name">Marco Brunner</span><span class="s-score">–</span></div>
+            </div>
+            <div class="match live">
+              <div class="side"><div class="av s" style="background:#8FB8F0">TR</div><span class="s-name">Timo Rüegg</span><span class="s-score">–</span></div>
+              <div class="side"><div class="av s" style="background:#C6A0F5">DF</div><span class="s-name">Dario Frei</span><span class="s-score">–</span></div>
+            </div>
+            <div class="mut small center" style="margin-top:2px">Partie antippen zum Erfassen</div>
+          </div>
+
+          <div class="br-col">
+            <div class="br-head">Final</div>
+            <div class="match next">
+              <div class="side"><div class="av s" style="background:#1E5265;color:#79A2AF">?</div><span class="s-name">Sieger HF 1</span><span class="s-score">–</span></div>
+              <div class="side"><div class="av s" style="background:#1E5265;color:#79A2AF">?</div><span class="s-name">Sieger HF 2</span><span class="s-score">–</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ══ HALL OF FAME ══ -->
+    <section class="view" id="v-hof">
+      <div class="grid g2" style="margin-bottom:14px">
+        <div class="card">
+          <div class="eyebrow">Saison-Sieger</div>
+          <div class="row"><span class="pos" style="width:52px;flex:0 0 52px;color:var(--ball)">Q2/26</span><div class="av s" style="background:#8FB8F0">TR</div><span class="row-name">Timo Rüegg</span><span class="row-val">42 P</span></div>
+          <div class="row"><span class="pos" style="width:52px;flex:0 0 52px;color:var(--ball)">Q1/26</span><div class="av s" style="background:#7ED0C0">MB</div><span class="row-name">Marco Brunner</span><span class="row-val">38 P</span></div>
+          <div class="row"><span class="pos" style="width:52px;flex:0 0 52px;color:var(--ball)">Q4/25</span><div class="av s" style="background:#EFD07A">SK</div><span class="row-name">Sandra Keller</span><span class="row-val">35 P</span></div>
+        </div>
+        <div class="card">
+          <div class="eyebrow">Turnier-Sieger</div>
+          <div class="row"><span class="pos" style="width:52px;flex:0 0 52px;font-size:11px">Frühling</span><div class="av s" style="background:#F2B25C">LV</div><span class="row-name">Lena Vogt</span><span class="pill">Einzel</span></div>
+          <div class="row"><span class="pos" style="width:52px;flex:0 0 52px;font-size:11px">Winter</span><div class="av s" style="background:#C6A0F5">DF</div><span class="row-name">Frei / Baumann</span><span class="pill">Doppel</span></div>
+          <div class="row"><span class="pos" style="width:52px;flex:0 0 52px;font-size:11px">Herbst</span><div class="av s" style="background:#8FB8F0">TR</div><span class="row-name">Timo Rüegg</span><span class="pill">Einzel</span></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="eyebrow">Rekord-Tafel · All-Time</div>
+        <div class="rec">
+          <div class="av m" style="background:#8FB8F0">TR</div>
+          <div class="rec-lab"><b>Längste Siegserie</b><span class="mut small">Timo Rüegg</span><div class="rec-date">03.02.2026 – 19.02.2026</div></div>
+          <div class="rec-val">11</div>
+        </div>
+        <div class="rec">
+          <div class="av m" style="background:#F2B25C">LV</div>
+          <div class="rec-lab"><b>Höchstes Elo</b><span class="mut small">Lena Vogt</span><div class="rec-date">08.07.2026</div></div>
+          <div class="rec-val">1361</div>
+        </div>
+        <div class="rec">
+          <div class="av m" style="background:#7ED0C0">MB</div>
+          <div class="rec-lab"><b>Grösstes Comeback</b><span class="mut small">Marco Brunner · 0:2 gedreht</span><div class="rec-date">04.07.2026</div></div>
+          <div class="rec-val">2</div>
+        </div>
+        <div class="rec">
+          <div class="av m" style="background:#A8BCC4">YM</div>
+          <div class="rec-lab"><b>Grösste Überraschung</b><span class="mut small">Yves Meier schlägt Lena Vogt · 9% Prognose</span><div class="rec-date">21.05.2026</div></div>
+          <div class="rec-val">9%</div>
+        </div>
+        <div class="rec">
+          <div class="av m" style="background:#9FD98C">PH</div>
+          <div class="rec-lab"><b>Meiste Spiele an einem Tag</b><span class="mut small">Pascal Huber</span><div class="rec-date">12.06.2026</div></div>
+          <div class="rec-val">9</div>
+        </div>
+        <div class="rec">
+          <div class="av m" style="background:#EFD07A">SK</div>
+          <div class="rec-lab"><b>Beste Siegquote</b><span class="mut small">Sandra Keller · min. 20 Spiele</span><div class="rec-date">laufend</div></div>
+          <div class="rec-val">71%</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ══ TIPPSPIEL ══ -->
+    <section class="view" id="v-tipp">
+      <div class="grid g2" style="margin-bottom:14px">
+        <div class="card">
+          <div class="eyebrow">Offene Partie · dein Tipp</div>
+          <div class="vs">
+            <div class="av m" style="background:#F2B25C">LV</div>
+            <div class="center"><div class="vs-score" style="font-size:24px;color:var(--muted)">vs</div><div class="vs-mid">Halbfinal Sommer-Cup</div></div>
+            <div class="av m" style="background:#7ED0C0">MB</div>
+          </div>
+          <div class="mut small center" style="margin:8px 0 12px">Du spielst selbst mit — kein Tipp möglich.</div>
+          <div style="height:1px;background:var(--line);margin:4px 0 14px"></div>
+          <div class="eyebrow">Offene Partie · dein Tipp</div>
+          <div class="vs">
+            <div class="av m" style="background:#8FB8F0">TR</div>
+            <div class="center"><div class="vs-score" style="font-size:24px;color:var(--muted)">vs</div><div class="vs-mid">Prognose 68% / 32%</div></div>
+            <div class="av m" style="background:#C6A0F5">DF</div>
+          </div>
+          <div style="display:flex;gap:9px;margin-top:12px">
+            <button class="btn-primary" style="background:var(--panel-2);color:var(--chalk);border:1px solid var(--line)">Timo · 1 Pkt</button>
+            <button class="btn-primary" style="background:var(--panel-2);color:var(--ball);border:1px solid var(--ball)">Dario · 3 Pkt ⚡</button>
+          </div>
+          <div class="mut small center" style="margin-top:9px">Underdog-Bonus: unter 40% Prognose gibt 3 Punkte statt 1.</div>
+        </div>
+
+        <div class="card">
+          <div class="eyebrow">Tipp-Rangliste · Saison Q3</div>
+          <div class="row"><span class="pos">1</span><div class="av s" style="background:#EFD07A">SK</div><span class="row-name">Sandra Keller</span><span class="pill">🔮 Hellseher</span><span class="row-val" style="color:var(--ball);font-weight:700">31</span></div>
+          <div class="row"><span class="pos">2</span><div class="av s" style="background:#9FD98C">PH</div><span class="row-name">Pascal Huber</span><span class="pill">64%</span><span class="row-val">27</span></div>
+          <div class="row"><span class="pos">3</span><div class="av s" style="background:#7ED0C0">MB</div><span class="row-name">Marco Brunner</span><span class="pill">58%</span><span class="row-val">22</span></div>
+          <div class="row"><span class="pos">4</span><div class="av s" style="background:#F0A0B4">NB</div><span class="row-name">Nina Baumann</span><span class="pill">51%</span><span class="row-val">19</span></div>
+          <div class="row"><span class="pos">5</span><div class="av s" style="background:#A8BCC4">YM</div><span class="row-name">Yves Meier</span><span class="pill">44%</span><span class="row-val">14</span></div>
+          <div class="mut small" style="margin-top:12px">Nur Punkte, kein Geld. Auf eigene Spiele kann nicht getippt werden.</div>
+        </div>
+      </div>
+    </section>
+  </main>
+</div>
+
+<!-- ══ DIALOG: Spiel erfassen ══ -->
+<div class="scrim" id="scrim">
+  <div class="dialog">
+    <div class="dlg-title">Spiel erfassen</div>
+
+    <div class="field">
+      <label>Modus</label>
+      <select id="mode" onchange="syncMode()">
+        <option value="single">Einzel</option>
+        <option value="double">Doppel</option>
+      </select>
+    </div>
+
+    <div class="sets">
+      <div class="field">
+        <label>Spieler A</label>
+        <select id="pa"><option>Marco Brunner</option><option>Lena Vogt</option><option>Timo Rüegg</option></select>
+      </div>
+      <div class="field">
+        <label>Spieler B</label>
+        <select id="pb"><option>Dario Frei</option><option>Yves Meier</option><option>Nina Baumann</option></select>
+      </div>
+    </div>
+
+    <div class="prognose">
+      <div class="prog-head"><span>Marco 64%</span><span>Prognose (Elo)</span><span>Dario 36%</span></div>
+      <div class="prog-track"><div class="prog-fill" style="width:64%"></div></div>
+    </div>
+
+    <div class="sets">
+      <div class="field"><label>Sätze A</label><select id="sa"><option>3</option><option>2</option><option>1</option><option>0</option></select></div>
+      <div class="field"><label>Sätze B</label><select id="sb"><option>2</option><option>3</option><option>1</option><option>0</option></select></div>
+    </div>
+
+    <div class="field">
+      <label>Satzergebnisse (optional)</label>
+      <input id="setdetail" value="9:11, 7:11, 11:8, 12:10, 11:9">
+    </div>
+
+    <div class="dlg-actions">
+      <button class="btn-ghost" onclick="closeDialog()">Abbrechen</button>
+      <button class="btn-primary" onclick="saveMatch()">Speichern</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ WIN OVERLAY ══ -->
+<div class="win" id="win" onclick="closeWin()">
+  <div class="win-inner">
+    <div class="win-avs" id="winAvs"></div>
+    <div class="win-kicker" id="winKicker">Sieger</div>
+    <div class="win-name" id="winName">Marco Brunner</div>
+    <div class="win-score" id="winScore">3 : 2</div>
+    <div class="win-comeback" id="winCb">COMEBACK!</div>
+    <div class="win-quote" id="winQuote">„Totgesagte leben länger."</div>
+    <div class="win-hint">Tippen zum Schliessen · abschaltbar in den Einstellungen</div>
+  </div>
+</div>
+
+<script>
+const TITLES = {dash:'Dashboard',profil:'Mein Profil',liga:'Liga',turnier:'Turnier',hof:'Hall of Fame',tipp:'Tippspiel'};
+
+document.querySelectorAll('.nav-item').forEach(b=>{
+  b.addEventListener('click',()=>{
+    document.querySelectorAll('.nav-item').forEach(x=>x.classList.remove('on'));
+    document.querySelectorAll('.view').forEach(x=>x.classList.remove('on'));
+    b.classList.add('on');
+    const v=b.dataset.view;
+    document.getElementById('v-'+v).classList.add('on');
+    document.getElementById('ptitle').textContent=TITLES[v];
+    window.scrollTo({top:0,behavior:'smooth'});
+  });
+});
+
+document.querySelectorAll('.range').forEach(g=>{
+  g.querySelectorAll('button').forEach(b=>{
+    b.addEventListener('click',()=>{
+      g.querySelectorAll('button').forEach(x=>x.classList.remove('on'));
+      b.classList.add('on');
+    });
+  });
+});
+
+function openDialog(){document.getElementById('scrim').classList.add('on')}
+function closeDialog(){document.getElementById('scrim').classList.remove('on')}
+function syncMode(){
+  const d=document.getElementById('mode').value==='double';
+  document.querySelector('#pa').previousElementSibling.textContent = d?'Team A · Spieler 1':'Spieler A';
+  document.querySelector('#pb').previousElementSibling.textContent = d?'Team B · Spieler 1':'Spieler B';
+}
+
+const QUOTES={
+  sweep:['„Das war Körperverletzung."','„Bitte den nächsten Gegner."'],
+  close:['„Zittersieg — aber im Buch steht nur der Sieg."'],
+  comeback:['„Totgesagte leben länger."','„0:2 hinten? War Absicht."'],
+  double:['„Ein Herz, zwei Schläger."']
+};
+
+function saveMatch(){
+  closeDialog();
+  const dbl = document.getElementById('mode').value==='double';
+  const sa=+document.getElementById('sa').value, sb=+document.getElementById('sb').value;
+  const winA = sa>sb;
+  const avs=document.getElementById('winAvs');
+  avs.innerHTML='';
+
+  if(dbl){
+    avs.innerHTML='<div class="av xl" style="background:#7ED0C0">MB</div><div class="av xl" style="background:#EFD07A">SK</div>';
+    document.getElementById('winKicker').textContent='Sieger-Team';
+    document.getElementById('winName').textContent='Brunner / Keller';
+    document.getElementById('winQuote').textContent=QUOTES.double[0];
+    document.getElementById('winCb').style.display='none';
+  }else{
+    const name = winA? document.getElementById('pa').value : document.getElementById('pb').value;
+    const ini = name.split(' ').map(w=>w[0]).join('');
+    avs.innerHTML='<div class="av xl" style="background:#7ED0C0">'+ini+'</div>';
+    document.getElementById('winKicker').textContent='Sieger';
+    document.getElementById('winName').textContent=name;
+    const cb = Math.abs(sa-sb)===1 && sa+sb===5;
+    document.getElementById('winCb').style.display = cb?'inline-block':'none';
+    const pool = cb?QUOTES.comeback : (Math.abs(sa-sb)>=3?QUOTES.sweep:QUOTES.close);
+    document.getElementById('winQuote').textContent = pool[Math.floor(Math.random()*pool.length)];
+  }
+  document.getElementById('winScore').textContent = sa+' : '+sb;
+
+  const w=document.getElementById('win');
+  w.classList.add('on');
+  rainBalls(w);
+  setTimeout(closeWin,5200);
+}
+
+function closeWin(){
+  const w=document.getElementById('win');
+  w.classList.remove('on');
+  w.querySelectorAll('.pball').forEach(b=>b.remove());
+}
+
+function rainBalls(root){
+  const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const n = reduce?0:70;
+  for(let i=0;i<n;i++){
+    const b=document.createElement('div');
+    b.className='pball';
+    const size = 7+Math.random()*13;
+    b.style.width=size+'px';
+    b.style.height=size+'px';
+    b.style.left=(Math.random()*100)+'%';
+    b.style.animationDuration=(2.1+Math.random()*2.4)+'s';
+    b.style.animationDelay=(Math.random()*1.4)+'s';
+    if(Math.random()<0.18) b.style.background='radial-gradient(circle at 32% 30%,#fff,#DCE9EC 65%)';
+    root.appendChild(b);
+  }
+}
+</script>
+</body>
+</html>
