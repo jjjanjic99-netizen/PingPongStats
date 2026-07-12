@@ -384,4 +384,62 @@ public class BadgeEngineTests
 
         Assert.Null(new TournamentWinnerBadgeRule().Evaluate(p1.Id, context));
     }
+
+    // ----- HellseherBadgeRule ------------------------------------------------
+
+    private static Season ActiveSeason(DateTime start, DateTime end) =>
+        new() { Id = Guid.NewGuid(), Name = "Saison", StartDate = start, IsActive = true, EndDate = end };
+
+    [Fact]
+    public void Hellseher_AwardsTheSeasonLeaderboardLeader()
+    {
+        var leader = P("Leader");
+        var other = P("Other");
+        var season = ActiveSeason(new DateTime(2026, 1, 1), new DateTime(2026, 12, 31));
+        var bets = new List<Bet>
+        {
+            new() { BettorPlayerId = leader.Id, IsResolved = true, Points = 3, ResolvedAt = new DateTime(2026, 6, 1) },
+            new() { BettorPlayerId = other.Id, IsResolved = true, Points = 1, ResolvedAt = new DateTime(2026, 6, 1) },
+        };
+        var context = BadgeEngine.BuildContext(
+            new[] { leader, other }, new List<Match>(), new List<DoubleMatch>(), bets: bets, activeSeason: season);
+
+        Assert.NotNull(new HellseherBadgeRule().Evaluate(leader.Id, context));
+        Assert.Null(new HellseherBadgeRule().Evaluate(other.Id, context));
+    }
+
+    [Fact]
+    public void Hellseher_NoAwardWithoutAnActiveSeason()
+    {
+        var p1 = P("Anna");
+        var bets = new List<Bet> { new() { BettorPlayerId = p1.Id, IsResolved = true, Points = 3, ResolvedAt = DateTime.Now } };
+        var context = BadgeEngine.BuildContext(new[] { p1 }, new List<Match>(), new List<DoubleMatch>(), bets: bets, activeSeason: null);
+
+        Assert.Null(new HellseherBadgeRule().Evaluate(p1.Id, context));
+    }
+
+    [Fact]
+    public void Hellseher_IgnoresBetsResolvedOutsideTheSeasonWindow()
+    {
+        var p1 = P("Anna");
+        var season = ActiveSeason(new DateTime(2026, 6, 1), new DateTime(2026, 6, 30));
+        var bets = new List<Bet>
+        {
+            new() { BettorPlayerId = p1.Id, IsResolved = true, Points = 3, ResolvedAt = new DateTime(2026, 1, 15) }, // outside window
+        };
+        var context = BadgeEngine.BuildContext(new[] { p1 }, new List<Match>(), new List<DoubleMatch>(), bets: bets, activeSeason: season);
+
+        Assert.Null(new HellseherBadgeRule().Evaluate(p1.Id, context));
+    }
+
+    [Fact]
+    public void Hellseher_NoAwardWhenNobodyHasScoredAnyPoints()
+    {
+        var p1 = P("Anna");
+        var season = ActiveSeason(new DateTime(2026, 1, 1), new DateTime(2026, 12, 31));
+        var bets = new List<Bet> { new() { BettorPlayerId = p1.Id, IsResolved = true, Points = 0, ResolvedAt = new DateTime(2026, 6, 1) } };
+        var context = BadgeEngine.BuildContext(new[] { p1 }, new List<Match>(), new List<DoubleMatch>(), bets: bets, activeSeason: season);
+
+        Assert.Null(new HellseherBadgeRule().Evaluate(p1.Id, context));
+    }
 }

@@ -115,7 +115,7 @@ public partial class PlayersViewModel : ObservableObject
         var players = _dataService.Players;
         var matches = _dataService.Matches.ToList();
         var eloRatings = EloService.ComputeRatings(matches, players.Select(p => p.Id));
-        var badgeContext = BadgeEngine.BuildContext(players, matches, _dataService.DoubleMatches.ToList(), _dataService.Tournaments.ToList());
+        var badgeContext = BadgeEngine.BuildContext(players, matches, _dataService.DoubleMatches.ToList(), _dataService.Tournaments.ToList(), _dataService.Bets.ToList(), _dataService.ActiveSeason);
 
         _allRows = players
             .Select(p => new PlayerRow

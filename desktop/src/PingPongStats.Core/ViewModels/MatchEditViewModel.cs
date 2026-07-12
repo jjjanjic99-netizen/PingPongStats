@@ -15,6 +15,7 @@ public partial class MatchEditViewModel : ObservableObject
     private readonly NotificationService _notifications;
     private readonly Guid? _editingMatchId;
     private readonly TournamentMatchContext? _tournamentContext;
+    private readonly PendingMatchContext? _pendingMatchContext;
 
     public static readonly QuickResultOption[] QuickResultOptions =
     {
@@ -58,7 +59,12 @@ public partial class MatchEditViewModel : ObservableObject
     /// <summary>True when this is a tournament bracket slot's match: the player
     /// selectors are locked to the bracket's assigned entrants.</summary>
     public bool IsTournamentMatch => _tournamentContext is not null;
-    public bool ArePlayerSelectorsEnabled => !IsTournamentMatch;
+
+    /// <summary>True when this is a standalone "Tippspiel" pending-match fixture
+    /// (Phase 15): the player selectors are locked to the announced pairing.</summary>
+    public bool IsPendingMatch => _pendingMatchContext is not null;
+
+    public bool ArePlayerSelectorsEnabled => !IsTournamentMatch && !IsPendingMatch;
 
     /// <summary>Raised after a successful save or when the user cancels, so the
     /// hosting navigation can return to the matches list.</summary>
@@ -68,14 +74,19 @@ public partial class MatchEditViewModel : ObservableObject
     /// can show the win animation overlay.</summary>
     public event Action<MatchSavedInfo>? MatchSaved;
 
+    /// <summary>Raised after a pending-match-context save completes, so
+    /// MainViewModel can navigate back to the "Tippspiel" page.</summary>
+    public event Action? PendingMatchFinished;
+
     public MatchEditViewModel(
         PingPongDataService dataService, NotificationService notifications, Guid? matchIdToEdit = null,
-        TournamentMatchContext? tournamentContext = null)
+        TournamentMatchContext? tournamentContext = null, PendingMatchContext? pendingMatchContext = null)
     {
         _dataService = dataService;
         _notifications = notifications;
         _editingMatchId = matchIdToEdit;
         _tournamentContext = tournamentContext;
+        _pendingMatchContext = pendingMatchContext;
 
         SaveCommand = new RelayCommand(Save);
         CancelCommand = new RelayCommand(() => Finished?.Invoke());
@@ -90,6 +101,12 @@ public partial class MatchEditViewModel : ObservableObject
             Title = "Turnier-Partie erfassen";
             PlayerA = AvailablePlayers.FirstOrDefault(p => p.Id == tournamentContext.PlayerAId);
             PlayerB = AvailablePlayers.FirstOrDefault(p => p.Id == tournamentContext.PlayerBId);
+        }
+        else if (pendingMatchContext is not null)
+        {
+            Title = "Getippte Partie erfassen";
+            PlayerA = AvailablePlayers.FirstOrDefault(p => p.Id == pendingMatchContext.PlayerAId);
+            PlayerB = AvailablePlayers.FirstOrDefault(p => p.Id == pendingMatchContext.PlayerBId);
         }
         else if (matchIdToEdit is Guid id)
         {
@@ -167,6 +184,11 @@ public partial class MatchEditViewModel : ObservableObject
             relevantIds.Add(_tournamentContext.PlayerAId);
             relevantIds.Add(_tournamentContext.PlayerBId);
         }
+        else if (_pendingMatchContext is not null)
+        {
+            relevantIds.Add(_pendingMatchContext.PlayerAId);
+            relevantIds.Add(_pendingMatchContext.PlayerBId);
+        }
         else if (_editingMatchId is Guid id)
         {
             var existing = _dataService.Matches.FirstOrDefault(m => m.Id == id);
@@ -232,6 +254,12 @@ public partial class MatchEditViewModel : ObservableObject
                 isTournamentFinal = tournament?.Status == TournamentStatus.Completed;
                 _notifications.NotifySuccess("Turnier-Partie wurde erfasst.");
             }
+            else if (_pendingMatchContext is not null)
+            {
+                savedMatch = _dataService.RecordPendingMatchSinglesResult(
+                    _pendingMatchContext.PendingMatchId, playedAt, PlayerASets, PlayerBSets, Notes, setResults);
+                _notifications.NotifySuccess("Getippte Partie wurde erfasst.");
+            }
             else if (_editingMatchId is Guid id)
             {
                 _dataService.UpdateMatch(id, playedAt, PlayerA.Id, PlayerB.Id, PlayerASets, PlayerBSets, Notes, setResults);
@@ -265,6 +293,7 @@ public partial class MatchEditViewModel : ObservableObject
                 IsDoubles: false, savedMatch.WinnerId, null, $"{winnerSets}:{loserSets}", isComeback, quoteCategory,
                 IsTournamentFinal: isTournamentFinal));
 
+            if (_pendingMatchContext is not null) PendingMatchFinished?.Invoke();
             Finished?.Invoke();
         }
         catch (ValidationException ex)

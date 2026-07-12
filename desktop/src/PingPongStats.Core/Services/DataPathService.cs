@@ -48,6 +48,8 @@ public class DataPathService
             new QuoteXmlRepository(dataPath).EnsureSeeded();
             new SeasonXmlRepository(dataPath).EnsureFileExists();
             new TournamentXmlRepository(dataPath).EnsureFileExists();
+            new PendingMatchXmlRepository(dataPath).EnsureFileExists();
+            new BetXmlRepository(dataPath).EnsureFileExists();
         }
         catch (Exception ex)
         {

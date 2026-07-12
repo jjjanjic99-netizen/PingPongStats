@@ -63,6 +63,7 @@ public partial class MainViewModel : ObservableObject
     public ProfileViewModel? Profile { get; private set; }
     public LeagueViewModel League { get; }
     public TournamentViewModel Tournament { get; }
+    public BettingViewModel Betting { get; }
 
     public bool IsLoggedIn => CurrentPlayer is not null;
 
@@ -79,6 +80,7 @@ public partial class MainViewModel : ObservableObject
     public IRelayCommand DismissWinAnimationCommand { get; }
     public IRelayCommand ShowLeagueCommand { get; }
     public IRelayCommand ShowTournamentCommand { get; }
+    public IRelayCommand ShowBettingCommand { get; }
 
     public MainViewModel(
         PingPongDataService dataService,
@@ -120,6 +122,10 @@ public partial class MainViewModel : ObservableObject
         Tournament = new TournamentViewModel(_dataService, _notifications, _settingsRepository);
         Tournament.PlayRequested += OnTournamentPlayRequested;
         Doubles.TournamentMatchFinished += () => Navigate("Turnier", Tournament, () => Tournament.Load());
+        Betting = new BettingViewModel(_dataService, _notifications, _settingsRepository);
+        Betting.RecordResultRequested += OnBettingRecordResultRequested;
+        Tournament.BetRequested += () => Navigate("Tippspiel", Betting, () => Betting.Load());
+        Doubles.PendingMatchFinished += () => Navigate("Tippspiel", Betting, () => Betting.Load());
 
         ShowDashboardCommand = new RelayCommand(() => Navigate("Dashboard", Dashboard, () => Dashboard.Load()));
         ShowPlayersCommand = new RelayCommand(() => Navigate("Spieler", Players, () => Players.Load()));
@@ -137,6 +143,7 @@ public partial class MainViewModel : ObservableObject
         DismissWinAnimationCommand = new RelayCommand(DismissWinAnimation);
         ShowLeagueCommand = new RelayCommand(() => Navigate("Liga", League, () => League.Load()));
         ShowTournamentCommand = new RelayCommand(() => Navigate("Turnier", Tournament, () => Tournament.Load()));
+        ShowBettingCommand = new RelayCommand(() => Navigate("Tippspiel", Betting, () => Betting.Load()));
 
         CurrentViewModel = Dashboard;
         InitializeKnownBadges();
@@ -148,7 +155,7 @@ public partial class MainViewModel : ObservableObject
     private void InitializeKnownBadges()
     {
         _knownBadgeKeys.Clear();
-        var context = BadgeEngine.BuildContext(_dataService.Players, _dataService.Matches, _dataService.DoubleMatches, _dataService.Tournaments);
+        var context = BadgeEngine.BuildContext(_dataService.Players, _dataService.Matches, _dataService.DoubleMatches, _dataService.Tournaments, _dataService.Bets, _dataService.ActiveSeason);
         foreach (var player in _dataService.Players)
         {
             foreach (var award in BadgeEngine.EvaluateForPlayer(player.Id, context))
@@ -162,7 +169,7 @@ public partial class MainViewModel : ObservableObject
     /// verdient" sound once if any badge appears that wasn't already known.</summary>
     private void CheckForNewlyEarnedBadges()
     {
-        var context = BadgeEngine.BuildContext(_dataService.Players, _dataService.Matches, _dataService.DoubleMatches, _dataService.Tournaments);
+        var context = BadgeEngine.BuildContext(_dataService.Players, _dataService.Matches, _dataService.DoubleMatches, _dataService.Tournaments, _dataService.Bets, _dataService.ActiveSeason);
         var foundNew = false;
         foreach (var player in _dataService.Players)
         {
@@ -235,9 +242,36 @@ public partial class MainViewModel : ObservableObject
         }
     }
 
+    /// <summary>Phase 15: the user clicked "Ergebnis erfassen" on a standalone
+    /// (non-tournament) pending match on the "Tippspiel" page - open the normal
+    /// (locked, pre-filled) match/doubles entry form for it.</summary>
+    private void OnBettingRecordResultRequested(PendingMatch pendingMatch)
+    {
+        if (pendingMatch.Mode == TournamentMode.Doubles)
+        {
+            var context = new PendingMatchDoublesContext(
+                pendingMatch.Id, pendingMatch.TeamAPlayer1Id!.Value, pendingMatch.TeamAPlayer2Id!.Value,
+                pendingMatch.TeamBPlayer1Id!.Value, pendingMatch.TeamBPlayer2Id!.Value);
+
+            Doubles.BeginPendingMatch(context);
+            ActiveSection = "Doppel";
+            CurrentViewModel = Doubles;
+        }
+        else
+        {
+            var context = new PendingMatchContext(pendingMatch.Id, pendingMatch.PlayerAId!.Value, pendingMatch.PlayerBId!.Value);
+            var editVm = new MatchEditViewModel(_dataService, _notifications, null, null, context);
+            editVm.Finished += () => Navigate("Tippspiel", Betting, () => Betting.Load());
+            editVm.MatchSaved += OnMatchSaved;
+            ActiveSection = "Getippte Partie";
+            CurrentViewModel = editVm;
+        }
+    }
+
     private void OnMatchSaved(MatchSavedInfo info)
     {
         Tournament.Load();
+        Betting.Load();
 
         _soundService.PlaySound(info.IsTournamentFinal ? SoundEvent.TournamentWin : SoundEvent.Win);
         CheckForNewlyEarnedBadges();
@@ -277,6 +311,7 @@ public partial class MainViewModel : ObservableObject
         CurrentPlayer = player;
         if (Profile is null) Profile = new ProfileViewModel(_dataService, _settingsRepository, playerId);
         else Profile.SetPlayer(playerId);
+        Betting.SetCurrentPlayer(playerId);
 
         Navigate("Mein Profil", Profile, null);
     }
@@ -285,6 +320,7 @@ public partial class MainViewModel : ObservableObject
     {
         CurrentPlayer = null;
         Profile = null;
+        Betting.SetCurrentPlayer(null);
         Navigate("Dashboard", Dashboard, () => Dashboard.Load());
     }
 
@@ -300,6 +336,7 @@ public partial class MainViewModel : ObservableObject
         Tournament.Load();
         CurrentPlayer = null;
         Profile = null;
+        Betting.SetCurrentPlayer(null);
         Login.Load();
         InitializeKnownBadges();
     }

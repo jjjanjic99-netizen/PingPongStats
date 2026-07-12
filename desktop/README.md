@@ -224,6 +224,8 @@ Beispiel `appsettings.json`:
 | `quotes.xml` | Trash-Talk-Sprüche fürs Gewinn-Overlay, bewusst frei editierbar |
 | `seasons.xml` | Manuell angelegte Liga-Saisons |
 | `tournaments.xml` | Turniere (Teilnehmer, Setzliste, Baum, Status) |
+| `pendingmatches.xml` | Angekündigte, noch nicht gespielte Partien fürs Tippspiel |
+| `bets.xml` | Tipps der Spieler auf angekündigte Partien |
 | `avatars\` | Verarbeitete Profilbilder, `{PlayerId}.png`, max. 512x512 px |
 
 Alle XML-Dateien werden **UTF-8 ohne BOM**, eingerückt und ohne
@@ -545,6 +547,32 @@ der "Ding"-Sound genau einmal - das ist reine Sitzungs-Buchführung in
 `MainViewModel`, keine neue Kennzahl, und deshalb bewusst ohne eigene
 Unit-Tests (anders als die reinen Berechnungs-Services).
 
+### Wettbüro (Tippspiel)
+
+**Reine Punkte-Wette - es geht nie um echtes Geld oder Guthaben.** Auf der
+neuen Seite **Tippspiel** (und direkt auf einer spielbaren Turnier-Paarung
+über den neuen "Tippen"-Button) können anstehende Partien angekündigt werden,
+bevor sie gespielt sind - Einzel oder Doppel, mit oder ohne Turnier-Bezug.
+Eingeloggte Spieler tippen den Sieger; ein Tipp pro Spieler pro Partie, bis
+zur Ergebniserfassung beliebig änderbar. Auf eine Partie, an der man selbst
+beteiligt ist, kann nicht getippt werden.
+
+Sobald das Ergebnis erfasst wird (auf der Turnier-Bracket-Seite wie gehabt,
+oder für freundschaftliche Partien über "Ergebnis erfassen" auf der
+Tippspiel-Seite - beides öffnet den normalen, gesperrten Ergebnis-Dialog),
+werden alle Tipps automatisch aufgelöst: richtiger Tipp = 1 Punkt; war der
+getippte Sieger laut Elo-Prognose ein Underdog (unter 40 % Siegwahrscheinlichkeit),
+gibt es 3 Punkte statt 1 (`BettingService`, Konstanten `PointsForCorrectPick`/
+`PointsForUnderdogPick`/`UnderdogProbabilityThreshold`). Falscher Tipp = 0
+Punkte. Die Prognose wird - wie beim bestehenden Gewinn-Overlay - aus den
+Elo-Ratings **vor** dieser einen Partie berechnet, nicht danach.
+
+Die Tipp-Rangliste (eigene Karte auf der Tippspiel-Seite) zeigt Punkte,
+Trefferquote und Anzahl Tipps pro Spieler. Das neue Badge "Hellseher" geht an
+den Führenden dieser Rangliste, ausgewertet nur über Tipps, deren Partie
+innerhalb der aktuell aktiven Liga-Saison gespielt wurde (keine aktive
+Saison oder niemand mit Punkten = kein Träger dieses Badges).
+
 ### Migration alter Daten
 
 Bestehende `players.xml`/`matches.xml`/`doubles.xml` ohne die neuen Felder
@@ -643,6 +671,14 @@ abgeleitet, nie direkt vom UI gesetzt.
 
 ## Getroffene Annahmen (Defaults)
 
+- **Tippspiel-Datenmodell**: Die Aufgabenstellung nannte für `Bet` nur
+  `MatchId` (nullable bis Spiel erfasst). Um zu wissen, *auf welche* noch
+  ungespielte Paarung überhaupt getippt wird (nötig für den Selbst-Tipp-Block
+  und die Anzeige), gibt es zusätzlich ein eigenes `PendingMatch`-Modell
+  ("angekündigte Partie") mit eigener `PendingMatchId` auf dem Bet; `MatchId`/
+  `DoubleMatchId` bleiben wie beschrieben null, bis das echte Ergebnis erfasst
+  ist. Eine reine Strukturentscheidung zur Umsetzung, keine erfundene
+  Kennzahl.
 - **Aktive-Spieler-Pflicht bei neuen Spielen**: Die Spielerauswahl bei
   "Neues Spiel"/"Spiel bearbeiten" zeigt nur aktive Spieler (plus die beiden
   Spieler eines gerade bearbeiteten Bestandsspiels, auch wenn diese seither

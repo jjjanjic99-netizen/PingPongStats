@@ -44,12 +44,18 @@ public partial class TournamentViewModel : ObservableObject
     public IRelayCommand GenerateTeamsCommand { get; }
     public IRelayCommand DrawRandomTeamsCommand { get; }
     public IRelayCommand<TournamentSlotRow> PlaySlotCommand { get; }
+    public IRelayCommand<TournamentSlotRow> RequestBetCommand { get; }
     public IRelayCommand AbortTournamentCommand { get; }
     public IRelayCommand<Tournament> ViewTournamentCommand { get; }
     public IRelayCommand RefreshCommand { get; }
 
     /// <summary>Raised when the user clicks a playable bracket slot.</summary>
     public event Action<TournamentPlayRequest>? PlayRequested;
+
+    /// <summary>Raised after "Tippen" ensures a PendingMatch exists for a
+    /// playable bracket slot (Phase 15), so MainViewModel can navigate to the
+    /// "Tippspiel" page to actually place the tip.</summary>
+    public event Action? BetRequested;
 
     public TournamentViewModel(PingPongDataService dataService, NotificationService notifications, ISettingsRepository settingsRepository)
     {
@@ -61,6 +67,7 @@ public partial class TournamentViewModel : ObservableObject
         GenerateTeamsCommand = new RelayCommand(() => BuildTeamsFromSelection(shuffle: false));
         DrawRandomTeamsCommand = new RelayCommand(() => BuildTeamsFromSelection(shuffle: true));
         PlaySlotCommand = new RelayCommand<TournamentSlotRow>(row => { if (row is not null) RequestPlaySlot(row); });
+        RequestBetCommand = new RelayCommand<TournamentSlotRow>(row => { if (row is not null) RequestBet(row); });
         AbortTournamentCommand = new RelayCommand(AbortActiveTournament);
         ViewTournamentCommand = new RelayCommand<Tournament>(t => { if (t is not null) ViewingTournament = t; });
         RefreshCommand = new RelayCommand(Load);
@@ -267,6 +274,22 @@ public partial class TournamentViewModel : ObservableObject
     {
         if (!row.IsPlayable || ActiveTournamentModel is null) return;
         PlayRequested?.Invoke(new TournamentPlayRequest(ActiveTournamentModel.Id, row.Slot, ActiveTournamentModel.Mode));
+    }
+
+    private void RequestBet(TournamentSlotRow row)
+    {
+        if (!row.IsPlayable || ActiveTournamentModel is null) return;
+
+        try
+        {
+            _dataService.GetOrCreatePendingMatchForSlot(ActiveTournamentModel.Id, row.Slot.Id);
+            BetRequested?.Invoke();
+        }
+        catch (Exception ex)
+        {
+            _notifications.NotifyError(ex.Message);
+            Logger.Error("TournamentViewModel.RequestBet failed", ex);
+        }
     }
 
     private void AbortActiveTournament()

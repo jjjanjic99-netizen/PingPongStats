@@ -182,6 +182,17 @@ public class PlayerRankingRow
 /// PingPongDataService.RecordTournamentSinglesResult instead of CreateMatch.</summary>
 public record TournamentMatchContext(Guid TournamentId, Guid SlotId, Guid PlayerAId, Guid PlayerBId);
 
+/// <summary>Pre-fills and locks a singles match entry for a standalone
+/// (non-tournament) pending-match tip fixture (Phase 15): the two players are
+/// fixed (whoever the pending match announced), and on save the result is
+/// recorded via PingPongDataService.RecordPendingMatchSinglesResult, which
+/// also resolves every bet placed on it.</summary>
+public record PendingMatchContext(Guid PendingMatchId, Guid PlayerAId, Guid PlayerBId);
+
+/// <summary>Doubles equivalent of <see cref="PendingMatchContext"/>.</summary>
+public record PendingMatchDoublesContext(
+    Guid PendingMatchId, Guid TeamAPlayer1Id, Guid TeamAPlayer2Id, Guid TeamBPlayer1Id, Guid TeamBPlayer2Id);
+
 /// <summary>Doubles equivalent of <see cref="TournamentMatchContext"/>.</summary>
 public record TournamentDoublesMatchContext(
     Guid TournamentId, Guid SlotId,
@@ -246,6 +257,47 @@ public class StreakAlarmRow
 
     public bool IsOnFire => StreakLength >= StreakAlarmService.FireStreakThreshold;
     public string MessageLabel => $"{StreakLength} Siege in Folge – wer stoppt {Player.DisplayName}?";
+}
+
+/// <summary>One selectable tip option on a "Tippspiel" pending-match row
+/// (Phase 15) - exactly two per row (the two sides), mirroring the
+/// QuickResultOption pattern used for match entry.</summary>
+public class BetPickOption
+{
+    public required Guid PendingMatchId { get; init; }
+    public Guid? PredictedWinnerId { get; init; }
+    public string PredictedWinningTeam { get; init; } = string.Empty;
+    public required string Label { get; init; }
+    public bool IsCurrentPick { get; init; }
+}
+
+/// <summary>One open (unresolved) pending match on the "Tippspiel" page,
+/// together with the currently logged-in player's own betting state on it.</summary>
+public class PendingMatchRow
+{
+    public required PendingMatch PendingMatch { get; init; }
+    public required string Label { get; init; }
+    public required List<BetPickOption> PickOptions { get; init; }
+    public bool CurrentPlayerIsParticipant { get; init; }
+
+    public Guid Id => PendingMatch.Id;
+    public bool IsTournamentLinked => PendingMatch.TournamentId is not null;
+    public string SourceLabel => IsTournamentLinked ? "Turnier" : "Freundschaftlich";
+    public bool CanPlaceBet => !CurrentPlayerIsParticipant;
+}
+
+/// <summary>One row of the "Tippspiel" leaderboard.</summary>
+public class BettingLeaderboardDisplayRow
+{
+    public required BettingLeaderboardRow Row { get; init; }
+    public Player? Player { get; init; }
+    public int Rank { get; init; }
+
+    public string DisplayName => Player?.DisplayName ?? "?";
+    public int TotalPoints => Row.TotalPoints;
+    public int BetsPlaced => Row.BetsPlaced;
+    public int CorrectPicks => Row.CorrectPicks;
+    public string HitRateLabel => $"{Row.HitRatePct:F0}%";
 }
 
 /// <summary>One row of the completed-tournaments list.</summary>

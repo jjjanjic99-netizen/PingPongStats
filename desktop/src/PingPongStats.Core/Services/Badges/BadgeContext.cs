@@ -13,6 +13,15 @@ public class BadgeContext
     public required IReadOnlyList<DoubleMatch> DoubleMatches { get; init; }
     public required IReadOnlyDictionary<Guid, double> EloRatings { get; init; }
     public IReadOnlyList<Tournament> Tournaments { get; init; } = Array.Empty<Tournament>();
+
+    /// <summary>Betting tips (Phase 15), needed by the "Hellseher" badge.</summary>
+    public IReadOnlyList<Bet> Bets { get; init; } = Array.Empty<Bet>();
+
+    /// <summary>The currently active league season (Phase 11), if any - the
+    /// "Hellseher" badge scopes its leaderboard to this season's games, the
+    /// same way the league table itself is scoped.</summary>
+    public Season? ActiveSeason { get; init; }
+
     public DateTime ReferenceDate { get; init; } = DateTime.Now;
 }
 

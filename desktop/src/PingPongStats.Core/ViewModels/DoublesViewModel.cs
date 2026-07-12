@@ -18,6 +18,7 @@ public partial class DoublesViewModel : ObservableObject
     private readonly PingPongDataService _dataService;
     private readonly NotificationService _notifications;
     private TournamentDoublesMatchContext? _tournamentContext;
+    private PendingMatchDoublesContext? _pendingMatchContext;
 
     public DashboardRangeFilter RangeFilter { get; }
 
@@ -68,7 +69,12 @@ public partial class DoublesViewModel : ObservableObject
     /// <summary>True while the open form is a tournament bracket slot's match:
     /// the four player selectors are locked to the bracket's assigned entrants.</summary>
     public bool IsTournamentMatch => _tournamentContext is not null;
-    public bool ArePlayerSelectorsEnabled => !IsTournamentMatch;
+
+    /// <summary>True while the open form is a standalone "Tippspiel" pending-match
+    /// fixture (Phase 15): the four player selectors are locked to it.</summary>
+    public bool IsPendingMatch => _pendingMatchContext is not null;
+
+    public bool ArePlayerSelectorsEnabled => !IsTournamentMatch && !IsPendingMatch;
 
     /// <summary>Raised after a successful save, so MainViewModel can show the win
     /// animation overlay.</summary>
@@ -77,6 +83,10 @@ public partial class DoublesViewModel : ObservableObject
     /// <summary>Raised after a tournament-context save completes, so MainViewModel
     /// can navigate back to the "Turnier" page.</summary>
     public event Action? TournamentMatchFinished;
+
+    /// <summary>Raised after a pending-match-context save completes, so
+    /// MainViewModel can navigate back to the "Tippspiel" page.</summary>
+    public event Action? PendingMatchFinished;
 
     public DoublesViewModel(
         PingPongDataService dataService, NotificationService notifications, DashboardRangeFilter rangeFilter)
@@ -88,7 +98,7 @@ public partial class DoublesViewModel : ObservableObject
 
         RefreshCommand = new RelayCommand(Load);
         NewMatchCommand = new RelayCommand(BeginCreate);
-        CancelFormCommand = new RelayCommand(() => { _tournamentContext = null; IsFormOpen = false; });
+        CancelFormCommand = new RelayCommand(() => { _tournamentContext = null; _pendingMatchContext = null; IsFormOpen = false; });
         SaveCommand = new RelayCommand(Save);
         ApplyQuickResultCommand = new RelayCommand<QuickResultOption>(option => { if (option is not null) ApplyQuickResult(option); });
         DeleteCommand = new RelayCommand<DoubleMatchRow>(row => { if (row is not null) Delete(row); });
@@ -139,15 +149,24 @@ public partial class DoublesViewModel : ObservableObject
     public void Load()
     {
         // Only active players can be picked for a new doubles match, except the
-        // players a locked tournament-context match already assigned (which may
-        // since have been archived) so the pre-fill can still succeed.
-        var relevantIds = _tournamentContext is null
-            ? new HashSet<Guid>()
-            : new HashSet<Guid>
-            {
-                _tournamentContext.TeamAPlayer1Id, _tournamentContext.TeamAPlayer2Id,
-                _tournamentContext.TeamBPlayer1Id, _tournamentContext.TeamBPlayer2Id,
-            };
+        // players a locked tournament- or pending-match-context match already
+        // assigned (which may since have been archived) so the pre-fill can
+        // still succeed.
+        var relevantIds = new HashSet<Guid>();
+        if (_tournamentContext is not null)
+        {
+            relevantIds.Add(_tournamentContext.TeamAPlayer1Id);
+            relevantIds.Add(_tournamentContext.TeamAPlayer2Id);
+            relevantIds.Add(_tournamentContext.TeamBPlayer1Id);
+            relevantIds.Add(_tournamentContext.TeamBPlayer2Id);
+        }
+        else if (_pendingMatchContext is not null)
+        {
+            relevantIds.Add(_pendingMatchContext.TeamAPlayer1Id);
+            relevantIds.Add(_pendingMatchContext.TeamAPlayer2Id);
+            relevantIds.Add(_pendingMatchContext.TeamBPlayer1Id);
+            relevantIds.Add(_pendingMatchContext.TeamBPlayer2Id);
+        }
 
         AvailablePlayers.Clear();
         foreach (var p in _dataService.Players.Where(p => p.IsActive || relevantIds.Contains(p.Id)).OrderBy(p => p.DisplayName))
@@ -212,6 +231,7 @@ public partial class DoublesViewModel : ObservableObject
     private void BeginCreate()
     {
         _tournamentContext = null;
+        _pendingMatchContext = null;
         PlayedAtDate = DateTime.Today;
         PlayedAtTime = DateTime.Now.ToString("HH:mm");
         TeamAPlayer1 = null;
@@ -226,6 +246,7 @@ public partial class DoublesViewModel : ObservableObject
         SetEntries.Clear();
         IsFormOpen = true;
         OnPropertyChanged(nameof(IsTournamentMatch));
+        OnPropertyChanged(nameof(IsPendingMatch));
         OnPropertyChanged(nameof(ArePlayerSelectorsEnabled));
     }
 
@@ -248,6 +269,31 @@ public partial class DoublesViewModel : ObservableObject
         SetEntries.Clear();
         IsFormOpen = true;
         OnPropertyChanged(nameof(IsTournamentMatch));
+        OnPropertyChanged(nameof(IsPendingMatch));
+        OnPropertyChanged(nameof(ArePlayerSelectorsEnabled));
+    }
+
+    /// <summary>Opens the form pre-filled and locked for a standalone
+    /// "Tippspiel" pending-match doubles fixture (Phase 15).</summary>
+    public void BeginPendingMatch(PendingMatchDoublesContext context)
+    {
+        _tournamentContext = null;
+        _pendingMatchContext = context;
+        PlayedAtDate = DateTime.Today;
+        PlayedAtTime = DateTime.Now.ToString("HH:mm");
+        TeamAPlayer1 = AvailablePlayers.FirstOrDefault(p => p.Id == context.TeamAPlayer1Id);
+        TeamAPlayer2 = AvailablePlayers.FirstOrDefault(p => p.Id == context.TeamAPlayer2Id);
+        TeamBPlayer1 = AvailablePlayers.FirstOrDefault(p => p.Id == context.TeamBPlayer1Id);
+        TeamBPlayer2 = AvailablePlayers.FirstOrDefault(p => p.Id == context.TeamBPlayer2Id);
+        TeamASets = 0;
+        TeamBSets = 0;
+        Notes = string.Empty;
+        WinnerSide = "A";
+        FormErrorMessage = string.Empty;
+        SetEntries.Clear();
+        IsFormOpen = true;
+        OnPropertyChanged(nameof(IsTournamentMatch));
+        OnPropertyChanged(nameof(IsPendingMatch));
         OnPropertyChanged(nameof(ArePlayerSelectorsEnabled));
     }
 
@@ -299,6 +345,12 @@ public partial class DoublesViewModel : ObservableObject
                 isTournamentFinal = tournament?.Status == TournamentStatus.Completed;
                 _notifications.NotifySuccess("Turnier-Partie wurde erfasst.");
             }
+            else if (_pendingMatchContext is not null)
+            {
+                savedMatch = _dataService.RecordPendingMatchDoublesResult(
+                    _pendingMatchContext.PendingMatchId, playedAt, TeamASets, TeamBSets, Notes, setResults);
+                _notifications.NotifySuccess("Getippte Partie wurde erfasst.");
+            }
             else
             {
                 savedMatch = _dataService.CreateDoubleMatch(
@@ -334,12 +386,16 @@ public partial class DoublesViewModel : ObservableObject
                 IsTournamentFinal: isTournamentFinal));
 
             var wasTournamentMatch = _tournamentContext is not null;
+            var wasPendingMatch = _pendingMatchContext is not null;
             _tournamentContext = null;
+            _pendingMatchContext = null;
             IsFormOpen = false;
             Load();
             OnPropertyChanged(nameof(IsTournamentMatch));
+            OnPropertyChanged(nameof(IsPendingMatch));
             OnPropertyChanged(nameof(ArePlayerSelectorsEnabled));
             if (wasTournamentMatch) TournamentMatchFinished?.Invoke();
+            if (wasPendingMatch) PendingMatchFinished?.Invoke();
         }
         catch (ValidationException ex)
         {

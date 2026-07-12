@@ -17,6 +17,7 @@ public static class BadgeEngine
         new EisenmannBadgeRule(),
         new DoublesSpecialistBadgeRule(),
         new TournamentWinnerBadgeRule(),
+        new HellseherBadgeRule(),
     };
 
     public static BadgeContext BuildContext(
@@ -24,6 +25,8 @@ public static class BadgeEngine
         IReadOnlyList<Match> matches,
         IReadOnlyList<DoubleMatch> doubleMatches,
         IReadOnlyList<Tournament>? tournaments = null,
+        IReadOnlyList<Bet>? bets = null,
+        Season? activeSeason = null,
         DateTime? referenceDate = null)
     {
         var eloRatings = EloService.ComputeRatings(matches, players.Select(p => p.Id));
@@ -34,6 +37,8 @@ public static class BadgeEngine
             DoubleMatches = doubleMatches,
             EloRatings = eloRatings,
             Tournaments = tournaments ?? Array.Empty<Tournament>(),
+            Bets = bets ?? Array.Empty<Bet>(),
+            ActiveSeason = activeSeason,
             ReferenceDate = referenceDate ?? DateTime.Now,
         };
     }

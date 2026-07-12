@@ -132,6 +132,11 @@
                                                                 Command="{Binding DataContext.PlaySlotCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
                                                                 CommandParameter="{Binding}"
                                                                 Visibility="{Binding IsPlayable, Converter={StaticResource BoolToVisibilityConverter}}" />
+                                                        <Button Content="Tippen" Style="{StaticResource SecondaryButton}"
+                                                                Margin="0,8,0,0" HorizontalAlignment="Stretch"
+                                                                Command="{Binding DataContext.RequestBetCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                                CommandParameter="{Binding}"
+                                                                Visibility="{Binding IsPlayable, Converter={StaticResource BoolToVisibilityConverter}}" />
                                                     </StackPanel>
                                                 </Border>
                                             </DataTemplate>

@@ -17,7 +17,8 @@ public class PingPongDataServiceTests : IDisposable
         _service = new PingPongDataService(
             new PlayerXmlRepository(_tempDir), new MatchXmlRepository(_tempDir), new DoubleMatchXmlRepository(_tempDir),
             auditLogRepository: null, quoteRepository: null, seasonRepository: new SeasonXmlRepository(_tempDir),
-            tournamentRepository: new TournamentXmlRepository(_tempDir));
+            tournamentRepository: new TournamentXmlRepository(_tempDir),
+            pendingMatchRepository: new PendingMatchXmlRepository(_tempDir), betRepository: new BetXmlRepository(_tempDir));
     }
 
     public void Dispose()
@@ -332,5 +333,79 @@ public class PingPongDataServiceTests : IDisposable
         _service.AbortTournament(tournament.Id);
 
         Assert.Single(_service.Matches);
+    }
+
+    [Fact]
+    public void CreateSinglesPendingMatch_IsAddedToPendingMatches()
+    {
+        var playerA = _service.CreatePlayer("A", "", "", "");
+        var playerB = _service.CreatePlayer("B", "", "", "");
+
+        var pendingMatch = _service.CreateSinglesPendingMatch(playerA.Id, playerB.Id);
+
+        Assert.Single(_service.PendingMatches);
+        Assert.Equal(pendingMatch.Id, _service.PendingMatches.Single().Id);
+        Assert.False(pendingMatch.IsResolved);
+    }
+
+    [Fact]
+    public void PlaceOrUpdateBet_BlocksBetFromAParticipant()
+    {
+        var playerA = _service.CreatePlayer("A", "", "", "");
+        var playerB = _service.CreatePlayer("B", "", "", "");
+        var pendingMatch = _service.CreateSinglesPendingMatch(playerA.Id, playerB.Id);
+
+        Assert.Throws<ValidationException>(() =>
+            _service.PlaceOrUpdateBet(pendingMatch.Id, playerA.Id, playerB.Id, null));
+    }
+
+    [Fact]
+    public void RecordPendingMatchSinglesResult_ResolvesPendingMatchAndScoresBets()
+    {
+        var playerA = _service.CreatePlayer("A", "", "", "");
+        var playerB = _service.CreatePlayer("B", "", "", "");
+        var bettor = _service.CreatePlayer("Bettor", "", "", "");
+        var pendingMatch = _service.CreateSinglesPendingMatch(playerA.Id, playerB.Id);
+
+        _service.PlaceOrUpdateBet(pendingMatch.Id, bettor.Id, playerA.Id, null);
+
+        var match = _service.RecordPendingMatchSinglesResult(pendingMatch.Id, DateTime.Now, 3, 0, "");
+
+        Assert.Single(_service.Matches);
+        Assert.True(_service.PendingMatches.Single().IsResolved);
+        Assert.Equal(match.Id, _service.PendingMatches.Single().ResolvedMatchId);
+
+        var bet = _service.Bets.Single();
+        Assert.True(bet.IsResolved);
+        Assert.True(bet.Points > 0); // even ratings (1000 vs 1000) -> correct pick, at least the base point
+    }
+
+    [Fact]
+    public void RecordTournamentSinglesResult_AlsoResolvesALinkedPendingMatchBet()
+    {
+        var players = Enumerable.Range(0, 2).Select(i => _service.CreatePlayer($"P{i}", "", "", "")).ToList();
+        var bettor = _service.CreatePlayer("Bettor", "", "", "");
+        var tournament = _service.CreateSinglesTournament("Turnier", players.Select(p => p.Id).ToList());
+        var slot = tournament.Bracket.Single();
+
+        var pendingMatch = _service.GetOrCreatePendingMatchForSlot(tournament.Id, slot.Id);
+        _service.PlaceOrUpdateBet(pendingMatch.Id, bettor.Id, players[0].Id, null);
+
+        _service.RecordTournamentSinglesResult(tournament.Id, slot.Id, DateTime.Now, players[0].Id, players[1].Id, 3, 0, "");
+
+        Assert.True(_service.PendingMatches.Single().IsResolved);
+        Assert.True(_service.Bets.Single().IsResolved);
+    }
+
+    [Fact]
+    public void RecordPendingMatchSinglesResult_ThrowsWhenAlreadyResolved()
+    {
+        var playerA = _service.CreatePlayer("A", "", "", "");
+        var playerB = _service.CreatePlayer("B", "", "", "");
+        var pendingMatch = _service.CreateSinglesPendingMatch(playerA.Id, playerB.Id);
+        _service.RecordPendingMatchSinglesResult(pendingMatch.Id, DateTime.Now, 3, 0, "");
+
+        Assert.Throws<ValidationException>(() =>
+            _service.RecordPendingMatchSinglesResult(pendingMatch.Id, DateTime.Now, 3, 1, ""));
     }
 }

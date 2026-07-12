@@ -10,6 +10,11 @@
                 <TextBlock Text="Turnier-Partie: Die Spieler sind durch die Turnierpaarung vorgegeben." TextWrapping="Wrap" />
             </Border>
 
+            <Border Style="{StaticResource CardBorder}" Margin="0,0,0,12" Padding="10"
+                    Visibility="{Binding IsPendingMatch, Converter={StaticResource BoolToVisibilityConverter}}">
+                <TextBlock Text="Getippte Partie: Die Spieler sind durch die im Tippspiel angelegte Paarung vorgegeben." TextWrapping="Wrap" />
+            </Border>
+
             <Grid Margin="0,0,0,12">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*" />

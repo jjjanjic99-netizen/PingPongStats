@@ -25,6 +25,8 @@ public class PingPongDataService
     private readonly IQuoteRepository? _quoteRepository;
     private readonly ISeasonRepository? _seasonRepository;
     private readonly ITournamentRepository? _tournamentRepository;
+    private readonly IPendingMatchRepository? _pendingMatchRepository;
+    private readonly IBetRepository? _betRepository;
 
     public PingPongDataService(
         IPlayerRepository playerRepository,
@@ -33,7 +35,9 @@ public class PingPongDataService
         IAuditLogRepository? auditLogRepository = null,
         IQuoteRepository? quoteRepository = null,
         ISeasonRepository? seasonRepository = null,
-        ITournamentRepository? tournamentRepository = null)
+        ITournamentRepository? tournamentRepository = null,
+        IPendingMatchRepository? pendingMatchRepository = null,
+        IBetRepository? betRepository = null)
     {
         _playerRepository = playerRepository;
         _matchRepository = matchRepository;
@@ -42,6 +46,8 @@ public class PingPongDataService
         _quoteRepository = quoteRepository;
         _seasonRepository = seasonRepository;
         _tournamentRepository = tournamentRepository;
+        _pendingMatchRepository = pendingMatchRepository;
+        _betRepository = betRepository;
         Reload();
     }
 
@@ -70,6 +76,14 @@ public class PingPongDataService
     /// can be in progress at a time.</summary>
     public Tournament? ActiveTournament => Tournaments.FirstOrDefault(t => t.Status == TournamentStatus.InProgress);
 
+    /// <summary>Announced pairings to bet on (Phase 15). Empty if no
+    /// IPendingMatchRepository was supplied, e.g. in tests that don't need it.</summary>
+    public IReadOnlyList<PendingMatch> PendingMatches { get; private set; } = new List<PendingMatch>();
+
+    /// <summary>Player tips on pending matches (Phase 15). Empty if no
+    /// IBetRepository was supplied, e.g. in tests that don't need it.</summary>
+    public IReadOnlyList<Bet> Bets { get; private set; } = new List<Bet>();
+
     /// <summary>Re-reads all XML files from disk. Called after every mutation and can
     /// also be triggered manually from Settings ("XML neu laden").</summary>
     public void Reload()
@@ -80,6 +94,8 @@ public class PingPongDataService
         Quotes = _quoteRepository?.GetAll() ?? new List<Quote>();
         Seasons = _seasonRepository?.GetAll() ?? new List<Season>();
         Tournaments = _tournamentRepository?.GetAll() ?? new List<Tournament>();
+        PendingMatches = _pendingMatchRepository?.GetAll() ?? new List<PendingMatch>();
+        Bets = _betRepository?.GetAll() ?? new List<Bet>();
     }
 
     // ----- Players -----------------------------------------------------
@@ -565,6 +581,7 @@ public class PingPongDataService
             ?? throw new NotFoundException("Gewinner konnte keinem Turnier-Teilnehmer zugeordnet werden.");
 
         AdvanceTournamentBracket(tournamentId, slotId, winnerEntrant.Id, match.Id);
+        ResolveLinkedPendingMatch(tournamentId, slotId, match.WinnerId == match.PlayerAId ? "A" : "B", match.Id, null, match.PlayedAt);
         return match;
     }
 
@@ -592,6 +609,7 @@ public class PingPongDataService
             ?? throw new NotFoundException("Gewinner-Team konnte keinem Turnier-Teilnehmer zugeordnet werden.");
 
         AdvanceTournamentBracket(tournamentId, slotId, winnerEntrant.Id, match.Id);
+        ResolveLinkedPendingMatch(tournamentId, slotId, match.WinningTeam, null, match.Id, match.PlayedAt);
         return match;
     }
 
@@ -622,6 +640,223 @@ public class PingPongDataService
         });
 
         LogAudit("TournamentAborted", tournamentId.ToString());
+        Reload();
+    }
+
+    // ----- Betting / Wettbüro -----------------------------------------------
+
+    /// <summary>Announces a new singles pairing to bet on (Phase 15, standalone -
+    /// not linked to any tournament).</summary>
+    public PendingMatch CreateSinglesPendingMatch(Guid playerAId, Guid playerBId)
+    {
+        ValidationService.EnsurePlayersExist(playerAId, playerBId, Players);
+        var pendingMatch = BettingService.CreateSinglesPendingMatch(playerAId, playerBId);
+
+        _pendingMatchRepository?.Update(pendingMatches =>
+        {
+            pendingMatches.Add(pendingMatch);
+            return pendingMatches;
+        });
+
+        LogAudit("PendingMatchCreated", $"{playerAId} vs {playerBId}");
+        Reload();
+        return pendingMatch;
+    }
+
+    /// <summary>Announces a new doubles pairing to bet on (Phase 15, standalone -
+    /// not linked to any tournament).</summary>
+    public PendingMatch CreateDoublesPendingMatch(
+        Guid teamAPlayer1Id, Guid teamAPlayer2Id, Guid teamBPlayer1Id, Guid teamBPlayer2Id)
+    {
+        ValidationService.EnsurePlayersExist(
+            new[] { teamAPlayer1Id, teamAPlayer2Id, teamBPlayer1Id, teamBPlayer2Id }, Players);
+        var pendingMatch = BettingService.CreateDoublesPendingMatch(
+            teamAPlayer1Id, teamAPlayer2Id, teamBPlayer1Id, teamBPlayer2Id);
+
+        _pendingMatchRepository?.Update(pendingMatches =>
+        {
+            pendingMatches.Add(pendingMatch);
+            return pendingMatches;
+        });
+
+        LogAudit("PendingMatchCreated", $"{teamAPlayer1Id}+{teamAPlayer2Id} vs {teamBPlayer1Id}+{teamBPlayer2Id}");
+        Reload();
+        return pendingMatch;
+    }
+
+    /// <summary>Idempotent: returns the PendingMatch already linked to this
+    /// tournament bracket slot, creating one on first request (e.g. when a user
+    /// first clicks "Tipp abgeben" on a playable slot on the Turnier page).</summary>
+    public PendingMatch GetOrCreatePendingMatchForSlot(Guid tournamentId, Guid slotId)
+    {
+        var existing = PendingMatches.FirstOrDefault(pm => pm.TournamentId == tournamentId && pm.TournamentSlotId == slotId);
+        if (existing is not null) return existing;
+
+        var tournament = Tournaments.FirstOrDefault(t => t.Id == tournamentId)
+            ?? throw new NotFoundException("Turnier wurde nicht gefunden.");
+        var slot = tournament.Bracket.FirstOrDefault(s => s.Id == slotId)
+            ?? throw new NotFoundException("Turnier-Partie wurde nicht gefunden.");
+        if (!BracketService.IsPlayable(slot))
+        {
+            throw new ValidationException("Diese Turnier-Partie steht noch nicht fest.");
+        }
+
+        var entrantA = tournament.Entrants.FirstOrDefault(e => e.Id == slot.EntrantAId)
+            ?? throw new NotFoundException("Teilnehmer wurde nicht gefunden.");
+        var entrantB = tournament.Entrants.FirstOrDefault(e => e.Id == slot.EntrantBId)
+            ?? throw new NotFoundException("Teilnehmer wurde nicht gefunden.");
+
+        var pendingMatch = tournament.Mode == TournamentMode.Doubles
+            ? BettingService.CreateDoublesPendingMatch(
+                entrantA.Player1Id, entrantA.Player2Id!.Value, entrantB.Player1Id, entrantB.Player2Id!.Value, tournamentId, slotId)
+            : BettingService.CreateSinglesPendingMatch(entrantA.Player1Id, entrantB.Player1Id, tournamentId, slotId);
+
+        _pendingMatchRepository?.Update(pendingMatches =>
+        {
+            pendingMatches.Add(pendingMatch);
+            return pendingMatches;
+        });
+
+        LogAudit("PendingMatchCreated", $"Turnier {tournamentId} / Slot {slotId}");
+        Reload();
+        return PendingMatches.First(pm => pm.Id == pendingMatch.Id);
+    }
+
+    /// <summary>Places a new tip, or changes the bettor's existing tip on this
+    /// same pending match. Throws (via BettingService) if the match is already
+    /// resolved or the bettor is one of its participants.</summary>
+    public Bet PlaceOrUpdateBet(Guid pendingMatchId, Guid bettorPlayerId, Guid? predictedWinnerId, string? predictedWinningTeam)
+    {
+        var pendingMatch = PendingMatches.FirstOrDefault(pm => pm.Id == pendingMatchId)
+            ?? throw new NotFoundException("Partie wurde nicht gefunden.");
+        if (!Players.Any(p => p.Id == bettorPlayerId))
+        {
+            throw new NotFoundException("Spieler wurde nicht gefunden.");
+        }
+
+        Bet? bet = null;
+        _betRepository?.Update(bets =>
+        {
+            bet = BettingService.PlaceOrUpdateBet(bets, pendingMatch, bettorPlayerId, predictedWinnerId, predictedWinningTeam);
+            return bets;
+        });
+
+        LogAudit("BetPlaced", $"{bettorPlayerId} -> {pendingMatchId}");
+        Reload();
+        return bet ?? throw new NotFoundException("Tipp konnte nicht gespeichert werden.");
+    }
+
+    /// <summary>Records the result of a standalone (non-tournament) singles
+    /// pending match: creates the underlying Match and resolves every bet on it.</summary>
+    public Match RecordPendingMatchSinglesResult(
+        Guid pendingMatchId, DateTime playedAt, int playerASets, int playerBSets, string notes,
+        List<SetResult>? setResults = null)
+    {
+        var pendingMatch = PendingMatches.FirstOrDefault(pm => pm.Id == pendingMatchId)
+            ?? throw new NotFoundException("Partie wurde nicht gefunden.");
+        if (pendingMatch.IsResolved)
+        {
+            throw new ValidationException("Diese Partie wurde bereits erfasst.");
+        }
+        if (pendingMatch.Mode != TournamentMode.Singles)
+        {
+            throw new ValidationException("Diese Partie ist ein Doppel, kein Einzel.");
+        }
+        if (pendingMatch.TournamentId is not null)
+        {
+            throw new ValidationException(
+                "Diese Partie gehört zu einem Turnier - das Ergebnis wird über den Turnier-Bracket erfasst.");
+        }
+
+        var match = CreateMatch(
+            playedAt, pendingMatch.PlayerAId!.Value, pendingMatch.PlayerBId!.Value, playerASets, playerBSets, notes, setResults);
+
+        ResolvePendingMatchAndBets(
+            pendingMatch.Id, match.WinnerId == pendingMatch.PlayerAId ? "A" : "B", match.Id, null, match.PlayedAt);
+        return match;
+    }
+
+    /// <summary>Records the result of a standalone (non-tournament) doubles
+    /// pending match: creates the underlying DoubleMatch and resolves every bet
+    /// on it.</summary>
+    public DoubleMatch RecordPendingMatchDoublesResult(
+        Guid pendingMatchId, DateTime playedAt, int teamASets, int teamBSets, string notes,
+        List<SetResult>? setResults = null)
+    {
+        var pendingMatch = PendingMatches.FirstOrDefault(pm => pm.Id == pendingMatchId)
+            ?? throw new NotFoundException("Partie wurde nicht gefunden.");
+        if (pendingMatch.IsResolved)
+        {
+            throw new ValidationException("Diese Partie wurde bereits erfasst.");
+        }
+        if (pendingMatch.Mode != TournamentMode.Doubles)
+        {
+            throw new ValidationException("Diese Partie ist ein Einzel, kein Doppel.");
+        }
+        if (pendingMatch.TournamentId is not null)
+        {
+            throw new ValidationException(
+                "Diese Partie gehört zu einem Turnier - das Ergebnis wird über den Turnier-Bracket erfasst.");
+        }
+
+        var match = CreateDoubleMatch(
+            playedAt, pendingMatch.TeamAPlayer1Id!.Value, pendingMatch.TeamAPlayer2Id!.Value,
+            pendingMatch.TeamBPlayer1Id!.Value, pendingMatch.TeamBPlayer2Id!.Value, teamASets, teamBSets, notes, setResults);
+
+        ResolvePendingMatchAndBets(pendingMatch.Id, match.WinningTeam, null, match.Id, match.PlayedAt);
+        return match;
+    }
+
+    /// <summary>Looks up whether a tournament bracket slot has a linked pending
+    /// match and, if so, resolves it - called from RecordTournamentSinglesResult/
+    /// RecordTournamentDoublesResult so betting on tournament matches works
+    /// through the exact same recording flow as any other tournament match.</summary>
+    private void ResolveLinkedPendingMatch(
+        Guid tournamentId, Guid slotId, string winnerSide, Guid? matchId, Guid? doubleMatchId, DateTime playedAt)
+    {
+        var linked = PendingMatches.FirstOrDefault(
+            pm => pm.TournamentId == tournamentId && pm.TournamentSlotId == slotId && !pm.IsResolved);
+        if (linked is null) return;
+
+        ResolvePendingMatchAndBets(linked.Id, winnerSide, matchId, doubleMatchId, playedAt);
+    }
+
+    /// <summary>Marks a pending match resolved and scores every bet on it. Elo
+    /// ratings used for the underdog bonus exclude the resolving match itself
+    /// (same convention as the "isUnderdogWin" win-overlay flag elsewhere) - by
+    /// the time this runs, CreateMatch/CreateDoubleMatch has already reloaded
+    /// Matches/DoubleMatches to include it, so it is filtered back out here.</summary>
+    private void ResolvePendingMatchAndBets(
+        Guid pendingMatchId, string winnerSide, Guid? matchId, Guid? doubleMatchId, DateTime playedAt)
+    {
+        if (_pendingMatchRepository is null) return;
+
+        PendingMatch? resolved = null;
+        _pendingMatchRepository.Update(pendingMatches =>
+        {
+            var pm = pendingMatches.FirstOrDefault(p => p.Id == pendingMatchId);
+            if (pm is null || pm.IsResolved) return pendingMatches;
+
+            pm.IsResolved = true;
+            pm.ResolvedMatchId = matchId;
+            pm.ResolvedDoubleMatchId = doubleMatchId;
+            resolved = pm;
+            return pendingMatches;
+        });
+
+        if (resolved is not null && _betRepository is not null)
+        {
+            var priorMatches = matchId is Guid mId ? Matches.Where(m => m.Id != mId).ToList() : Matches.ToList();
+            var priorRatings = EloService.ComputeRatings(priorMatches, Players.Select(p => p.Id));
+
+            _betRepository.Update(bets =>
+            {
+                BettingService.ResolveBets(bets, resolved, winnerSide, playedAt, priorRatings);
+                return bets;
+            });
+        }
+
+        LogAudit("PendingMatchResolved", pendingMatchId.ToString());
         Reload();
     }
 
