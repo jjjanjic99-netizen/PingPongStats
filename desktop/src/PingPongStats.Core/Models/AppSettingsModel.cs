@@ -17,4 +17,12 @@ public class AppSettingsModel
     /// <summary>Whether to show the fullscreen confetti/win overlay after saving a
     /// match. Defaults to on.</summary>
     public bool ShowWinAnimation { get; set; } = true;
+
+    /// <summary>Whether sound effects (win, tournament win, badge earned) play.
+    /// Defaults to on.</summary>
+    public bool SoundEnabled { get; set; } = true;
+
+    /// <summary>Sound effect playback volume, 0.0 (silent) to 1.0 (full). Defaults
+    /// to 70%.</summary>
+    public double SoundVolume { get; set; } = 0.7;
 }

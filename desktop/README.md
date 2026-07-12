@@ -518,6 +518,33 @@ Berechnung ist bewusst unabhängig vom Dashboard-Zeitraumfilter (wie "Player
 of the Week"/"Rivalität des Monats") - eine durch einen Zeitfilter
 abgeschnittene Serie wäre irreführend.
 
+### Sound-Effekte
+
+Kurze WAV-Sounds (`ISoundService`/`WpfSoundService`, abgespielt über
+`System.Windows.Media.MediaPlayer` - keine externe Bibliothek) bei drei
+Ereignissen: Sieg-Overlay/Konfetti (`win.wav`), Turniersieg (`tournament-
+win.wav`, eigener, länger gedachter Sound) und einem neu verdienten Badge
+(`badge-earned.wav`, kurzer "Ding"). Abspielen blockiert nie die Oberfläche
+(`MediaPlayer.Play()` ist asynchron).
+
+Die eigentlichen Audiodateien werden **nicht** generiert oder aus dem
+Internet heruntergeladen - das war für diese Phase explizit ausgeschlossen.
+Stattdessen liegen unter `desktop/assets/sounds/` drei 0-Byte-Platzhalter mit
+den exakt richtigen Dateinamen; die genauen Anforderungen (Format, empfohlene
+Länge) stehen in `desktop/assets/sounds/README.md`. Eine fehlende oder nicht
+abspielbare Datei führt zu keinem Ton und **nie** zu einem Fehler/Absturz.
+Diese Dateien werden beim Build nach `sounds\` neben die EXE kopiert
+(`AppContext.BaseDirectory\sounds\*.wav`), unabhängig vom Datenpfad.
+
+Einstellung **"Sound-Effekte aktivieren"** (Default: an) plus ein
+Lautstärkeregler (0-100 %, Default 70 %) unter Einstellungen. Ein neu
+verdientes Badge wird erkannt, indem beim Start einer Sitzung einmal alle
+aktuell gehaltenen Badges als "bekannt" vorgemerkt werden; taucht danach (nach
+einem gespeicherten Spiel) ein Badge auf, das vorher nicht bekannt war, spielt
+der "Ding"-Sound genau einmal - das ist reine Sitzungs-Buchführung in
+`MainViewModel`, keine neue Kennzahl, und deshalb bewusst ohne eigene
+Unit-Tests (anders als die reinen Berechnungs-Services).
+
 ### Migration alter Daten
 
 Bestehende `players.xml`/`matches.xml`/`doubles.xml` ohne die neuen Felder

@@ -31,6 +31,8 @@ public partial class SettingsViewModel : ObservableObject
     [ObservableProperty] private bool darkMode;
     [ObservableProperty] private string selectedUiScale = "Medium";
     [ObservableProperty] private bool showWinAnimation = true;
+    [ObservableProperty] private bool soundEnabled = true;
+    [ObservableProperty] private double soundVolume = 0.7;
 
     [ObservableProperty] private string newSeasonName = string.Empty;
     [ObservableProperty] private DateTime newSeasonStartDate = DateTime.Today;
@@ -85,6 +87,8 @@ public partial class SettingsViewModel : ObservableObject
         DarkMode = settings.DarkMode;
         SelectedUiScale = string.IsNullOrWhiteSpace(settings.UiScale) ? "Medium" : settings.UiScale;
         ShowWinAnimation = settings.ShowWinAnimation;
+        SoundEnabled = settings.SoundEnabled;
+        SoundVolume = settings.SoundVolume;
 
         ChangeDataPathCommand = new RelayCommand(ChangeDataPath);
         ReloadCommand = new RelayCommand(Reload);
@@ -159,6 +163,20 @@ public partial class SettingsViewModel : ObservableObject
     {
         var settings = _settingsRepository.Load();
         settings.ShowWinAnimation = value;
+        _settingsRepository.Save(settings);
+    }
+
+    partial void OnSoundEnabledChanged(bool value)
+    {
+        var settings = _settingsRepository.Load();
+        settings.SoundEnabled = value;
+        _settingsRepository.Save(settings);
+    }
+
+    partial void OnSoundVolumeChanged(double value)
+    {
+        var settings = _settingsRepository.Load();
+        settings.SoundVolume = value;
         _settingsRepository.Save(settings);
     }
 

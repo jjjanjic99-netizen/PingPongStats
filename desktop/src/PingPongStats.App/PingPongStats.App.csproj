@@ -23,4 +23,16 @@
     <ProjectReference Include="..\PingPongStats.Core\PingPongStats.Core.csproj" />
   </ItemGroup>
 
+  <!-- Phase 14 sound effects: WAV files live in the repo under desktop/assets/sounds/
+       (see that folder's README for the exact expected file names) and are copied
+       next to the built EXE at sounds\*.wav, resolved at runtime via
+       AppContext.BaseDirectory. Placeholder files ship in the repo - missing/invalid
+       files are handled gracefully by WpfSoundService (no sound, no crash). -->
+  <ItemGroup>
+    <Content Include="..\..\assets\sounds\*.wav">
+      <Link>sounds\%(Filename)%(Extension)</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+
 </Project>

@@ -28,6 +28,7 @@ public partial class App : Application
         var shell = new WpfShellService();
         var filePicker = new WpfFilePickerService();
         var avatarImageService = new AvatarImageService();
+        var soundService = new WpfSoundService(settingsRepository);
 
         var settings = settingsRepository.Load();
         var dataPathReady = false;
@@ -81,7 +82,8 @@ public partial class App : Application
             seasonRepository, tournamentRepository);
 
         var mainViewModel = new MainViewModel(
-            dataService, settingsRepository, dataPathService, folderPicker, shell, filePicker, avatarImageService);
+            dataService, settingsRepository, dataPathService, folderPicker, shell, filePicker, avatarImageService,
+            soundService);
 
         var mainWindow = new MainWindow { DataContext = mainViewModel };
         MainWindow = mainWindow;

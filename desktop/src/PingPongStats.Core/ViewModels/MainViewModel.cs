@@ -3,6 +3,7 @@ using CommunityToolkit.Mvvm.Input;
 using PingPongStats.Core.Models;
 using PingPongStats.Core.Repositories;
 using PingPongStats.Core.Services;
+using PingPongStats.Core.Services.Badges;
 
 namespace PingPongStats.Core.ViewModels;
 
@@ -21,9 +22,15 @@ public partial class MainViewModel : ObservableObject
     private readonly IShellService _shell;
     private readonly IFilePickerService _filePicker;
     private readonly IAvatarImageService _avatarImageService;
+    private readonly ISoundService _soundService;
     private readonly SynchronizationContext? _uiContext;
     private System.Threading.Timer? _statusClearTimer;
     private System.Threading.Timer? _winAnimationTimer;
+
+    /// <summary>"{playerId}:{badgeId}" keys for badges already known to be held,
+    /// seeded once at startup so Phase 14's "badge neu verdient" sound only fires
+    /// for badges earned during this running session, never for pre-existing ones.</summary>
+    private readonly HashSet<string> _knownBadgeKeys = new();
 
     [ObservableProperty] private ObservableObject? currentViewModel;
     [ObservableProperty] private string statusMessage = string.Empty;
@@ -80,7 +87,8 @@ public partial class MainViewModel : ObservableObject
         IFolderPickerService folderPicker,
         IShellService shell,
         IFilePickerService filePicker,
-        IAvatarImageService avatarImageService)
+        IAvatarImageService avatarImageService,
+        ISoundService soundService)
     {
         _dataService = dataService;
         _settingsRepository = settingsRepository;
@@ -89,6 +97,7 @@ public partial class MainViewModel : ObservableObject
         _shell = shell;
         _filePicker = filePicker;
         _avatarImageService = avatarImageService;
+        _soundService = soundService;
         _uiContext = SynchronizationContext.Current;
         _notifications = new NotificationService();
         _notifications.Notified += OnNotified;
@@ -130,6 +139,40 @@ public partial class MainViewModel : ObservableObject
         ShowTournamentCommand = new RelayCommand(() => Navigate("Turnier", Tournament, () => Tournament.Load()));
 
         CurrentViewModel = Dashboard;
+        InitializeKnownBadges();
+    }
+
+    /// <summary>Seeds <see cref="_knownBadgeKeys"/> with every badge already held
+    /// right now, so the "badge neu verdient" sound never fires for a badge a
+    /// player already had before this session started.</summary>
+    private void InitializeKnownBadges()
+    {
+        _knownBadgeKeys.Clear();
+        var context = BadgeEngine.BuildContext(_dataService.Players, _dataService.Matches, _dataService.DoubleMatches, _dataService.Tournaments);
+        foreach (var player in _dataService.Players)
+        {
+            foreach (var award in BadgeEngine.EvaluateForPlayer(player.Id, context))
+            {
+                _knownBadgeKeys.Add($"{player.Id}:{award.BadgeId}");
+            }
+        }
+    }
+
+    /// <summary>Re-evaluates every player's badges and plays the "badge neu
+    /// verdient" sound once if any badge appears that wasn't already known.</summary>
+    private void CheckForNewlyEarnedBadges()
+    {
+        var context = BadgeEngine.BuildContext(_dataService.Players, _dataService.Matches, _dataService.DoubleMatches, _dataService.Tournaments);
+        var foundNew = false;
+        foreach (var player in _dataService.Players)
+        {
+            foreach (var award in BadgeEngine.EvaluateForPlayer(player.Id, context))
+            {
+                if (_knownBadgeKeys.Add($"{player.Id}:{award.BadgeId}")) foundNew = true;
+            }
+        }
+
+        if (foundNew) _soundService.PlaySound(SoundEvent.BadgeEarned);
     }
 
     private void Navigate(string section, ObservableObject viewModel, Action? refresh)
@@ -196,6 +239,9 @@ public partial class MainViewModel : ObservableObject
     {
         Tournament.Load();
 
+        _soundService.PlaySound(info.IsTournamentFinal ? SoundEvent.TournamentWin : SoundEvent.Win);
+        CheckForNewlyEarnedBadges();
+
         if (!_settingsRepository.Load().ShowWinAnimation) return;
 
         WinAnimationIsDoubles = info.IsDoubles;
@@ -255,6 +301,7 @@ public partial class MainViewModel : ObservableObject
         CurrentPlayer = null;
         Profile = null;
         Login.Load();
+        InitializeKnownBadges();
     }
 
     private void OnNotified(string message, bool isError)

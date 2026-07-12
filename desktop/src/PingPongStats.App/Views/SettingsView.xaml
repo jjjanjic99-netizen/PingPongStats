@@ -38,6 +38,26 @@
 
         <Border Style="{StaticResource CardBorder}" Margin="0,0,0,16">
             <StackPanel>
+                <TextBlock Text="Sound-Effekte" Style="{StaticResource SectionLabelText}" Margin="0,0,0,8" />
+                <CheckBox Content="Sound-Effekte aktivieren (Sieg, Turniersieg, neues Badge)" IsChecked="{Binding SoundEnabled}" Margin="0,0,0,12" />
+
+                <TextBlock Text="Lautstärke" Style="{StaticResource StatLabelText}" Margin="0,0,0,4" />
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="60" />
+                    </Grid.ColumnDefinitions>
+                    <Slider Grid.Column="0" Minimum="0" Maximum="1" TickFrequency="0.1"
+                            Value="{Binding SoundVolume, Mode=TwoWay}" VerticalAlignment="Center"
+                            IsEnabled="{Binding SoundEnabled}" />
+                    <TextBlock Grid.Column="1" Text="{Binding SoundVolume, StringFormat={}{0:P0}}"
+                               VerticalAlignment="Center" HorizontalAlignment="Right" />
+                </Grid>
+            </StackPanel>
+        </Border>
+
+        <Border Style="{StaticResource CardBorder}" Margin="0,0,0,16">
+            <StackPanel>
                 <TextBlock Text="Export (CSV, Excel-kompatibel, UTF-8)" Style="{StaticResource SectionLabelText}" Margin="0,0,0,8" />
                 <StackPanel Orientation="Horizontal">
                     <Button Content="Spieler exportieren" Style="{StaticResource SecondaryButton}" Margin="0,0,8,0"

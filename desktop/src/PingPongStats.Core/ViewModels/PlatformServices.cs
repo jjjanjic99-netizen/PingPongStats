@@ -1,3 +1,5 @@
+using PingPongStats.Core.Models;
+
 namespace PingPongStats.Core.ViewModels;
 
 /// <summary>Abstraction over the Win32/WPF folder-picker dialog, so ViewModels
@@ -36,4 +38,16 @@ public interface IAvatarImageService
     /// existing avatar for that player. Returns the file name to store in
     /// Player.AvatarFileName (always "{playerId}.png").</summary>
     string SaveAvatar(string sourceImagePath, string dataPath, Guid playerId);
+}
+
+/// <summary>
+/// Abstraction over playing short sound-effect WAV files (Phase 14). Like
+/// IAvatarImageService, this is platform I/O rather than a calculation, so it
+/// is implemented in the WPF App project (using WPF's MediaPlayer) and
+/// injected here. Implementations must never throw and must never block the
+/// UI thread - a missing or unplayable sound file simply means no sound.
+/// </summary>
+public interface ISoundService
+{
+    void PlaySound(SoundEvent soundEvent);
 }
