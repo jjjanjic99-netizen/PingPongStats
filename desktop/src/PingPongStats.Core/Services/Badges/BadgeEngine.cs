@@ -16,12 +16,14 @@ public static class BadgeEngine
         new StammgastBadgeRule(),
         new EisenmannBadgeRule(),
         new DoublesSpecialistBadgeRule(),
+        new TournamentWinnerBadgeRule(),
     };
 
     public static BadgeContext BuildContext(
         IReadOnlyList<Player> players,
         IReadOnlyList<Match> matches,
         IReadOnlyList<DoubleMatch> doubleMatches,
+        IReadOnlyList<Tournament>? tournaments = null,
         DateTime? referenceDate = null)
     {
         var eloRatings = EloService.ComputeRatings(matches, players.Select(p => p.Id));
@@ -31,6 +33,7 @@ public static class BadgeEngine
             Matches = matches,
             DoubleMatches = doubleMatches,
             EloRatings = eloRatings,
+            Tournaments = tournaments ?? Array.Empty<Tournament>(),
             ReferenceDate = referenceDate ?? DateTime.Now,
         };
     }

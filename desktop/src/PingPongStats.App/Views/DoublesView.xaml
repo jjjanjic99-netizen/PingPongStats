@@ -50,6 +50,11 @@
             <StackPanel>
                 <TextBlock Text="Neues Doppel-Spiel erfassen" Style="{StaticResource SectionLabelText}" Margin="0,0,0,12" />
 
+                <Border Style="{StaticResource CardBorder}" Margin="0,0,0,12" Padding="10"
+                        Visibility="{Binding IsTournamentMatch, Converter={StaticResource BoolToVisibilityConverter}}">
+                    <TextBlock Text="Turnier-Partie: Die Teams sind durch die Turnierpaarung vorgegeben." TextWrapping="Wrap" />
+                </Border>
+
                 <Grid Margin="0,0,0,12">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="*" />
@@ -74,9 +79,9 @@
                         <ColumnDefinition Width="*" />
                     </Grid.ColumnDefinitions>
                     <ComboBox Grid.Column="0" ItemsSource="{Binding AvailablePlayers}" DisplayMemberPath="DisplayName"
-                              SelectedItem="{Binding TeamAPlayer1}" />
+                              SelectedItem="{Binding TeamAPlayer1}" IsEnabled="{Binding ArePlayerSelectorsEnabled}" />
                     <ComboBox Grid.Column="2" ItemsSource="{Binding AvailablePlayers}" DisplayMemberPath="DisplayName"
-                              SelectedItem="{Binding TeamAPlayer2}" />
+                              SelectedItem="{Binding TeamAPlayer2}" IsEnabled="{Binding ArePlayerSelectorsEnabled}" />
                 </Grid>
 
                 <TextBlock Text="Team B" Style="{StaticResource SectionLabelText}" Margin="0,0,0,4" />
@@ -87,9 +92,9 @@
                         <ColumnDefinition Width="*" />
                     </Grid.ColumnDefinitions>
                     <ComboBox Grid.Column="0" ItemsSource="{Binding AvailablePlayers}" DisplayMemberPath="DisplayName"
-                              SelectedItem="{Binding TeamBPlayer1}" />
+                              SelectedItem="{Binding TeamBPlayer1}" IsEnabled="{Binding ArePlayerSelectorsEnabled}" />
                     <ComboBox Grid.Column="2" ItemsSource="{Binding AvailablePlayers}" DisplayMemberPath="DisplayName"
-                              SelectedItem="{Binding TeamBPlayer2}" />
+                              SelectedItem="{Binding TeamBPlayer2}" IsEnabled="{Binding ArePlayerSelectorsEnabled}" />
                 </Grid>
 
                 <Border Style="{StaticResource CardBorder}" Margin="0,0,0,12" Padding="10"

@@ -40,6 +40,9 @@
         <DataTemplate DataType="{x:Type vm:LeagueViewModel}">
             <views:LeagueView />
         </DataTemplate>
+        <DataTemplate DataType="{x:Type vm:TournamentViewModel}">
+            <views:TournamentView />
+        </DataTemplate>
     </Window.Resources>
 
     <Grid>
@@ -67,6 +70,7 @@
                 <Button Content="Doppel" Style="{StaticResource NavButton}" Command="{Binding ShowDoublesCommand}" />
                 <Button Content="Head-to-Head" Style="{StaticResource NavButton}" Command="{Binding ShowHeadToHeadCommand}" />
                 <Button Content="Liga" Style="{StaticResource NavButton}" Command="{Binding ShowLeagueCommand}" />
+                <Button Content="Turnier" Style="{StaticResource NavButton}" Command="{Binding ShowTournamentCommand}" />
                 <Button Content="Einstellungen" Style="{StaticResource NavButton}" Command="{Binding ShowSettingsCommand}" />
                 <Button Content="Mein Profil" Style="{StaticResource NavButton}" Command="{Binding ShowProfileCommand}"
                         Visibility="{Binding IsLoggedIn, Converter={StaticResource BoolToVisibilityConverter}}" />
@@ -124,6 +128,15 @@
             <Canvas x:Name="ConfettiCanvas" IsHitTestVisible="False" ClipToBounds="True" />
 
             <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
+                <!-- Phase 12: bigger trophy treatment when this win completed a
+                     tournament, shown above the normal win overlay content. -->
+                <StackPanel HorizontalAlignment="Center" Margin="0,0,0,8"
+                            Visibility="{Binding WinAnimationIsTournamentFinal, Converter={StaticResource BoolToVisibilityConverter}}">
+                    <TextBlock Text="🏆" FontSize="56" HorizontalAlignment="Center" />
+                    <TextBlock Text="TURNIERSIEGER!" FontSize="30" FontWeight="Bold"
+                               Foreground="{DynamicResource Brush.Accent}" HorizontalAlignment="Center" />
+                </StackPanel>
+
                 <StackPanel HorizontalAlignment="Center"
                             Visibility="{Binding WinAnimationIsDoubles, Converter={StaticResource InverseBoolToVisibilityConverter}}">
                     <controls:AvatarControl Player="{Binding WinAnimationPlayer1}" DataPath="{Binding Dashboard.DataPath}"

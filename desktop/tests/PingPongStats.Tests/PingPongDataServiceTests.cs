@@ -1,3 +1,4 @@
+using PingPongStats.Core.Models;
 using PingPongStats.Core.Repositories;
 using PingPongStats.Core.Services;
 using Xunit;
@@ -15,7 +16,8 @@ public class PingPongDataServiceTests : IDisposable
         Directory.CreateDirectory(_tempDir);
         _service = new PingPongDataService(
             new PlayerXmlRepository(_tempDir), new MatchXmlRepository(_tempDir), new DoubleMatchXmlRepository(_tempDir),
-            auditLogRepository: null, quoteRepository: null, seasonRepository: new SeasonXmlRepository(_tempDir));
+            auditLogRepository: null, quoteRepository: null, seasonRepository: new SeasonXmlRepository(_tempDir),
+            tournamentRepository: new TournamentXmlRepository(_tempDir));
     }
 
     public void Dispose()
@@ -237,5 +239,98 @@ public class PingPongDataServiceTests : IDisposable
     {
         _service.CreateSeason("Saison 1", new DateTime(2026, 1, 1), new DateTime(2026, 12, 31), isActive: false);
         Assert.Null(_service.ActiveSeason);
+    }
+
+    [Fact]
+    public void CreateSinglesTournament_BuildsSeededBracketAndSetsActiveTournament()
+    {
+        var players = Enumerable.Range(0, 4).Select(i => _service.CreatePlayer($"P{i}", "", "", "")).ToList();
+
+        var tournament = _service.CreateSinglesTournament("Turnier 1", players.Select(p => p.Id).ToList());
+
+        Assert.Single(_service.Tournaments);
+        Assert.Equal(tournament.Id, _service.ActiveTournament?.Id);
+        Assert.Equal(4, tournament.Entrants.Count);
+        Assert.Equal(2, tournament.Bracket.Count(s => s.Round == 1));
+    }
+
+    [Fact]
+    public void CreateSinglesTournament_ThrowsWhenAnotherTournamentIsInProgress()
+    {
+        var players = Enumerable.Range(0, 4).Select(i => _service.CreatePlayer($"P{i}", "", "", "")).ToList();
+        _service.CreateSinglesTournament("Turnier 1", players.Select(p => p.Id).ToList());
+
+        Assert.Throws<ValidationException>(() =>
+            _service.CreateSinglesTournament("Turnier 2", players.Select(p => p.Id).ToList()));
+    }
+
+    [Fact]
+    public void RecordTournamentSinglesResult_CreatesTaggedMatchAndAdvancesBracket()
+    {
+        var players = Enumerable.Range(0, 2).Select(i => _service.CreatePlayer($"P{i}", "", "", "")).ToList();
+        var tournament = _service.CreateSinglesTournament("Turnier", players.Select(p => p.Id).ToList());
+        var slot = tournament.Bracket.Single();
+
+        var match = _service.RecordTournamentSinglesResult(
+            tournament.Id, slot.Id, DateTime.Now, players[0].Id, players[1].Id, 3, 0, "");
+
+        Assert.Equal(tournament.Id, match.TournamentId);
+        Assert.Single(_service.Matches);
+
+        var updatedTournament = _service.Tournaments.Single(t => t.Id == tournament.Id);
+        Assert.Equal(TournamentStatus.Completed, updatedTournament.Status);
+        Assert.NotNull(updatedTournament.WinnerEntrantId);
+        Assert.Null(_service.ActiveTournament);
+    }
+
+    [Fact]
+    public void RecordTournamentDoublesResult_CreatesTaggedMatchAndAdvancesBracket()
+    {
+        var a1 = _service.CreatePlayer("A1", "", "", "");
+        var a2 = _service.CreatePlayer("A2", "", "", "");
+        var b1 = _service.CreatePlayer("B1", "", "", "");
+        var b2 = _service.CreatePlayer("B2", "", "", "");
+        var teams = new List<(Guid, Guid)> { (a1.Id, a2.Id), (b1.Id, b2.Id) };
+        var tournament = _service.CreateDoublesTournament("Doppel-Turnier", teams);
+        var slot = tournament.Bracket.Single();
+
+        var match = _service.RecordTournamentDoublesResult(
+            tournament.Id, slot.Id, DateTime.Now, a1.Id, a2.Id, b1.Id, b2.Id, 3, 0, "");
+
+        Assert.Equal(tournament.Id, match.TournamentId);
+
+        var updatedTournament = _service.Tournaments.Single(t => t.Id == tournament.Id);
+        Assert.Equal(TournamentStatus.Completed, updatedTournament.Status);
+    }
+
+    [Fact]
+    public void AbortTournament_MarksAbortedAndAllowsNewTournamentToStart()
+    {
+        var players = Enumerable.Range(0, 4).Select(i => _service.CreatePlayer($"P{i}", "", "", "")).ToList();
+        var tournament = _service.CreateSinglesTournament("Turnier 1", players.Select(p => p.Id).ToList());
+
+        _service.AbortTournament(tournament.Id);
+
+        Assert.Equal(TournamentStatus.Aborted, _service.Tournaments.Single().Status);
+        Assert.Null(_service.ActiveTournament);
+
+        // A new tournament can now be started.
+        var second = _service.CreateSinglesTournament("Turnier 2", players.Select(p => p.Id).ToList());
+        Assert.Equal(second.Id, _service.ActiveTournament?.Id);
+    }
+
+    [Fact]
+    public void AbortTournament_KeepsAlreadyPlayedMatchesInStats()
+    {
+        var players = Enumerable.Range(0, 4).Select(i => _service.CreatePlayer($"P{i}", "", "", "")).ToList();
+        var tournament = _service.CreateSinglesTournament("Turnier", players.Select(p => p.Id).ToList());
+        var firstSlot = tournament.Bracket.First(s => s.Round == 1);
+
+        _service.RecordTournamentSinglesResult(
+            tournament.Id, firstSlot.Id, DateTime.Now, players[0].Id, players[1].Id, 3, 0, "");
+
+        _service.AbortTournament(tournament.Id);
+
+        Assert.Single(_service.Matches);
     }
 }

@@ -22,4 +22,8 @@ public class DoubleMatch
     /// <summary>Optional set-by-set score detail (PointsA/PointsB = TeamA/TeamB).
     /// Empty for matches recorded without this detail - never guess/backfill it.</summary>
     public List<SetResult> SetResults { get; set; } = new();
+
+    /// <summary>Set when this match was played as part of a tournament bracket
+    /// (Tournament.Id). Null for ordinary matches.</summary>
+    public Guid? TournamentId { get; set; }
 }

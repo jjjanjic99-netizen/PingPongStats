@@ -1,0 +1,171 @@
+<UserControl x:Class="PingPongStats.App.Views.TournamentView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:controls="clr-namespace:PingPongStats.App.Controls">
+    <StackPanel>
+        <Grid Margin="0,0,0,16">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+            <TextBlock Grid.Column="0" Text="Turnier" Style="{StaticResource HeadingText}" />
+            <Button Grid.Column="1" Content="Aktualisieren" Style="{StaticResource SecondaryButton}"
+                    Command="{Binding RefreshCommand}" />
+        </Grid>
+
+        <!-- Setup: only shown while no tournament is currently running. -->
+        <Border Style="{StaticResource CardBorder}" Margin="0,0,0,16"
+                Visibility="{Binding HasActiveTournament, Converter={StaticResource InverseBoolToVisibilityConverter}}">
+            <StackPanel>
+                <TextBlock Text="Neues Turnier starten" Style="{StaticResource SectionLabelText}" Margin="0,0,0,12" />
+
+                <TextBlock Text="Turnier-Name" Style="{StaticResource StatLabelText}" Margin="0,0,0,4" />
+                <TextBox Text="{Binding NewTournamentName, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,12" />
+
+                <CheckBox Content="Doppel-Turnier" IsChecked="{Binding IsDoublesMode}" Margin="0,0,0,12" />
+
+                <TextBlock Text="Teilnehmer auswählen" Style="{StaticResource StatLabelText}" Margin="0,0,0,4" />
+                <ItemsControl ItemsSource="{Binding AvailableParticipants}" Margin="0,0,0,4">
+                    <ItemsControl.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <WrapPanel />
+                        </ItemsPanelTemplate>
+                    </ItemsControl.ItemsPanel>
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <Border Style="{StaticResource CardBorder}" Margin="0,0,8,8" Padding="8">
+                                <StackPanel Orientation="Horizontal">
+                                    <CheckBox IsChecked="{Binding IsSelected}" VerticalAlignment="Center" Margin="0,0,8,0" />
+                                    <controls:AvatarControl Player="{Binding Player}"
+                                                             DataPath="{Binding DataContext.DataPath, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                             Size="S" VerticalAlignment="Center" Margin="0,0,8,0" />
+                                    <TextBlock Text="{Binding Player.DisplayName}" VerticalAlignment="Center" />
+                                </StackPanel>
+                            </Border>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+
+                <StackPanel Orientation="Horizontal" Margin="0,8,0,12"
+                            Visibility="{Binding IsDoublesMode, Converter={StaticResource BoolToVisibilityConverter}}">
+                    <Button Content="Teams generieren" Style="{StaticResource SecondaryButton}" Margin="0,0,8,0"
+                            Command="{Binding GenerateTeamsCommand}" />
+                    <Button Content="Teams auslosen" Style="{StaticResource SecondaryButton}"
+                            Command="{Binding DrawRandomTeamsCommand}" />
+                </StackPanel>
+
+                <ItemsControl ItemsSource="{Binding Teams}" Margin="0,0,0,12"
+                              Visibility="{Binding IsDoublesMode, Converter={StaticResource BoolToVisibilityConverter}}">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <Grid Margin="0,0,0,8">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="16" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                <ComboBox Grid.Column="0"
+                                          ItemsSource="{Binding DataContext.AvailableParticipants, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                          DisplayMemberPath="Player.DisplayName" SelectedValuePath="Player"
+                                          SelectedValue="{Binding Player1}" />
+                                <ComboBox Grid.Column="2"
+                                          ItemsSource="{Binding DataContext.AvailableParticipants, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                          DisplayMemberPath="Player.DisplayName" SelectedValuePath="Player"
+                                          SelectedValue="{Binding Player2}" />
+                            </Grid>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+
+                <TextBlock Text="{Binding SetupErrorMessage}" Foreground="{DynamicResource Brush.Danger}"
+                           TextWrapping="Wrap" Margin="0,0,0,12"
+                           Visibility="{Binding SetupErrorMessage, Converter={StaticResource StringToVisibilityConverter}}" />
+
+                <Button Content="Turnier starten" Style="{StaticResource PrimaryButton}" HorizontalAlignment="Left"
+                        Command="{Binding StartTournamentCommand}" />
+            </StackPanel>
+        </Border>
+
+        <!-- Bracket: shown while a tournament is running, or while browsing a
+             completed/aborted tournament's history via "Anzeigen". -->
+        <Border Style="{StaticResource CardBorder}" Margin="0,0,0,16"
+                Visibility="{Binding ViewingTournamentLabel, Converter={StaticResource StringToVisibilityConverter}}">
+            <StackPanel>
+                <Grid Margin="0,0,0,12">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <TextBlock Grid.Column="0" Text="{Binding ViewingTournamentLabel}" Style="{StaticResource SectionLabelText}"
+                               VerticalAlignment="Center" />
+                    <Button Grid.Column="1" Content="Turnier abbrechen" Style="{StaticResource DangerButton}"
+                            Visibility="{Binding HasActiveTournament, Converter={StaticResource BoolToVisibilityConverter}}"
+                            Click="OnAbortClick" />
+                </Grid>
+
+                <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled">
+                    <ItemsControl ItemsSource="{Binding BracketRounds}">
+                        <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <StackPanel Orientation="Horizontal" />
+                            </ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <StackPanel Margin="0,0,24,0" MinWidth="220">
+                                    <TextBlock Text="{Binding RoundLabel}" Style="{StaticResource StatLabelText}"
+                                               Margin="0,0,0,8" HorizontalAlignment="Center" />
+                                    <ItemsControl ItemsSource="{Binding Slots}">
+                                        <ItemsControl.ItemTemplate>
+                                            <DataTemplate>
+                                                <Border Style="{StaticResource CardBorder}" Margin="0,0,0,12" Padding="10">
+                                                    <StackPanel>
+                                                        <TextBlock Text="{Binding EntrantA.Label}" TextWrapping="Wrap" />
+                                                        <TextBlock Text="vs" Style="{StaticResource StatLabelText}"
+                                                                   HorizontalAlignment="Center" Margin="0,4" />
+                                                        <TextBlock Text="{Binding EntrantB.Label}" TextWrapping="Wrap" />
+                                                        <TextBlock Text="{Binding WinnerLabel, StringFormat='Sieger: {0}'}"
+                                                                   Style="{StaticResource StatLabelText}" Margin="0,8,0,0"
+                                                                   Visibility="{Binding IsDecided, Converter={StaticResource BoolToVisibilityConverter}}" />
+                                                        <Button Content="Spielen" Style="{StaticResource PrimaryButton}"
+                                                                Margin="0,8,0,0" HorizontalAlignment="Stretch"
+                                                                Command="{Binding DataContext.PlaySlotCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                                CommandParameter="{Binding}"
+                                                                Visibility="{Binding IsPlayable, Converter={StaticResource BoolToVisibilityConverter}}" />
+                                                    </StackPanel>
+                                                </Border>
+                                            </DataTemplate>
+                                        </ItemsControl.ItemTemplate>
+                                    </ItemsControl>
+                                </StackPanel>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </ScrollViewer>
+            </StackPanel>
+        </Border>
+
+        <Border Style="{StaticResource CardBorder}" Padding="0">
+            <StackPanel>
+                <TextBlock Text="Abgeschlossene / abgebrochene Turniere" Style="{StaticResource SectionLabelText}" Margin="16,16,16,8" />
+                <DataGrid ItemsSource="{Binding CompletedTournaments}" BorderThickness="0" AutoGenerateColumns="False">
+                    <DataGrid.Columns>
+                        <DataGridTextColumn Header="Name" Binding="{Binding Name}" Width="180" />
+                        <DataGridTextColumn Header="Modus" Binding="{Binding ModeLabel}" Width="90" />
+                        <DataGridTextColumn Header="Status" Binding="{Binding StatusLabel}" Width="110" />
+                        <DataGridTextColumn Header="Sieger" Binding="{Binding WinnerLabel}" Width="200" />
+                        <DataGridTemplateColumn Header="Aktionen" Width="120">
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate>
+                                    <Button Content="Anzeigen" Style="{StaticResource CompactSecondaryButton}"
+                                            Command="{Binding DataContext.ViewTournamentCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                            CommandParameter="{Binding Tournament}" />
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
+                    </DataGrid.Columns>
+                </DataGrid>
+            </StackPanel>
+        </Border>
+    </StackPanel>
+</UserControl>

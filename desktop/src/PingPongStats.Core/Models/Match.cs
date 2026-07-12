@@ -24,4 +24,10 @@ public class Match
     /// properties, so "empty" rather than null is the natural "no data" marker,
     /// consistent with how other optional fields on this model default to empty.)</summary>
     public List<SetResult> SetResults { get; set; } = new();
+
+    /// <summary>Set when this match was played as part of a tournament bracket
+    /// (Tournament.Id). Null for ordinary matches. Tournament matches are
+    /// otherwise completely ordinary rows - they count for Elo/stats like any
+    /// other match.</summary>
+    public Guid? TournamentId { get; set; }
 }

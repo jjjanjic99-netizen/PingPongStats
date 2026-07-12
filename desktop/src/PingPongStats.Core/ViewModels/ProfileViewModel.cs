@@ -121,7 +121,7 @@ public partial class ProfileViewModel : ObservableObject
             FavoriteOpponentRecordLabel = $"{favorite.Wins}S / {favorite.Losses}N ({favorite.WinRatePct:F0}%)";
         }
 
-        var badgeContext = BadgeEngine.BuildContext(_dataService.Players, _dataService.Matches, _dataService.DoubleMatches);
+        var badgeContext = BadgeEngine.BuildContext(_dataService.Players, _dataService.Matches, _dataService.DoubleMatches, _dataService.Tournaments);
         Badges.Clear();
         foreach (var award in BadgeEngine.EvaluateForPlayer(_playerId, badgeContext)) Badges.Add(award);
         OnPropertyChanged(nameof(HasBadges));

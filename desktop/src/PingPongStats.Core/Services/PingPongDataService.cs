@@ -24,6 +24,7 @@ public class PingPongDataService
     private readonly IAuditLogRepository? _auditLogRepository;
     private readonly IQuoteRepository? _quoteRepository;
     private readonly ISeasonRepository? _seasonRepository;
+    private readonly ITournamentRepository? _tournamentRepository;
 
     public PingPongDataService(
         IPlayerRepository playerRepository,
@@ -31,7 +32,8 @@ public class PingPongDataService
         IDoubleMatchRepository doubleMatchRepository,
         IAuditLogRepository? auditLogRepository = null,
         IQuoteRepository? quoteRepository = null,
-        ISeasonRepository? seasonRepository = null)
+        ISeasonRepository? seasonRepository = null,
+        ITournamentRepository? tournamentRepository = null)
     {
         _playerRepository = playerRepository;
         _matchRepository = matchRepository;
@@ -39,6 +41,7 @@ public class PingPongDataService
         _auditLogRepository = auditLogRepository;
         _quoteRepository = quoteRepository;
         _seasonRepository = seasonRepository;
+        _tournamentRepository = tournamentRepository;
         Reload();
     }
 
@@ -59,6 +62,14 @@ public class PingPongDataService
     /// <summary>The currently active season, or null if none is active.</summary>
     public Season? ActiveSeason => Seasons.FirstOrDefault(s => s.IsActive);
 
+    /// <summary>Tournaments (Phase 12). Empty if no ITournamentRepository was
+    /// supplied, e.g. in tests that don't need it.</summary>
+    public IReadOnlyList<Tournament> Tournaments { get; private set; } = new List<Tournament>();
+
+    /// <summary>The tournament currently in progress, if any. Only one tournament
+    /// can be in progress at a time.</summary>
+    public Tournament? ActiveTournament => Tournaments.FirstOrDefault(t => t.Status == TournamentStatus.InProgress);
+
     /// <summary>Re-reads all XML files from disk. Called after every mutation and can
     /// also be triggered manually from Settings ("XML neu laden").</summary>
     public void Reload()
@@ -68,6 +79,7 @@ public class PingPongDataService
         DoubleMatches = _doubleMatchRepository.GetAll();
         Quotes = _quoteRepository?.GetAll() ?? new List<Quote>();
         Seasons = _seasonRepository?.GetAll() ?? new List<Season>();
+        Tournaments = _tournamentRepository?.GetAll() ?? new List<Tournament>();
     }
 
     // ----- Players -----------------------------------------------------
@@ -251,7 +263,7 @@ public class PingPongDataService
 
     public Match CreateMatch(
         DateTime playedAt, Guid playerAId, Guid playerBId, int playerASets, int playerBSets, string notes,
-        List<SetResult>? setResults = null)
+        List<SetResult>? setResults = null, Guid? tournamentId = null)
     {
         var winnerId = ValidationService.ComputeWinnerId(playerAId, playerBId, playerASets, playerBSets);
         ValidationService.EnsurePlayersExist(playerAId, playerBId, Players);
@@ -268,6 +280,7 @@ public class PingPongDataService
             WinnerId = winnerId,
             Notes = (notes ?? string.Empty).Trim(),
             SetResults = setResults ?? new(),
+            TournamentId = tournamentId,
             CreatedAt = now,
             UpdatedAt = now,
         };
@@ -333,7 +346,7 @@ public class PingPongDataService
     public DoubleMatch CreateDoubleMatch(
         DateTime playedAt,
         Guid teamAPlayer1Id, Guid teamAPlayer2Id, Guid teamBPlayer1Id, Guid teamBPlayer2Id,
-        int teamASets, int teamBSets, string notes, List<SetResult>? setResults = null)
+        int teamASets, int teamBSets, string notes, List<SetResult>? setResults = null, Guid? tournamentId = null)
     {
         var winningTeam = ValidationService.ComputeWinningTeam(
             teamAPlayer1Id, teamAPlayer2Id, teamBPlayer1Id, teamBPlayer2Id, teamASets, teamBSets);
@@ -354,6 +367,7 @@ public class PingPongDataService
             WinningTeam = winningTeam,
             Notes = (notes ?? string.Empty).Trim(),
             SetResults = setResults ?? new(),
+            TournamentId = tournamentId,
             CreatedAt = now,
             UpdatedAt = now,
         };
@@ -462,6 +476,152 @@ public class PingPongDataService
         });
 
         LogAudit(isActive ? "SeasonActivated" : "SeasonDeactivated", id.ToString());
+        Reload();
+    }
+
+    // ----- Tournaments ------------------------------------------------------
+
+    /// <summary>Starts a new singles tournament for the given players, seeded by
+    /// current Elo. Only one tournament may be in progress at a time.</summary>
+    public Tournament CreateSinglesTournament(string name, List<Guid> playerIds)
+    {
+        EnsureNoTournamentInProgress();
+        ValidationService.EnsurePlayersExist(playerIds, Players);
+
+        var eloRatings = EloService.ComputeRatings(Matches, Players.Select(p => p.Id));
+        var entrants = TournamentService.BuildSinglesEntrants(
+            Players.Where(p => playerIds.Contains(p.Id)), eloRatings);
+
+        return CreateTournament(name, TournamentMode.Singles, entrants);
+    }
+
+    /// <summary>Starts a new doubles tournament for the given teams, seeded by
+    /// average team Elo. Only one tournament may be in progress at a time.</summary>
+    public Tournament CreateDoublesTournament(string name, List<(Guid Player1Id, Guid Player2Id)> teams)
+    {
+        EnsureNoTournamentInProgress();
+        foreach (var team in teams)
+        {
+            ValidationService.EnsurePlayersExist(new[] { team.Player1Id, team.Player2Id }, Players);
+        }
+
+        var eloRatings = EloService.ComputeRatings(Matches, Players.Select(p => p.Id));
+        var displayNames = Players.ToDictionary(p => p.Id, p => p.DisplayName);
+        var entrants = TournamentService.BuildDoublesEntrants(teams, eloRatings, displayNames);
+
+        return CreateTournament(name, TournamentMode.Doubles, entrants);
+    }
+
+    private void EnsureNoTournamentInProgress()
+    {
+        if (ActiveTournament is not null)
+        {
+            throw new ValidationException(
+                "Es läuft bereits ein Turnier. Bitte zuerst abschliessen oder abbrechen.");
+        }
+    }
+
+    private Tournament CreateTournament(string name, TournamentMode mode, List<TournamentEntrant> entrants)
+    {
+        var trimmedName = (name ?? string.Empty).Trim();
+        if (trimmedName.Length == 0)
+        {
+            throw new ValidationException("Turnier-Name ist erforderlich.");
+        }
+
+        var tournament = new Tournament
+        {
+            Name = trimmedName,
+            Mode = mode,
+            Status = TournamentStatus.InProgress,
+            Entrants = entrants,
+            Bracket = BracketService.BuildBracket(entrants),
+            CreatedAt = Clock.Now(),
+        };
+
+        _tournamentRepository?.Update(tournaments =>
+        {
+            tournaments.Add(tournament);
+            return tournaments;
+        });
+
+        LogAudit("TournamentCreated", $"{trimmedName} ({mode}, {entrants.Count} Teilnehmer)");
+        Reload();
+        return tournament;
+    }
+
+    /// <summary>Records the result of one singles bracket slot: creates the
+    /// underlying Match (tagged with TournamentId) and advances the bracket.</summary>
+    public Match RecordTournamentSinglesResult(
+        Guid tournamentId, Guid slotId, DateTime playedAt, Guid playerAId, Guid playerBId,
+        int playerASets, int playerBSets, string notes, List<SetResult>? setResults = null)
+    {
+        var tournament = Tournaments.FirstOrDefault(t => t.Id == tournamentId)
+            ?? throw new NotFoundException("Turnier wurde nicht gefunden.");
+
+        var match = CreateMatch(playedAt, playerAId, playerBId, playerASets, playerBSets, notes, setResults, tournamentId);
+
+        var winnerEntrant = tournament.Entrants.FirstOrDefault(e => e.Player2Id is null && e.Player1Id == match.WinnerId)
+            ?? throw new NotFoundException("Gewinner konnte keinem Turnier-Teilnehmer zugeordnet werden.");
+
+        AdvanceTournamentBracket(tournamentId, slotId, winnerEntrant.Id, match.Id);
+        return match;
+    }
+
+    /// <summary>Records the result of one doubles bracket slot: creates the
+    /// underlying DoubleMatch (tagged with TournamentId) and advances the bracket.</summary>
+    public DoubleMatch RecordTournamentDoublesResult(
+        Guid tournamentId, Guid slotId, DateTime playedAt,
+        Guid teamAPlayer1Id, Guid teamAPlayer2Id, Guid teamBPlayer1Id, Guid teamBPlayer2Id,
+        int teamASets, int teamBSets, string notes, List<SetResult>? setResults = null)
+    {
+        var tournament = Tournaments.FirstOrDefault(t => t.Id == tournamentId)
+            ?? throw new NotFoundException("Turnier wurde nicht gefunden.");
+
+        var match = CreateDoubleMatch(
+            playedAt, teamAPlayer1Id, teamAPlayer2Id, teamBPlayer1Id, teamBPlayer2Id,
+            teamASets, teamBSets, notes, setResults, tournamentId);
+
+        var (winnerPlayer1, winnerPlayer2) = match.WinningTeam == "A"
+            ? (teamAPlayer1Id, teamAPlayer2Id)
+            : (teamBPlayer1Id, teamBPlayer2Id);
+
+        var winnerEntrant = tournament.Entrants.FirstOrDefault(e =>
+                (e.Player1Id == winnerPlayer1 && e.Player2Id == winnerPlayer2) ||
+                (e.Player1Id == winnerPlayer2 && e.Player2Id == winnerPlayer1))
+            ?? throw new NotFoundException("Gewinner-Team konnte keinem Turnier-Teilnehmer zugeordnet werden.");
+
+        AdvanceTournamentBracket(tournamentId, slotId, winnerEntrant.Id, match.Id);
+        return match;
+    }
+
+    private void AdvanceTournamentBracket(Guid tournamentId, Guid slotId, Guid winnerEntrantId, Guid matchId)
+    {
+        _tournamentRepository?.Update(tournaments =>
+        {
+            var tournament = tournaments.FirstOrDefault(t => t.Id == tournamentId)
+                ?? throw new NotFoundException("Turnier wurde nicht gefunden.");
+            BracketService.AdvanceWinner(tournament, slotId, winnerEntrantId, matchId);
+            return tournaments;
+        });
+
+        LogAudit("TournamentSlotRecorded", $"{tournamentId}/{slotId}");
+        Reload();
+    }
+
+    /// <summary>Aborts an in-progress tournament. Matches already played remain in
+    /// the stats exactly as they are - only the tournament's own status changes.</summary>
+    public void AbortTournament(Guid tournamentId)
+    {
+        _tournamentRepository?.Update(tournaments =>
+        {
+            var tournament = tournaments.FirstOrDefault(t => t.Id == tournamentId)
+                ?? throw new NotFoundException("Turnier wurde nicht gefunden.");
+            tournament.Status = TournamentStatus.Aborted;
+            return tournaments;
+        });
+
+        LogAudit("TournamentAborted", tournamentId.ToString());
         Reload();
     }
 

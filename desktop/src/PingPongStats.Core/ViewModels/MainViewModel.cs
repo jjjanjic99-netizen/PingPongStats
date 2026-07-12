@@ -41,6 +41,10 @@ public partial class MainViewModel : ObservableObject
     [ObservableProperty] private bool winAnimationIsComeback;
     [ObservableProperty] private string? winAnimationQuote;
 
+    /// <summary>Phase 12: true when the just-saved match completed a tournament,
+    /// so the win overlay shows the bigger trophy/"Turniersieger" treatment.</summary>
+    [ObservableProperty] private bool winAnimationIsTournamentFinal;
+
     public DashboardRangeFilter RangeFilter { get; private set; } = null!;
     public DashboardViewModel Dashboard { get; }
     public PlayersViewModel Players { get; }
@@ -51,6 +55,7 @@ public partial class MainViewModel : ObservableObject
     public LoginViewModel Login { get; }
     public ProfileViewModel? Profile { get; private set; }
     public LeagueViewModel League { get; }
+    public TournamentViewModel Tournament { get; }
 
     public bool IsLoggedIn => CurrentPlayer is not null;
 
@@ -66,6 +71,7 @@ public partial class MainViewModel : ObservableObject
     public IRelayCommand LogoutCommand { get; }
     public IRelayCommand DismissWinAnimationCommand { get; }
     public IRelayCommand ShowLeagueCommand { get; }
+    public IRelayCommand ShowTournamentCommand { get; }
 
     public MainViewModel(
         PingPongDataService dataService,
@@ -102,6 +108,9 @@ public partial class MainViewModel : ObservableObject
         Login.LoggedIn += OnLoggedIn;
         League = new LeagueViewModel(_dataService, _settingsRepository);
         Settings.SeasonsChanged += () => League.Load();
+        Tournament = new TournamentViewModel(_dataService, _notifications, _settingsRepository);
+        Tournament.PlayRequested += OnTournamentPlayRequested;
+        Doubles.TournamentMatchFinished += () => Navigate("Turnier", Tournament, () => Tournament.Load());
 
         ShowDashboardCommand = new RelayCommand(() => Navigate("Dashboard", Dashboard, () => Dashboard.Load()));
         ShowPlayersCommand = new RelayCommand(() => Navigate("Spieler", Players, () => Players.Load()));
@@ -118,6 +127,7 @@ public partial class MainViewModel : ObservableObject
         LogoutCommand = new RelayCommand(Logout);
         DismissWinAnimationCommand = new RelayCommand(DismissWinAnimation);
         ShowLeagueCommand = new RelayCommand(() => Navigate("Liga", League, () => League.Load()));
+        ShowTournamentCommand = new RelayCommand(() => Navigate("Turnier", Tournament, () => Tournament.Load()));
 
         CurrentViewModel = Dashboard;
     }
@@ -147,11 +157,49 @@ public partial class MainViewModel : ObservableObject
         CurrentViewModel = editVm;
     }
 
+    /// <summary>Phase 12: the user clicked a playable bracket slot on the
+    /// "Turnier" page - open the normal (locked, pre-filled) match/doubles entry
+    /// form for the two entrants assigned to that slot.</summary>
+    private void OnTournamentPlayRequested(TournamentPlayRequest request)
+    {
+        var tournament = _dataService.Tournaments.FirstOrDefault(t => t.Id == request.TournamentId);
+        if (tournament is null) return;
+
+        var entrantA = tournament.Entrants.FirstOrDefault(e => e.Id == request.Slot.EntrantAId);
+        var entrantB = tournament.Entrants.FirstOrDefault(e => e.Id == request.Slot.EntrantBId);
+        if (entrantA is null || entrantB is null) return;
+
+        if (request.Mode == TournamentMode.Doubles)
+        {
+            if (entrantA.Player2Id is not Guid entrantAPlayer2 || entrantB.Player2Id is not Guid entrantBPlayer2) return;
+
+            var context = new TournamentDoublesMatchContext(
+                request.TournamentId, request.Slot.Id,
+                entrantA.Player1Id, entrantAPlayer2, entrantB.Player1Id, entrantBPlayer2);
+
+            Doubles.BeginTournamentMatch(context);
+            ActiveSection = "Doppel";
+            CurrentViewModel = Doubles;
+        }
+        else
+        {
+            var context = new TournamentMatchContext(request.TournamentId, request.Slot.Id, entrantA.Player1Id, entrantB.Player1Id);
+            var editVm = new MatchEditViewModel(_dataService, _notifications, null, context);
+            editVm.Finished += () => Navigate("Turnier", Tournament, () => Tournament.Load());
+            editVm.MatchSaved += OnMatchSaved;
+            ActiveSection = "Turnier-Partie";
+            CurrentViewModel = editVm;
+        }
+    }
+
     private void OnMatchSaved(MatchSavedInfo info)
     {
+        Tournament.Load();
+
         if (!_settingsRepository.Load().ShowWinAnimation) return;
 
         WinAnimationIsDoubles = info.IsDoubles;
+        WinAnimationIsTournamentFinal = info.IsTournamentFinal;
         WinAnimationPlayer1 = _dataService.Players.FirstOrDefault(p => p.Id == info.WinnerId1);
         WinAnimationPlayer2 = info.WinnerId2 is Guid id2 ? _dataService.Players.FirstOrDefault(p => p.Id == id2) : null;
         WinAnimationScoreLabel = info.ScoreLabel;
@@ -203,6 +251,7 @@ public partial class MainViewModel : ObservableObject
         Doubles.Load();
         HeadToHead.Load();
         League.Load();
+        Tournament.Load();
         CurrentPlayer = null;
         Profile = null;
         Login.Load();

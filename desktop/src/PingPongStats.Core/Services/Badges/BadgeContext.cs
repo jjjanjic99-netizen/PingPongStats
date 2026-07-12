@@ -12,6 +12,7 @@ public class BadgeContext
     public required IReadOnlyList<Match> Matches { get; init; }
     public required IReadOnlyList<DoubleMatch> DoubleMatches { get; init; }
     public required IReadOnlyDictionary<Guid, double> EloRatings { get; init; }
+    public IReadOnlyList<Tournament> Tournaments { get; init; } = Array.Empty<Tournament>();
     public DateTime ReferenceDate { get; init; } = DateTime.Now;
 }
 

@@ -131,7 +131,7 @@ public class BadgeEngineTests
             M(new DateTime(2026, 7, 3), p1.Id, p3.Id, 3, 0),
             M(new DateTime(2026, 7, 4), p2.Id, p4.Id, 3, 0),
         };
-        var context = BadgeEngine.BuildContext(new[] { p1, p2, p3, p4 }, matches, new List<DoubleMatch>(), now);
+        var context = BadgeEngine.BuildContext(new[] { p1, p2, p3, p4 }, matches, new List<DoubleMatch>(), referenceDate: now);
 
         // p1: 3 games, p3: 3 games (tied max) - both qualify; p2/p4: 1 game each - do not.
         Assert.NotNull(new StammgastBadgeRule().Evaluate(p1.Id, context));
@@ -150,7 +150,7 @@ public class BadgeEngineTests
             M(new DateTime(2026, 6, 2), p1.Id, p2.Id, 3, 0),
             M(new DateTime(2026, 7, 1), p2.Id, p1.Id, 3, 0),
         };
-        var context = BadgeEngine.BuildContext(new[] { p1, p2 }, matches, new List<DoubleMatch>(), now);
+        var context = BadgeEngine.BuildContext(new[] { p1, p2 }, matches, new List<DoubleMatch>(), referenceDate: now);
 
         // Only July counts: p2 has 1 game, p1 has 1 game -> tie, both awarded.
         Assert.NotNull(new StammgastBadgeRule().Evaluate(p1.Id, context));
@@ -173,7 +173,7 @@ public class BadgeEngineTests
             MD(new DateTime(2026, 7, 2), p1.Id, p3.Id, p2.Id, p4.Id, 3, 0),
             MD(new DateTime(2026, 7, 3), p1.Id, p3.Id, p2.Id, p4.Id, 3, 0),
         };
-        var context = BadgeEngine.BuildContext(new[] { p1, p2, p3, p4, p5 }, matches, doubles, now);
+        var context = BadgeEngine.BuildContext(new[] { p1, p2, p3, p4, p5 }, matches, doubles, referenceDate: now);
 
         // p1: 1 singles + 2 doubles = 3, strictly more than everyone else.
         Assert.NotNull(new StammgastBadgeRule().Evaluate(p1.Id, context));
@@ -184,7 +184,7 @@ public class BadgeEngineTests
     public void Stammgast_NoAwardWhenNoGamesThisMonth()
     {
         var p1 = P("Anna");
-        var context = BadgeEngine.BuildContext(new[] { p1 }, new List<Match>(), new List<DoubleMatch>(), new DateTime(2026, 7, 15));
+        var context = BadgeEngine.BuildContext(new[] { p1 }, new List<Match>(), new List<DoubleMatch>(), referenceDate: new DateTime(2026, 7, 15));
 
         Assert.Null(new StammgastBadgeRule().Evaluate(p1.Id, context));
     }
@@ -308,5 +308,80 @@ public class BadgeEngineTests
         var awards = BadgeEngine.EvaluateForPlayer(p1.Id, context);
 
         Assert.Contains(awards, a => a.BadgeId == "der-unbesiegte");
+    }
+
+    // ----- TournamentWinnerBadgeRule ----------------------------------------
+
+    [Fact]
+    public void TournamentWinner_AwardsPlayerWhoWonACompletedTournament()
+    {
+        var winner = P("Winner");
+        var loser = P("Loser");
+        var winnerEntrant = new TournamentEntrant { Id = Guid.NewGuid(), Player1Id = winner.Id, Seed = 1 };
+        var loserEntrant = new TournamentEntrant { Id = Guid.NewGuid(), Player1Id = loser.Id, Seed = 2 };
+        var tournament = new Tournament
+        {
+            Mode = TournamentMode.Singles,
+            Status = TournamentStatus.Completed,
+            Entrants = new List<TournamentEntrant> { winnerEntrant, loserEntrant },
+            WinnerEntrantId = winnerEntrant.Id,
+            CompletedAt = new DateTime(2026, 3, 1),
+        };
+        var context = BadgeEngine.BuildContext(
+            new[] { winner, loser }, new List<Match>(), new List<DoubleMatch>(), new List<Tournament> { tournament });
+
+        var award = new TournamentWinnerBadgeRule().Evaluate(winner.Id, context);
+
+        Assert.NotNull(award);
+        Assert.Equal("turniersieger", award!.BadgeId);
+        Assert.Null(new TournamentWinnerBadgeRule().Evaluate(loser.Id, context));
+    }
+
+    [Fact]
+    public void TournamentWinner_AwardsBothDoublesTeamMembers()
+    {
+        var winner1 = P("Winner1");
+        var winner2 = P("Winner2");
+        var winnerEntrant = new TournamentEntrant { Id = Guid.NewGuid(), Player1Id = winner1.Id, Player2Id = winner2.Id, Seed = 1 };
+        var tournament = new Tournament
+        {
+            Mode = TournamentMode.Doubles,
+            Status = TournamentStatus.Completed,
+            Entrants = new List<TournamentEntrant> { winnerEntrant },
+            WinnerEntrantId = winnerEntrant.Id,
+            CompletedAt = new DateTime(2026, 3, 1),
+        };
+        var context = BadgeEngine.BuildContext(
+            new[] { winner1, winner2 }, new List<Match>(), new List<DoubleMatch>(), new List<Tournament> { tournament });
+
+        Assert.NotNull(new TournamentWinnerBadgeRule().Evaluate(winner1.Id, context));
+        Assert.NotNull(new TournamentWinnerBadgeRule().Evaluate(winner2.Id, context));
+    }
+
+    [Fact]
+    public void TournamentWinner_NoAwardForInProgressOrAbortedTournament()
+    {
+        var p1 = P("Anna");
+        var entrant = new TournamentEntrant { Id = Guid.NewGuid(), Player1Id = p1.Id, Seed = 1 };
+        var inProgress = new Tournament
+        {
+            Mode = TournamentMode.Singles,
+            Status = TournamentStatus.InProgress,
+            Entrants = new List<TournamentEntrant> { entrant },
+            WinnerEntrantId = entrant.Id, // shouldn't happen in practice, but rule must still require Completed
+        };
+        var context = BadgeEngine.BuildContext(
+            new[] { p1 }, new List<Match>(), new List<DoubleMatch>(), new List<Tournament> { inProgress });
+
+        Assert.Null(new TournamentWinnerBadgeRule().Evaluate(p1.Id, context));
+    }
+
+    [Fact]
+    public void TournamentWinner_NoAwardWhenNoTournamentsExist()
+    {
+        var p1 = P("Anna");
+        var context = BadgeEngine.BuildContext(new[] { p1 }, new List<Match>(), new List<DoubleMatch>());
+
+        Assert.Null(new TournamentWinnerBadgeRule().Evaluate(p1.Id, context));
     }
 }

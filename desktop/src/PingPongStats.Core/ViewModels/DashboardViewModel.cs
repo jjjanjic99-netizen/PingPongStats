@@ -109,7 +109,7 @@ public partial class DashboardViewModel : ObservableObject
             .ToList();
 
         var playersById = _dataService.Players.ToDictionary(p => p.Id);
-        var badgeContext = BadgeEngine.BuildContext(_dataService.Players, _dataService.Matches, _dataService.DoubleMatches);
+        var badgeContext = BadgeEngine.BuildContext(_dataService.Players, _dataService.Matches, _dataService.DoubleMatches, _dataService.Tournaments);
 
         Ranking.Clear();
         foreach (var p in rankedPlayers)

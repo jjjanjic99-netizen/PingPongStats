@@ -1,3 +1,4 @@
+using CommunityToolkit.Mvvm.ComponentModel;
 using PingPongStats.Core.Models;
 using PingPongStats.Core.Services;
 using PingPongStats.Core.Services.Badges;
@@ -89,9 +90,12 @@ public class DoubleMatchRow
 /// <summary>Raised after a match (singles or doubles) is successfully saved, so
 /// MainViewModel can show the Phase 6 win/confetti overlay. WinnerId2 is set only
 /// for doubles (the second member of the winning team). QuoteCategory is the
-/// Phase 8 trash-talk category to show a random quote for (empty = none).</summary>
+/// Phase 8 trash-talk category to show a random quote for (empty = none).
+/// IsTournamentFinal is true when this save just completed a tournament (Phase
+/// 12), triggering the bigger trophy overlay instead of the plain win overlay.</summary>
 public record MatchSavedInfo(
-    bool IsDoubles, Guid WinnerId1, Guid? WinnerId2, string ScoreLabel, bool IsComeback, string QuoteCategory);
+    bool IsDoubles, Guid WinnerId1, Guid? WinnerId2, string ScoreLabel, bool IsComeback, string QuoteCategory,
+    bool IsTournamentFinal = false);
 
 /// <summary>One point of a player's Elo history line chart, pre-normalized to 0..1 on
 /// both axes so the WPF view can position it on a fixed-size canvas without needing
@@ -170,4 +174,83 @@ public class PlayerRankingRow
     };
     public string RecentFormLabel => string.Join(" ", Stats.RecentForm.Select(f => f.Result));
     public bool LowSampleSize => Stats.LowSampleSize;
+}
+
+/// <summary>Pre-fills and locks a singles match entry for a tournament bracket
+/// slot: the two players are fixed (the entrants the bracket assigned to this
+/// slot), and on save the result is recorded via
+/// PingPongDataService.RecordTournamentSinglesResult instead of CreateMatch.</summary>
+public record TournamentMatchContext(Guid TournamentId, Guid SlotId, Guid PlayerAId, Guid PlayerBId);
+
+/// <summary>Doubles equivalent of <see cref="TournamentMatchContext"/>.</summary>
+public record TournamentDoublesMatchContext(
+    Guid TournamentId, Guid SlotId,
+    Guid TeamAPlayer1Id, Guid TeamAPlayer2Id, Guid TeamBPlayer1Id, Guid TeamBPlayer2Id);
+
+/// <summary>One side (entrant) of a bracket slot, resolved to actual Player
+/// objects for display. Players has 1 entry for singles, 2 for doubles.</summary>
+public class TournamentEntrantDisplay
+{
+    public Guid? EntrantId { get; init; }
+    public List<Player> Players { get; init; } = new();
+    public bool IsBye { get; init; }
+
+    public bool IsTbd => EntrantId is null && !IsBye;
+    public string Label => IsBye ? "Freilos" : IsTbd ? "TBD" : string.Join(" & ", Players.Select(p => p.DisplayName));
+}
+
+/// <summary>One bracket slot ready for display, with both sides resolved to
+/// player data and playability precomputed.</summary>
+public class TournamentSlotRow
+{
+    public required TournamentMatchSlot Slot { get; init; }
+    public required TournamentEntrantDisplay EntrantA { get; init; }
+    public required TournamentEntrantDisplay EntrantB { get; init; }
+    public string WinnerLabel { get; init; } = string.Empty;
+
+    public bool IsPlayable => BracketService.IsPlayable(Slot);
+    public bool IsDecided => Slot.WinnerEntrantId is not null;
+}
+
+/// <summary>One round of the bracket tree, with a human label ("Finale",
+/// "Halbfinale", "Runde 1", ...) for display left-to-right.</summary>
+public class TournamentRoundGroup
+{
+    public required int Round { get; init; }
+    public required string RoundLabel { get; init; }
+    public List<TournamentSlotRow> Slots { get; init; } = new();
+}
+
+/// <summary>One row of the tournament setup's participant checkbox list.</summary>
+public partial class TournamentParticipantOption : ObservableObject
+{
+    public required Player Player { get; init; }
+
+    [ObservableProperty] private bool isSelected;
+}
+
+/// <summary>One editable doubles team row in the tournament setup (manual
+/// assembly, or filled in by "Teams auslosen").</summary>
+public partial class TournamentTeamSlot : ObservableObject
+{
+    [ObservableProperty] private Player? player1;
+    [ObservableProperty] private Player? player2;
+}
+
+/// <summary>One row of the completed-tournaments list.</summary>
+public class TournamentSummaryRow
+{
+    public required Tournament Tournament { get; init; }
+    public string WinnerLabel { get; init; } = string.Empty;
+
+    public Guid Id => Tournament.Id;
+    public string Name => Tournament.Name;
+    public TournamentStatus Status => Tournament.Status;
+    public string ModeLabel => Tournament.Mode == TournamentMode.Doubles ? "Doppel" : "Einzel";
+    public string StatusLabel => Tournament.Status switch
+    {
+        TournamentStatus.Completed => "Abgeschlossen",
+        TournamentStatus.Aborted => "Abgebrochen",
+        _ => "Laufend",
+    };
 }

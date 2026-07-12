@@ -5,6 +5,11 @@
         <StackPanel>
             <TextBlock Text="{Binding Title}" Style="{StaticResource HeadingText}" Margin="0,0,0,16" />
 
+            <Border Style="{StaticResource CardBorder}" Margin="0,0,0,12" Padding="10"
+                    Visibility="{Binding IsTournamentMatch, Converter={StaticResource BoolToVisibilityConverter}}">
+                <TextBlock Text="Turnier-Partie: Die Spieler sind durch die Turnierpaarung vorgegeben." TextWrapping="Wrap" />
+            </Border>
+
             <Grid Margin="0,0,0,12">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*" />
@@ -30,12 +35,12 @@
                 <StackPanel Grid.Column="0">
                     <TextBlock Text="Spieler A" Style="{StaticResource StatLabelText}" Margin="0,0,0,4" />
                     <ComboBox ItemsSource="{Binding AvailablePlayers}" DisplayMemberPath="DisplayName"
-                              SelectedItem="{Binding PlayerA}" />
+                              SelectedItem="{Binding PlayerA}" IsEnabled="{Binding ArePlayerSelectorsEnabled}" />
                 </StackPanel>
                 <StackPanel Grid.Column="2">
                     <TextBlock Text="Spieler B" Style="{StaticResource StatLabelText}" Margin="0,0,0,4" />
                     <ComboBox ItemsSource="{Binding AvailablePlayers}" DisplayMemberPath="DisplayName"
-                              SelectedItem="{Binding PlayerB}" />
+                              SelectedItem="{Binding PlayerB}" IsEnabled="{Binding ArePlayerSelectorsEnabled}" />
                 </StackPanel>
             </Grid>
 

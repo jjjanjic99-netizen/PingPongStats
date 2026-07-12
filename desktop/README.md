@@ -223,6 +223,7 @@ Beispiel `appsettings.json`:
 | `audit-log.xml` | Optionales Änderungsprotokoll (wer hat was geändert) |
 | `quotes.xml` | Trash-Talk-Sprüche fürs Gewinn-Overlay, bewusst frei editierbar |
 | `seasons.xml` | Manuell angelegte Liga-Saisons |
+| `tournaments.xml` | Turniere (Teilnehmer, Setzliste, Baum, Status) |
 | `avatars\` | Verarbeitete Profilbilder, `{PlayerId}.png`, max. 512x512 px |
 
 Alle XML-Dateien werden **UTF-8 ohne BOM**, eingerückt und ohne
@@ -466,6 +467,41 @@ Team-Mitglieder einzeln). Punktesystem: 3 Punkte pro Sieg, 0 pro Niederlage;
 Tiebreak zuerst über die Satzdifferenz, danach über den direkten Vergleich
 zwischen den betroffenen Spielern. Podest für die Top 3 plus die volle
 Tabelle mit Avataren.
+
+### Turniermodus
+
+Auf der neuen Seite **Turnier** kann manuell (max. ein laufendes Turnier
+gleichzeitig) ein K.-o.-Turnier gestartet werden - Einzel oder Doppel.
+Teilnehmer werden per Checkbox-Liste ausgewählt; im Doppel-Modus können die
+Teams entweder manuell über Dropdowns zusammengestellt oder per "Teams
+auslosen" zufällig (Fisher-Yates, `TournamentService.DrawRandomTeams`)
+gebildet werden.
+
+Die Setzliste (`BracketService`) ordnet die Teilnehmer nach aktuellem
+Elo-Rating (Doppel: Team-Elo = Mittelwert der beiden Spieler) und erzeugt
+die Paarungen über das Standard-Turnierraster-Verfahren (rekursive
+Seed-Reihenfolge), sodass Seed 1 und Seed 2 sich frühestens im Finale
+treffen können. Ist die Teilnehmerzahl keine Zweierpotenz, erhalten die
+besten Seeds automatisch ein Freilos in Runde 1 - ergibt sich direkt aus
+der Seed-Reihenfolge, ohne Sonderfall-Logik.
+
+Der Baum wird links-nach-rechts rundenweise dargestellt (Achtelfinale,
+Viertelfinale, Halbfinale, Finale, ...). Ein Klick auf eine spielbare
+Paarung öffnet den normalen Ergebnis-Dialog (inkl. Sätzen) mit fest
+vorgegebenen (nicht änderbaren) Spielern/Teams; das Ergebnis wird wie jedes
+andere Spiel in `matches.xml`/`doubles.xml` gespeichert (nur zusätzlich mit
+`TournamentId` markiert) und zählt daher ganz normal für Elo, Statistiken
+und Badges. Der Sieger rückt automatisch in die nächste Runde vor
+(`BracketService.AdvanceWinner`). Nach dem Finalsieg erscheint die
+Gewinn-Overlay in einer grösseren "Turniersieger"-Aufmachung (Pokal-Symbol +
+Konfetti + Trash-Talk-Spruch); der/die Turniersieger erhalten das neue Badge
+"Turniersieger".
+
+Ein laufendes Turnier kann jederzeit mit Sicherheitsabfrage abgebrochen
+werden (`AbortTournamentCommand`) - bereits gespielte Partien bleiben
+unverändert in der Statistik erhalten. Abgeschlossene und abgebrochene
+Turniere bleiben über "Anzeigen" in der Turnier-Historie mit ihrem
+vollständigen Baum einsehbar.
 
 ### Migration alter Daten
 
