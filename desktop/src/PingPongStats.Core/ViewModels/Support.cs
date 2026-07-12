@@ -300,6 +300,36 @@ public class BettingLeaderboardDisplayRow
     public string HitRateLabel => $"{Row.HitRatePct:F0}%";
 }
 
+/// <summary>One completed season's Hall-of-Fame card: winners, podium, date
+/// range and total game count.</summary>
+public class SeasonHallOfFameRow
+{
+    public required Season Season { get; init; }
+    public required int TotalGames { get; init; }
+    public Player? SinglesWinner { get; init; }
+    public Player? DoublesWinner { get; init; }
+    public List<LeagueTableDisplayRow> SinglesPodium { get; init; } = new();
+
+    public Guid Id => Season.Id;
+    public string Name => Season.Name;
+    public string DateRangeLabel => $"{Season.StartDate:dd.MM.yyyy} - {Season.EndDate:dd.MM.yyyy}";
+}
+
+/// <summary>One row of the all-time Rekord-Tafel. HasRecord is false (shown as
+/// a plain placeholder, never a guessed value) when nobody currently
+/// qualifies for this record.</summary>
+public class RecordBoardRow
+{
+    public required string Title { get; init; }
+    public HallOfFameRecord? Record { get; init; }
+    public Player? Player { get; init; }
+
+    public bool HasRecord => Record is not null;
+    public string DisplayName => Player?.DisplayName ?? "?";
+    public string ValueLabel => Record?.ValueLabel ?? string.Empty;
+    public string DateLabel => Record is null ? string.Empty : Record.AchievedAt.ToString("dd.MM.yyyy");
+}
+
 /// <summary>One row of the completed-tournaments list.</summary>
 public class TournamentSummaryRow
 {

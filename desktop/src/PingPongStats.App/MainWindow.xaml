@@ -46,6 +46,9 @@
         <DataTemplate DataType="{x:Type vm:BettingViewModel}">
             <views:BettingView />
         </DataTemplate>
+        <DataTemplate DataType="{x:Type vm:HallOfFameViewModel}">
+            <views:HallOfFameView />
+        </DataTemplate>
     </Window.Resources>
 
     <Grid>
@@ -75,6 +78,7 @@
                 <Button Content="Liga" Style="{StaticResource NavButton}" Command="{Binding ShowLeagueCommand}" />
                 <Button Content="Turnier" Style="{StaticResource NavButton}" Command="{Binding ShowTournamentCommand}" />
                 <Button Content="Tippspiel" Style="{StaticResource NavButton}" Command="{Binding ShowBettingCommand}" />
+                <Button Content="Hall of Fame" Style="{StaticResource NavButton}" Command="{Binding ShowHallOfFameCommand}" />
                 <Button Content="Einstellungen" Style="{StaticResource NavButton}" Command="{Binding ShowSettingsCommand}" />
                 <Button Content="Mein Profil" Style="{StaticResource NavButton}" Command="{Binding ShowProfileCommand}"
                         Visibility="{Binding IsLoggedIn, Converter={StaticResource BoolToVisibilityConverter}}" />

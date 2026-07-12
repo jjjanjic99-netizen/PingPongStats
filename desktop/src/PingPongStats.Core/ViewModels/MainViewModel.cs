@@ -64,6 +64,7 @@ public partial class MainViewModel : ObservableObject
     public LeagueViewModel League { get; }
     public TournamentViewModel Tournament { get; }
     public BettingViewModel Betting { get; }
+    public HallOfFameViewModel HallOfFame { get; }
 
     public bool IsLoggedIn => CurrentPlayer is not null;
 
@@ -81,6 +82,7 @@ public partial class MainViewModel : ObservableObject
     public IRelayCommand ShowLeagueCommand { get; }
     public IRelayCommand ShowTournamentCommand { get; }
     public IRelayCommand ShowBettingCommand { get; }
+    public IRelayCommand ShowHallOfFameCommand { get; }
 
     public MainViewModel(
         PingPongDataService dataService,
@@ -126,6 +128,7 @@ public partial class MainViewModel : ObservableObject
         Betting.RecordResultRequested += OnBettingRecordResultRequested;
         Tournament.BetRequested += () => Navigate("Tippspiel", Betting, () => Betting.Load());
         Doubles.PendingMatchFinished += () => Navigate("Tippspiel", Betting, () => Betting.Load());
+        HallOfFame = new HallOfFameViewModel(_dataService, _settingsRepository);
 
         ShowDashboardCommand = new RelayCommand(() => Navigate("Dashboard", Dashboard, () => Dashboard.Load()));
         ShowPlayersCommand = new RelayCommand(() => Navigate("Spieler", Players, () => Players.Load()));
@@ -144,6 +147,7 @@ public partial class MainViewModel : ObservableObject
         ShowLeagueCommand = new RelayCommand(() => Navigate("Liga", League, () => League.Load()));
         ShowTournamentCommand = new RelayCommand(() => Navigate("Turnier", Tournament, () => Tournament.Load()));
         ShowBettingCommand = new RelayCommand(() => Navigate("Tippspiel", Betting, () => Betting.Load()));
+        ShowHallOfFameCommand = new RelayCommand(() => Navigate("Hall of Fame", HallOfFame, () => HallOfFame.Load()));
 
         CurrentViewModel = Dashboard;
         InitializeKnownBadges();
@@ -334,6 +338,7 @@ public partial class MainViewModel : ObservableObject
         HeadToHead.Load();
         League.Load();
         Tournament.Load();
+        HallOfFame.Load();
         CurrentPlayer = null;
         Profile = null;
         Betting.SetCurrentPlayer(null);

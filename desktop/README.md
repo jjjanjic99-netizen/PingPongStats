@@ -573,6 +573,42 @@ den Führenden dieser Rangliste, ausgewertet nur über Tipps, deren Partie
 innerhalb der aktuell aktiven Liga-Saison gespielt wurde (keine aktive
 Saison oder niemand mit Punkten = kein Träger dieses Badges).
 
+### Hall of Fame
+
+Neue Seite **Hall of Fame** in zwei Bereichen:
+
+**Abgeschlossene Saisons/Turniere**: eine Saison gilt als abgeschlossen,
+sobald ihr Enddatum in der Vergangenheit liegt (unabhängig vom `IsActive`-
+Flag) - pro Saison werden Sieger Einzel und Doppel (jeweils die Nr. 1 der
+bestehenden Liga-Tabelle - Doppel bleibt wie auf der Liga-Seite eine
+Einzelspieler-Wertung, kein Team-Konstrukt), das Einzel-Podest (Top 3) mit
+Avataren, Zeitraum und Gesamtspielzahl gezeigt. Dazu alle abgeschlossenen
+Turniere mit ihrem Sieger.
+
+**Rekord-Tafel (all-time)**, jeweils mit Avatar, Wert und Datum
+(`HallOfFameService`):
+
+- Längste Siegserie, höchstes je erreichtes Elo und beste Siegquote
+  (min. 20 Spiele) sind **Einzel-only** - dieselbe Definition, die auch auf
+  Mein Profil/im Dashboard bereits pro Spieler gezeigt wird (Phase 13s
+  Streak-Alarm kombiniert Einzel+Doppel bewusst nur für die *aktuell
+  laufende* Serie auf dem Dashboard, nicht für diesen All-Time-Rekord, um
+  keine zwei unterschiedlichen Zahlen für "Siegserie" im selben Programm zu
+  zeigen).
+- Meiste Spiele an einem Tag und meiste Spiele gesamt zählen Einzel und
+  Doppel zusammen.
+- Grösster Comeback verwendet unverändert `ComebackService.FindBestComeback`
+  (inkl. dessen eigenem, bereits bestehenden Tiebreak).
+- Grösste Elo-Überraschung (Einzel-only) sucht den Sieg mit der niedrigsten
+  Vorab-Siegwahrscheinlichkeit laut Elo-Prognose (Rating jeweils *vor* der
+  betreffenden Partie berechnet).
+
+Kein Rekord vorhanden (z. B. noch niemand mit 20+ Spielen): dezenter
+Platzhalter-Text statt eines erfundenen Werts. Bei einem echten Gleichstand
+im Wert gewinnt durchgängig der ältere Eintrag (wer den Wert zuerst erreicht
+hat) - ausser bei "Grösster Comeback", wo bewusst der bereits bestehende
+Tiebreak dieser Funktion erhalten bleibt.
+
 ### Migration alter Daten
 
 Bestehende `players.xml`/`matches.xml`/`doubles.xml` ohne die neuen Felder
