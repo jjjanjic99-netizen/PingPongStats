@@ -237,6 +237,17 @@ public partial class TournamentTeamSlot : ObservableObject
     [ObservableProperty] private Player? player2;
 }
 
+/// <summary>One row of the Dashboard's "Streak-Alarm" card (Phase 13): a player
+/// currently on a qualifying combined (singles + doubles) win streak.</summary>
+public class StreakAlarmRow
+{
+    public required Player Player { get; init; }
+    public required int StreakLength { get; init; }
+
+    public bool IsOnFire => StreakLength >= StreakAlarmService.FireStreakThreshold;
+    public string MessageLabel => $"{StreakLength} Siege in Folge – wer stoppt {Player.DisplayName}?";
+}
+
 /// <summary>One row of the completed-tournaments list.</summary>
 public class TournamentSummaryRow
 {

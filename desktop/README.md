@@ -503,6 +503,21 @@ unverändert in der Statistik erhalten. Abgeschlossene und abgebrochene
 Turniere bleiben über "Anzeigen" in der Turnier-Historie mit ihrem
 vollständigen Baum einsehbar.
 
+### Streak-Alarm
+
+Neue Dashboard-Karte (`StreakAlarmService`): zeigt alle Spieler mit einer
+aktuell laufenden Siegserie von mindestens 3 Spielen, absteigend nach
+Serienlänge sortiert. Die Serie wird rein chronologisch nach `PlayedAt`
+rückwärts ab dem jeweils letzten Spiel des Spielers gezählt - Einzel- **und**
+Doppel-Spiele zählen gemeinsam zu derselben Serie (eine Doppel-Niederlage
+bricht eine Einzel-Siegserie genauso wie umgekehrt). Die erste Niederlage
+(egal welcher Art) beendet die Serie. Ab 5 Siegen in Folge wird die Zeile
+zusätzlich mit einem Flammen-Symbol hervorgehoben. Ist niemand aktuell auf
+einer Serie, wird die Karte komplett ausgeblendet statt leer angezeigt. Die
+Berechnung ist bewusst unabhängig vom Dashboard-Zeitraumfilter (wie "Player
+of the Week"/"Rivalität des Monats") - eine durch einen Zeitfilter
+abgeschnittene Serie wäre irreführend.
+
 ### Migration alter Daten
 
 Bestehende `players.xml`/`matches.xml`/`doubles.xml` ohne die neuen Felder

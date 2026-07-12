@@ -47,6 +47,12 @@ public partial class DashboardViewModel : ObservableObject
     [ObservableProperty] private Player? rivalryPlayer2;
     [ObservableProperty] private string rivalryRecordLabel = string.Empty;
 
+    /// <summary>"Streak-Alarm" (Phase 13): always computed over the player's full
+    /// history, independent of RangeFilter - a streak that got truncated by a
+    /// time-range filter would be misleading.</summary>
+    [ObservableProperty] private bool hasStreakAlarms;
+    public ObservableCollection<StreakAlarmRow> StreakAlarms { get; } = new();
+
     /// <summary>Shared with DoublesViewModel so changing the time range on either
     /// dashboard page keeps both in sync.</summary>
     public DashboardRangeFilter RangeFilter { get; }
@@ -210,5 +216,16 @@ public partial class DashboardViewModel : ObservableObject
             RivalryPlayer2 = null;
             RivalryRecordLabel = string.Empty;
         }
+
+        var streaks = StreakAlarmService.GetPlayersOnStreak(_dataService.Players, _dataService.Matches, _dataService.DoubleMatches);
+        StreakAlarms.Clear();
+        foreach (var s in streaks)
+        {
+            var player = playersById.GetValueOrDefault(s.PlayerId);
+            if (player is null) continue;
+            StreakAlarms.Add(new StreakAlarmRow { Player = player, StreakLength = s.StreakLength });
+        }
+
+        HasStreakAlarms = StreakAlarms.Count > 0;
     }
 }
