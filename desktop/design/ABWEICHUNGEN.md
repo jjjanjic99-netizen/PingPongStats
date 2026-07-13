@@ -253,3 +253,18 @@ nötig war. Reihenfolge: chronologisch nach Phase (D1–D4).
   Serie/Satzdifferenz. Spiele/Siege/Niederlagen/Längste Niederlagenserie
   bleiben in einer zweiten Kachel-Reihe darunter, statt entfernt zu
   werden.
+
+## Phase D4 — Liga
+
+- **Einzel/Doppel als Segment-Toggle statt CheckBox**: `IsDoublesMode` war
+  bereits ein einfaches bool auf `LeagueViewModel`. Für den
+  mockup-typischen Zwei-Segment-Umschalter wurde ein trivialer
+  `SetDoublesModeCommand` (`IRelayCommand<bool>`) ergänzt, der die
+  bestehende Eigenschaft direkt setzt - keine neue Logik, nur ein anderer
+  UI-Auslöser für dieselbe Eigenschaft.
+- **"Aktualisieren"-Button entfernt**: gleiche Begründung wie bei
+  Dashboard/Profil.
+- Podium und Tabelle sind ansonsten sehr nah am Mockup 1:1 umsetzbar
+  gewesen (die App hatte bereits Rank/Player/DisplayName/Played/Wins/
+  Losses/SetDifferenceLabel/Points in exakt der vom Mockup benötigten
+  Form).

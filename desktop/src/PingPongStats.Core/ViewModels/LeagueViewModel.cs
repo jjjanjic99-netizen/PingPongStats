@@ -24,11 +24,17 @@ public partial class LeagueViewModel : ObservableObject
 
     public IRelayCommand RefreshCommand { get; }
 
+    /// <summary>Sets IsDoublesMode directly (mockup's Einzel/Doppel segmented
+    /// control, Phase D4) - a thin wrapper so the two toggle buttons don't need
+    /// a two-way CheckBox binding.</summary>
+    public IRelayCommand<bool> SetDoublesModeCommand { get; }
+
     public LeagueViewModel(PingPongDataService dataService, ISettingsRepository settingsRepository)
     {
         _dataService = dataService;
         _settingsRepository = settingsRepository;
         RefreshCommand = new RelayCommand(Load);
+        SetDoublesModeCommand = new RelayCommand<bool>(value => IsDoublesMode = value);
         Load();
     }
 
