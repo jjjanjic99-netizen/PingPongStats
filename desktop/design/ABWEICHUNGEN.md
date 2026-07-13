@@ -164,3 +164,63 @@ nötig war. Reihenfolge: chronologisch nach Phase (D1–D4).
   bewusst ausserhalb dieser rein visuellen Überarbeitung. Beide Dialoge
   werden in der Erfassungs-Dialog-Phase optisch an den Mockup angeglichen,
   bleiben aber als zwei getrennte Flows bestehen.
+
+## Phase D4 — Dashboard
+
+- **"Match of the Day" nicht übernommen**: Der Mockup zeigt in der zweiten
+  Kartenreihe ein Beispiel "knappste Partie heute" neben "Rivalität des
+  Monats". Diese Kennzahl existiert nicht in der App (kein Service dafür)
+  und wurde gemäss Vorgabe ("keine erfundenen Daten") nicht ergänzt.
+  "Rivalität des Monats" steht daher allein, über die volle Breite, statt
+  neben einer erfundenen zweiten Karte.
+- **Bestes Comeback: nur ein echter Avatar**: Nur der Sieger ist als
+  `Player`-Objekt verfügbar (`ComebackWinner`); der Gegnername
+  (`ComebackOpponentName`) ist reiner Text ohne Spieler-Referenz. Der
+  zweite Avatar-Platz bleibt daher bewusst ohne `Player` gebunden, was
+  `AvatarControl` bereits als neutralen "?"-Kreis darstellt - dieselbe
+  Konvention, die der Mockup selbst für unbekannte Turnier-Platzhalter
+  verwendet ("Sieger HF 1/2"). Der Mockup zeigt hier zusätzlich eine
+  kompakte "3:2"-Anzeige; ein solcher verdichteter Score ist in den
+  vorhandenen Comeback-Daten nicht als eigenes Feld vorhanden (nur die
+  volle Satzfolge und der "aufgeholte Rückstand"), daher werden beide
+  vorhandenen Texte gezeigt statt eine neue Kennzahl zu berechnen.
+- **Elo-Trendpfeil (▲/▼) aus vorhandenen Daten abgeleitet**: Der Mockup
+  zeigt neben jedem Elo-Wert einen Trendpfeil. Es gibt keine gespeicherte
+  Elo-Historie-Differenz pro Rangliste-Zeile; der Pfeil wird daher aus der
+  bereits vorhandenen aktuellen Sieg-/Verlustserie abgeleitet (Sieg-Serie
+  → ▲/Win-Farbe, Verlust-Serie → ▼/Lose-Farbe, keine Serie → neutral) -
+  eine rein visuelle Ableitung aus bestehenden Daten (zwei neue
+  App-Converter, keine neue Core-Logik), keine neue/erfundene Kennzahl.
+- **"👤 du"-Badge nicht übernommen**: Der Mockup markiert die eigene Zeile
+  in der Rangliste mit einem "du"-Pill. Das würde erfordern, dem
+  Dashboard-ViewModel den eingeloggten Spieler durchzureichen (aktuell nur
+  in `MainViewModel` bekannt) - eine kleine funktionale Verdrahtung, keine
+  rein optische Änderung, daher ausserhalb dieser Phase belassen. Die
+  Pill-Spalte zeigt stattdessen weiterhin die vorhandenen Abzeichen-Icons.
+- **"Aktualisieren"-Button entfernt**: Die alte Kopfzeile hatte einen
+  expliziten Refresh-Button. Der Mockup kennt keinen solchen Button; da
+  jede Navigation zum Dashboard ohnehin `Load()` erneut aufruft (siehe
+  `MainViewModel.Navigate`), ist ein manueller Zwischen-Refresh selten
+  nötig. `DashboardViewModel.RefreshCommand` bleibt im ViewModel bestehen
+  (aktuell ungenutzt), falls später wieder eine UI dafür gebraucht wird.
+- **Detail-Tabelle statt gestrichener Spalten**: Die App hat mehr
+  Pro-Spieler-Kennzahlen (Spiele, S/N, Siegquote, Siegquote 30T, Serie,
+  Form) als der Mockup zeigt. Diese stehen weiterhin in einer zweiten,
+  ausführlicheren `DataGrid`-Tabelle ("Ranking-Details") unterhalb der
+  Mockup-genauen Elo-Rangliste, statt entfernt zu werden.
+- **Bugfix: `AncestorType=UserControl`-Bindungen brechen jetzt, wo Inhalte
+  in `CardControl` verschachtelt sind**: Mehrere bestehende Bindungen
+  suchten den nächsten `UserControl`-Vorfahren, um von dort
+  `DataContext.DataPath` zu lesen (z. B. für `AvatarControl.DataPath` in
+  einer `ItemsControl`/`DataGrid`-Zelle). Seit `CardControl` (und
+  `RowItem`) selbst `UserControl`s sind, liefert `AncestorType=UserControl`
+  jetzt oft die falsche, nähere Karte/Zeile statt der Seite selbst - der
+  Pfad `DataPath` existiert dort nicht, die Bindung schlägt still fehl und
+  Avatare zeigen dauerhaft nur Initialen statt eines evtl. vorhandenen
+  Fotos. Behoben in `DashboardView.xaml` durch ein `x:Name="Root"` auf dem
+  Seiten-`UserControl` und `ElementName=Root` statt `AncestorType`. Andere
+  Views mit demselben alten Muster (`BettingView`, `DoublesView`,
+  `HallOfFameView`, `LeagueView`, `LoginView`, `MatchEditView`,
+  `PlayersView`, `SettingsView`, `TournamentView`) werden bei ihrer
+  eigenen D4-Überarbeitung auf dasselbe `ElementName`-Muster umgestellt,
+  sobald/falls sie Inhalte in `CardControl` verschachteln.

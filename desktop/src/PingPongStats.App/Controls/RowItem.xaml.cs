@@ -1,5 +1,6 @@
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Media;
 using PingPongStats.Core.Models;
 
 namespace PingPongStats.App.Controls;
@@ -28,6 +29,9 @@ public partial class RowItem : UserControl
 
     public static readonly DependencyProperty ShowDividerProperty = DependencyProperty.Register(
         nameof(ShowDivider), typeof(bool), typeof(RowItem), new PropertyMetadata(true, OnShowDividerChanged));
+
+    public static readonly DependencyProperty ValueBrushProperty = DependencyProperty.Register(
+        nameof(ValueBrush), typeof(Brush), typeof(RowItem), new PropertyMetadata(null, OnValueBrushChanged));
 
     public RowItem()
     {
@@ -83,6 +87,15 @@ public partial class RowItem : UserControl
         set => SetValue(ShowDividerProperty, value);
     }
 
+    /// <summary>Optional override for the value column's color (mockup's
+    /// .row-val.up/.down) - e.g. Win/Lose brush for an Elo trend. Left
+    /// null/unset for the default Chalk color.</summary>
+    public Brush? ValueBrush
+    {
+        get => (Brush?)GetValue(ValueBrushProperty);
+        set => SetValue(ValueBrushProperty, value);
+    }
+
     private static void OnPosChanged(DependencyObject d, DependencyPropertyChangedEventArgs e) =>
         ((RowItem)d).PosBlock.Text = (string)e.NewValue;
 
@@ -94,4 +107,11 @@ public partial class RowItem : UserControl
 
     private static void OnShowDividerChanged(DependencyObject d, DependencyPropertyChangedEventArgs e) =>
         ((RowItem)d).Divider.Visibility = (bool)e.NewValue ? Visibility.Visible : Visibility.Collapsed;
+
+    private static void OnValueBrushChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+    {
+        var control = (RowItem)d;
+        control.ValueBlock.Foreground = (Brush?)e.NewValue
+            ?? (Brush)Application.Current.Resources["Brush.Chalk"];
+    }
 }

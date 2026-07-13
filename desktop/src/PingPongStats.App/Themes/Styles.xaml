@@ -27,6 +27,8 @@
     <converters:FractionToPixelConverter x:Key="XPixelConverter" InvertForYAxis="False" />
     <converters:FractionToPixelConverter x:Key="YPixelConverter" InvertForYAxis="True" />
     <converters:EloPointsToPolylineConverter x:Key="EloPointsToPolylineConverter" />
+    <converters:StreakTypeToArrowConverter x:Key="StreakTypeToArrowConverter" />
+    <converters:StreakTypeToTrendBrushConverter x:Key="StreakTypeToTrendBrushConverter" />
 
     <!-- Shared bar-chart item template/panel, used by Dashboard and Doubles views
          so both render identical hand-rolled bar charts without duplicating XAML.

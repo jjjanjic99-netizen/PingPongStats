@@ -1,204 +1,278 @@
 <UserControl x:Class="PingPongStats.App.Views.DashboardView"
+             x:Name="Root"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:controls="clr-namespace:PingPongStats.App.Controls">
     <StackPanel>
-        <Grid Margin="0,0,0,16">
+        <!-- Hero "Spieler der Woche" (mockup .hero): Table-colored surface with
+             a radial orange glow top-right, XL avatar, hero-name/line/score. -->
+        <Border CornerRadius="14" Padding="22" Margin="0,0,0,14" BorderThickness="1" BorderBrush="#1B7186"
+                Visibility="{Binding HasPlayerOfTheWeek, Converter={StaticResource BoolToVisibilityConverter}}">
+            <Border.Background>
+                <RadialGradientBrush Center="0.88,0.08" GradientOrigin="0.88,0.08" RadiusX="1.3" RadiusY="1.3">
+                    <GradientStop Color="#3AFF7A1A" Offset="0" />
+                    <GradientStop Color="{StaticResource Color.Table}" Offset="0.55" />
+                </RadialGradientBrush>
+            </Border.Background>
+            <StackPanel Orientation="Horizontal">
+                <controls:AvatarControl Player="{Binding PlayerOfTheWeek}" DataPath="{Binding DataPath}" Size="XL" />
+                <StackPanel VerticalAlignment="Center" Margin="22,0,0,0">
+                    <TextBlock Text="SPIELER DER WOCHE" FontFamily="{DynamicResource Font.Mono}" FontSize="10.5"
+                               Foreground="{DynamicResource Brush.Ball}" CharacterSpacing="152" />
+                    <TextBlock Text="{Binding PlayerOfTheWeek.DisplayName}" Style="{StaticResource Typo.HeroName}" Margin="0,5,0,0" />
+                    <TextBlock Foreground="#CDE6EC" FontSize="13.5" Margin="0,7,0,0">
+                        <Run Text="{Binding PlayerOfTheWeekRecordLabel, Mode=OneWay}" />
+                    </TextBlock>
+                    <Border Background="{DynamicResource Brush.Ball}" CornerRadius="7" Padding="12,6" Margin="0,11,0,0"
+                            HorizontalAlignment="Left">
+                        <TextBlock Text="{Binding PlayerOfTheWeekScoreLabel}" FontFamily="{DynamicResource Font.Mono}"
+                                   FontWeight="Bold" FontSize="15" Foreground="{DynamicResource Brush.OnBall}" />
+                    </Border>
+                </StackPanel>
+            </StackPanel>
+        </Border>
+        <controls:CardControl Margin="0,0,0,14"
+                               Visibility="{Binding HasPlayerOfTheWeek, Converter={StaticResource InverseBoolToVisibilityConverter}}">
+            <TextBlock Text="Player of the Week: noch niemand qualifiziert (mindestens 3 Spiele in den letzten 7 Tagen nötig)."
+                       Style="{StaticResource Typo.Body}" TextWrapping="Wrap" Foreground="{DynamicResource Brush.Muted}" />
+        </controls:CardControl>
+
+        <!-- Streak-Alarm + Bestes Comeback (mockup grid g2) -->
+        <Grid Margin="0,0,0,14">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*" />
-                <ColumnDefinition Width="Auto" />
-                <ColumnDefinition Width="16" />
-                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="14" />
+                <ColumnDefinition Width="*" />
             </Grid.ColumnDefinitions>
-            <TextBlock Grid.Column="0" Text="Dashboard" Style="{StaticResource HeadingText}" />
-            <ComboBox Grid.Column="1" Width="170"
-                      ItemsSource="{Binding RangeOptions}" DisplayMemberPath="Label" SelectedValuePath="Preset"
-                      SelectedValue="{Binding RangeFilter.SelectedPreset}" />
-            <Button Grid.Column="3" Content="Aktualisieren" Style="{StaticResource SecondaryButton}"
-                    Command="{Binding RefreshCommand}" />
+
+            <controls:CardControl Grid.Column="0" Visibility="{Binding HasStreakAlarms, Converter={StaticResource BoolToVisibilityConverter}}">
+                <StackPanel>
+                    <controls:EyebrowLabel Text="Streak-Alarm" />
+                    <ItemsControl ItemsSource="{Binding StreakAlarms}">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Border CornerRadius="9" Padding="12,10" Margin="0,0,0,8" BorderThickness="3,0,0,0">
+                                    <Border.Style>
+                                        <Style TargetType="Border">
+                                            <Setter Property="Background" Value="{DynamicResource Brush.Panel2}" />
+                                            <Setter Property="BorderBrush" Value="{DynamicResource Brush.Ball}" />
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding IsOnFire}" Value="True">
+                                                    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Rubber}" />
+                                                    <Setter Property="Background">
+                                                        <Setter.Value>
+                                                            <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
+                                                                <GradientStop Color="#2ED8342A" Offset="0" />
+                                                                <GradientStop Color="{StaticResource Color.Panel2}" Offset="0.6" />
+                                                            </LinearGradientBrush>
+                                                        </Setter.Value>
+                                                    </Setter>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </Border.Style>
+                                    <StackPanel Orientation="Horizontal">
+                                        <TextBlock Text="{Binding StreakLength}" FontSize="26" VerticalAlignment="Center">
+                                            <TextBlock.Style>
+                                                <Style TargetType="TextBlock" BasedOn="{StaticResource Typo.BigStat}">
+                                                    <Setter Property="FontSize" Value="26" />
+                                                    <Setter Property="Foreground" Value="{DynamicResource Brush.Ball}" />
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding IsOnFire}" Value="True">
+                                                            <Setter Property="Foreground" Value="{DynamicResource Brush.Rubber}" />
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </TextBlock.Style>
+                                        </TextBlock>
+                                        <StackPanel VerticalAlignment="Center" Margin="11,0,0,0">
+                                            <TextBlock FontWeight="Bold" FontSize="13.5">
+                                                <Run Text="{Binding Player.DisplayName, Mode=OneWay}" />
+                                            </TextBlock>
+                                            <TextBlock Text="{Binding MessageLabel}" Style="{StaticResource Typo.Small}"
+                                                       Foreground="{DynamicResource Brush.Muted}" Margin="0,2,0,0" />
+                                        </StackPanel>
+                                        <TextBlock Text="🔥" FontSize="19" VerticalAlignment="Center" Margin="11,0,0,0"
+                                                   Visibility="{Binding IsOnFire, Converter={StaticResource BoolToVisibilityConverter}}" />
+                                    </StackPanel>
+                                </Border>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </StackPanel>
+            </controls:CardControl>
+            <controls:CardControl Grid.Column="0" Visibility="{Binding HasStreakAlarms, Converter={StaticResource InverseBoolToVisibilityConverter}}">
+                <StackPanel>
+                    <controls:EyebrowLabel Text="Streak-Alarm" />
+                    <TextBlock Text="Aktuell keine Serie ab 3 Siegen in Folge." Style="{StaticResource Typo.Small}"
+                               Foreground="{DynamicResource Brush.Muted}" TextWrapping="Wrap" />
+                </StackPanel>
+            </controls:CardControl>
+
+            <controls:CardControl Grid.Column="2" Visibility="{Binding HasBestComeback, Converter={StaticResource BoolToVisibilityConverter}}">
+                <StackPanel>
+                    <controls:EyebrowLabel Text="Bestes Comeback" />
+                    <!-- Only the winner's Player object is available here (no
+                         opponent Player reference is plumbed through) - the
+                         right-hand avatar intentionally shows no Player, which
+                         AvatarControl already renders as a muted "?" circle,
+                         matching the mockup's own placeholder-avatar
+                         convention (Turnier's "Sieger HF 1/2" slots). -->
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                        <controls:AvatarControl Player="{Binding ComebackWinner}" DataPath="{Binding DataPath}" Size="M" />
+                        <TextBlock Text="{Binding ComebackValueLabel}" FontFamily="{DynamicResource Font.Mono}"
+                                   FontSize="11" Foreground="{DynamicResource Brush.Muted}" VerticalAlignment="Center"
+                                   TextAlignment="Center" TextWrapping="Wrap" MaxWidth="140" Margin="16,0" />
+                        <controls:AvatarControl Size="M" DataPath="{Binding DataPath}" />
+                    </StackPanel>
+                    <TextBlock HorizontalAlignment="Center" Margin="0,6,0,0" FontSize="12.5">
+                        <Run Text="{Binding ComebackWinner.DisplayName, Mode=OneWay}" FontWeight="SemiBold" />
+                        <Run Text=" schlägt " Foreground="{DynamicResource Brush.Muted}" />
+                        <Run Text="{Binding ComebackOpponentName, Mode=OneWay}" FontWeight="SemiBold" />
+                    </TextBlock>
+                    <TextBlock HorizontalAlignment="Center" Margin="0,4,0,0" FontFamily="{DynamicResource Font.Mono}"
+                               FontSize="11" Foreground="{DynamicResource Brush.Muted}">
+                        <Run Text="{Binding ComebackSetProgressionLabel, Mode=OneWay}" />
+                        <Run Text="  ·  " />
+                        <Run Text="{Binding ComebackDateLabel, Mode=OneWay}" />
+                    </TextBlock>
+                </StackPanel>
+            </controls:CardControl>
+            <controls:CardControl Grid.Column="2" Visibility="{Binding HasBestComeback, Converter={StaticResource InverseBoolToVisibilityConverter}}">
+                <StackPanel>
+                    <controls:EyebrowLabel Text="Bestes Comeback" />
+                    <TextBlock Text="Keine Spiele mit Satzdetails und mindestens 2 Sätzen Rückstand im gewählten Zeitraum."
+                               Style="{StaticResource Typo.Small}" Foreground="{DynamicResource Brush.Muted}" TextWrapping="Wrap" />
+                </StackPanel>
+            </controls:CardControl>
         </Grid>
 
-        <Border Style="{StaticResource CardBorder}" Margin="0,0,0,16"
-                Visibility="{Binding HasPlayerOfTheWeek, Converter={StaticResource BoolToVisibilityConverter}}">
-            <StackPanel Orientation="Horizontal">
-                <controls:AvatarControl Player="{Binding PlayerOfTheWeek}" DataPath="{Binding DataPath}" Size="L" />
-                <StackPanel VerticalAlignment="Center" Margin="16,0,0,0">
-                    <TextBlock Text="PLAYER OF THE WEEK" Style="{StaticResource StatLabelText}" />
-                    <TextBlock Text="{Binding PlayerOfTheWeek.DisplayName}" Style="{StaticResource HeadingText}" FontSize="20" Margin="0,4,0,0" />
-                    <TextBlock Text="{Binding PlayerOfTheWeekRecordLabel}" Style="{StaticResource StatLabelText}" Margin="0,4,0,0" />
-                    <TextBlock Text="{Binding PlayerOfTheWeekScoreLabel}" Style="{StaticResource StatLabelText}" />
-                </StackPanel>
-            </StackPanel>
-        </Border>
-        <Border Style="{StaticResource CardBorder}" Margin="0,0,0,16"
-                Visibility="{Binding HasPlayerOfTheWeek, Converter={StaticResource InverseBoolToVisibilityConverter}}">
-            <TextBlock Text="Player of the Week: noch niemand qualifiziert (mindestens 3 Spiele in den letzten 7 Tagen nötig)."
-                       Style="{StaticResource StatLabelText}" TextWrapping="Wrap" />
-        </Border>
-
-        <Border Style="{StaticResource CardBorder}" Margin="0,0,0,16"
-                Visibility="{Binding HasBestComeback, Converter={StaticResource BoolToVisibilityConverter}}">
+        <!-- Rivalität des Monats (mockup pairs this with a "Match of the Day"
+             card the app has no data source for - see ABWEICHUNGEN.md - so it
+             stands alone, full width, instead of a fabricated second card. -->
+        <controls:CardControl Margin="0,0,0,14" Visibility="{Binding HasRivalryOfTheMonth, Converter={StaticResource BoolToVisibilityConverter}}">
             <StackPanel>
-                <TextBlock Text="BESTES COMEBACK" Style="{StaticResource StatLabelText}" Margin="0,0,0,8" />
-                <StackPanel Orientation="Horizontal">
-                    <controls:AvatarControl Player="{Binding ComebackWinner}" DataPath="{Binding DataPath}" Size="M" />
-                    <StackPanel VerticalAlignment="Center" Margin="12,0,0,0">
-                        <TextBlock>
-                            <Run Text="{Binding ComebackWinner.DisplayName, Mode=OneWay}" FontWeight="SemiBold" />
-                            <Run Text=" gegen " />
-                            <Run Text="{Binding ComebackOpponentName, Mode=OneWay}" />
-                        </TextBlock>
-                        <TextBlock Text="{Binding ComebackSetProgressionLabel}" Style="{StaticResource StatLabelText}" Margin="0,4,0,0" />
-                        <StackPanel Orientation="Horizontal" Margin="0,4,0,0">
-                            <TextBlock Text="{Binding ComebackValueLabel}" Style="{StaticResource StatLabelText}" Margin="0,0,16,0" />
-                            <TextBlock Text="{Binding ComebackDateLabel}" Style="{StaticResource StatLabelText}" />
-                        </StackPanel>
-                    </StackPanel>
-                </StackPanel>
-            </StackPanel>
-        </Border>
-        <Border Style="{StaticResource CardBorder}" Margin="0,0,0,16"
-                Visibility="{Binding HasBestComeback, Converter={StaticResource InverseBoolToVisibilityConverter}}">
-            <TextBlock Text="Bestes Comeback: keine Spiele mit Satzdetails und mindestens 2 Sätzen Rückstand im gewählten Zeitraum."
-                       Style="{StaticResource StatLabelText}" TextWrapping="Wrap" />
-        </Border>
-
-        <Border Style="{StaticResource CardBorder}" Margin="0,0,0,16"
-                Visibility="{Binding HasRivalryOfTheMonth, Converter={StaticResource BoolToVisibilityConverter}}">
-            <StackPanel>
-                <TextBlock Text="RIVALITÄT DES MONATS" Style="{StaticResource StatLabelText}" Margin="0,0,0,8" />
-                <StackPanel Orientation="Horizontal">
+                <controls:EyebrowLabel Text="Rivalität des Monats" />
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
                     <controls:AvatarControl Player="{Binding RivalryPlayer1}" DataPath="{Binding DataPath}" Size="M" />
-                    <controls:AvatarControl Player="{Binding RivalryPlayer2}" DataPath="{Binding DataPath}" Size="M" Margin="8,0,0,0" />
-                    <TextBlock Text="{Binding RivalryRecordLabel}" VerticalAlignment="Center" Margin="12,0,0,0" />
+                    <TextBlock Text="{Binding RivalryRecordLabel}" VerticalAlignment="Center" Margin="16,0" FontSize="14" />
+                    <controls:AvatarControl Player="{Binding RivalryPlayer2}" DataPath="{Binding DataPath}" Size="M" />
                 </StackPanel>
             </StackPanel>
-        </Border>
-        <Border Style="{StaticResource CardBorder}" Margin="0,0,0,16"
-                Visibility="{Binding HasRivalryOfTheMonth, Converter={StaticResource InverseBoolToVisibilityConverter}}">
-            <TextBlock Text="Rivalität des Monats: noch kein Einzel-Paar mit mindestens 3 Spielen in den letzten 30 Tagen."
-                       Style="{StaticResource StatLabelText}" TextWrapping="Wrap" />
-        </Border>
-
-        <Border Style="{StaticResource CardBorder}" Margin="0,0,0,16"
-                Visibility="{Binding HasStreakAlarms, Converter={StaticResource BoolToVisibilityConverter}}">
+        </controls:CardControl>
+        <controls:CardControl Margin="0,0,0,14" Visibility="{Binding HasRivalryOfTheMonth, Converter={StaticResource InverseBoolToVisibilityConverter}}">
             <StackPanel>
-                <TextBlock Text="STREAK-ALARM" Style="{StaticResource StatLabelText}" Margin="0,0,0,8" />
-                <ItemsControl ItemsSource="{Binding StreakAlarms}">
+                <controls:EyebrowLabel Text="Rivalität des Monats" />
+                <TextBlock Text="Noch kein Einzel-Paar mit mindestens 3 Spielen in den letzten 30 Tagen."
+                           Style="{StaticResource Typo.Small}" Foreground="{DynamicResource Brush.Muted}" TextWrapping="Wrap" />
+            </StackPanel>
+        </controls:CardControl>
+
+        <!-- Summary stat tiles (app-specific, no direct mockup equivalent on
+             this page - the mockup's own .card.center stat-tile pattern is
+             reused here via StatTile). -->
+        <UniformGrid Rows="1" Columns="5" Margin="0,0,0,14">
+            <controls:StatTile Label="Spiele total" Value="{Binding TotalMatches}" Margin="0,0,10,0" />
+            <controls:StatTile Label="Aktive Spieler" Value="{Binding ActivePlayerCount}" Margin="0,0,10,0" />
+            <controls:StatTile Label="Meiste Siege" Value="{Binding MostWinsLabel}" Margin="0,0,10,0" />
+            <controls:StatTile Label="Siegquote overall" Value="{Binding HighestOverallWinRateLabel}" Margin="0,0,10,0" />
+            <controls:StatTile Label="Beste aktuelle Serie" Value="{Binding BestCurrentStreakLabel}" />
+        </UniformGrid>
+
+        <!-- Elo-Rangliste (mockup's simplified row list - the app's richer
+             per-player stats table follows further down, see
+             ABWEICHUNGEN.md). -->
+        <controls:CardControl Margin="0,0,0,14">
+            <StackPanel>
+                <controls:EyebrowLabel Text="Elo-Rangliste" />
+                <ItemsControl ItemsSource="{Binding Ranking}">
                     <ItemsControl.ItemTemplate>
                         <DataTemplate>
-                            <Border Style="{StaticResource CardBorder}" Margin="0,0,0,8" Padding="10">
-                                <StackPanel Orientation="Horizontal">
-                                    <controls:AvatarControl Player="{Binding Player}"
-                                                             DataPath="{Binding DataContext.DataPath, RelativeSource={RelativeSource AncestorType=UserControl}}"
-                                                             Size="S" />
-                                    <StackPanel VerticalAlignment="Center" Margin="12,0,0,0">
-                                        <StackPanel Orientation="Horizontal">
-                                            <TextBlock Text="{Binding Player.DisplayName}" FontWeight="SemiBold" />
-                                            <TextBlock Text="🔥" Margin="6,0,0,0"
-                                                       Visibility="{Binding IsOnFire, Converter={StaticResource BoolToVisibilityConverter}}" />
-                                        </StackPanel>
-                                        <TextBlock Text="{Binding MessageLabel}" Style="{StaticResource StatLabelText}" Margin="0,4,0,0" />
-                                    </StackPanel>
-                                </StackPanel>
-                            </Border>
+                            <controls:RowItem AvatarPlayer="{Binding Player}"
+                                               AvatarDataPath="{Binding DataContext.DataPath, ElementName=Root}"
+                                               NameText="{Binding DisplayName}">
+                                <controls:RowItem.TrailingContent>
+                                    <controls:Pill Text="{Binding BadgeIconsLabel}" ToolTip="{Binding BadgeNamesTooltip}" />
+                                </controls:RowItem.TrailingContent>
+                                <controls:RowItem.ValueText>
+                                    <MultiBinding StringFormat="{}{0} {1}">
+                                        <Binding Path="EloRounded" />
+                                        <Binding Path="Stats.CurrentStreak.Type" Converter="{StaticResource StreakTypeToArrowConverter}" />
+                                    </MultiBinding>
+                                </controls:RowItem.ValueText>
+                                <controls:RowItem.ValueBrush>
+                                    <Binding Path="Stats.CurrentStreak.Type" Converter="{StaticResource StreakTypeToTrendBrushConverter}" />
+                                </controls:RowItem.ValueBrush>
+                            </controls:RowItem>
                         </DataTemplate>
                     </ItemsControl.ItemTemplate>
                 </ItemsControl>
             </StackPanel>
-        </Border>
+        </controls:CardControl>
 
-        <UniformGrid Rows="1" Columns="5" Margin="0,0,0,16">
-            <Border Style="{StaticResource CardBorder}" Margin="0,0,8,0">
-                <StackPanel>
-                    <TextBlock Text="SPIELE TOTAL" Style="{StaticResource StatLabelText}" />
-                    <TextBlock Text="{Binding TotalMatches}" Style="{StaticResource StatValueText}" />
-                </StackPanel>
-            </Border>
-            <Border Style="{StaticResource CardBorder}" Margin="0,0,8,0">
-                <StackPanel>
-                    <TextBlock Text="AKTIVE SPIELER" Style="{StaticResource StatLabelText}" />
-                    <TextBlock Text="{Binding ActivePlayerCount}" Style="{StaticResource StatValueText}" />
-                </StackPanel>
-            </Border>
-            <Border Style="{StaticResource CardBorder}" Margin="0,0,8,0">
-                <StackPanel>
-                    <TextBlock Text="MEISTE SIEGE" Style="{StaticResource StatLabelText}" />
-                    <TextBlock Text="{Binding MostWinsLabel}" Style="{StaticResource StatValueText}" FontSize="15" TextWrapping="Wrap" />
-                </StackPanel>
-            </Border>
-            <Border Style="{StaticResource CardBorder}" Margin="0,0,8,0">
-                <StackPanel>
-                    <TextBlock Text="SIEGQUOTE OVERALL" Style="{StaticResource StatLabelText}" />
-                    <TextBlock Text="{Binding HighestOverallWinRateLabel}" Style="{StaticResource StatValueText}" FontSize="15" TextWrapping="Wrap" />
-                </StackPanel>
-            </Border>
-            <Border Style="{StaticResource CardBorder}">
-                <StackPanel>
-                    <TextBlock Text="BESTE AKTUELLE SERIE" Style="{StaticResource StatLabelText}" />
-                    <TextBlock Text="{Binding BestCurrentStreakLabel}" Style="{StaticResource StatValueText}" FontSize="15" TextWrapping="Wrap" />
-                </StackPanel>
-            </Border>
-        </UniformGrid>
-
-        <Grid Margin="0,0,0,16">
+        <Grid Margin="0,0,0,14">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*" />
-                <ColumnDefinition Width="16" />
+                <ColumnDefinition Width="14" />
                 <ColumnDefinition Width="*" />
             </Grid.ColumnDefinitions>
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto" />
+                <RowDefinition Height="14" />
                 <RowDefinition Height="Auto" />
             </Grid.RowDefinitions>
 
-            <Border Grid.Column="0" Style="{StaticResource CardBorder}" Margin="0,0,0,16">
+            <controls:CardControl Grid.Column="0" Grid.Row="0">
                 <StackPanel>
                     <TextBlock Text="Siege pro Spieler" Style="{StaticResource SectionLabelText}" Margin="0,0,0,12" />
                     <ItemsControl ItemsSource="{Binding WinsChart}"
                                   ItemsPanel="{StaticResource ChartItemsPanel}"
                                   ItemTemplate="{StaticResource ChartBarItemTemplate}" />
                 </StackPanel>
-            </Border>
+            </controls:CardControl>
 
-            <Border Grid.Column="2" Style="{StaticResource CardBorder}" Margin="0,0,0,16">
+            <controls:CardControl Grid.Column="2" Grid.Row="0">
                 <StackPanel>
                     <TextBlock Text="Siegquote pro Spieler" Style="{StaticResource SectionLabelText}" Margin="0,0,0,12" />
                     <ItemsControl ItemsSource="{Binding WinRateChart}"
                                   ItemsPanel="{StaticResource ChartItemsPanel}"
                                   ItemTemplate="{StaticResource ChartBarItemTemplate}" />
                 </StackPanel>
-            </Border>
+            </controls:CardControl>
 
-            <Border Grid.Column="0" Grid.Row="1" Style="{StaticResource CardBorder}">
+            <controls:CardControl Grid.Column="0" Grid.Row="2">
                 <StackPanel>
                     <TextBlock Text="Spiele pro Woche" Style="{StaticResource SectionLabelText}" Margin="0,0,0,12" />
                     <ItemsControl ItemsSource="{Binding MatchesPerWeekChart}"
                                   ItemsPanel="{StaticResource ChartItemsPanel}"
                                   ItemTemplate="{StaticResource ChartBarItemTemplate}" />
                 </StackPanel>
-            </Border>
+            </controls:CardControl>
 
-            <Border Grid.Column="2" Grid.Row="1" Style="{StaticResource CardBorder}">
+            <controls:CardControl Grid.Column="2" Grid.Row="2">
                 <StackPanel>
                     <TextBlock Text="Spiele pro Monat" Style="{StaticResource SectionLabelText}" Margin="0,0,0,12" />
                     <ItemsControl ItemsSource="{Binding MatchesPerMonthChart}"
                                   ItemsPanel="{StaticResource ChartItemsPanel}"
                                   ItemTemplate="{StaticResource ChartBarItemTemplate}" />
                 </StackPanel>
-            </Border>
+            </controls:CardControl>
         </Grid>
 
-        <Border Style="{StaticResource CardBorder}" Padding="0">
+        <!-- Detailed per-player stats table: more columns than the mockup's
+             Elo-Rangliste shows (Spiele, S/N, Siegquote, Siegquote 30T, Serie,
+             Form) - kept as a supplementary table rather than dropped, since
+             RowItem doesn't support this many columns (see ABWEICHUNGEN.md). -->
+        <controls:CardControl>
             <StackPanel>
-                <TextBlock Text="Ranking &amp; Spielerübersicht" Style="{StaticResource SectionLabelText}" Margin="16,16,16,8" />
-                <DataGrid ItemsSource="{Binding Ranking}" BorderThickness="0">
+                <TextBlock Text="Ranking-Details" Style="{StaticResource SectionLabelText}" Margin="0,0,0,8" />
+                <DataGrid ItemsSource="{Binding Ranking}" BorderThickness="0" Background="Transparent">
                     <DataGrid.Columns>
                         <DataGridTemplateColumn Header="Bild" Width="50">
                             <DataGridTemplateColumn.CellTemplate>
                                 <DataTemplate>
                                     <controls:AvatarControl Player="{Binding Player}"
-                                                             DataPath="{Binding DataContext.DataPath, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                             DataPath="{Binding DataContext.DataPath, ElementName=Root}"
                                                              Size="S" />
                                 </DataTemplate>
                             </DataGridTemplateColumn.CellTemplate>
@@ -223,6 +297,6 @@
                     </DataGrid.Columns>
                 </DataGrid>
             </StackPanel>
-        </Border>
+        </controls:CardControl>
     </StackPanel>
 </UserControl>
