@@ -224,3 +224,32 @@ nötig war. Reihenfolge: chronologisch nach Phase (D1–D4).
   `PlayersView`, `SettingsView`, `TournamentView`) werden bei ihrer
   eigenen D4-Überarbeitung auf dasselbe `ElementName`-Muster umgestellt,
   sobald/falls sie Inhalte in `CardControl` verschachteln.
+
+## Phase D4 — Profil
+
+- **Zwei kleine, ehrliche ViewModel-Ergänzungen** (keine neue Formel, nur
+  bereits vorhandene Berechnungen/Objekte zusätzlich freigegeben):
+  - `RankLabel` ("Rang X von Y"): dieselbe Elo-absteigende Sortierung, die
+    das Dashboard bereits verwendet, angewendet auf `ProfileViewModel`
+    (das bislang nur den eigenen Elo-Wert kannte, nicht die Platzierung).
+  - `NemesisPlayer`/`FavoriteOpponentPlayer`: das volle `Player`-Objekt des
+    Angst-/Lieblingsgegners war in `Load()` bereits über `playersById`
+    verfügbar, nur nicht als Property exponiert - nötig, um den
+    Mockup-Avatar neben Name/Bilanz zu zeigen.
+- **Abzeichen ohne "gesperrt mit Fortschritt"-Anzeige**: Der Mockup zeigt
+  ein Beispiel für ein noch nicht verdientes Abzeichen mit
+  Fortschrittszähler ("🔒 Der Unbesiegte · 4/10"). Die Badge-Engine
+  kennt nur bereits verdiente Abzeichen, keine Fortschritts-Metrik für
+  ungerdiente - daher werden weiterhin nur verdiente Abzeichen gezeigt.
+- **Bilanz-Countdown ohne Avatar**: `StatsService` liefert für die
+  häufigsten Gegner nur den Anzeigenamen, kein `Player`-Objekt. Die Zeilen
+  verwenden daher `RowItem` ohne `AvatarPlayer` (kein Platzhalter-Kreis,
+  da hier - anders als beim Comeback/Angstgegner - noch nicht mal eine
+  Spieler-Referenz vorliegt, nur ein String).
+- **"Aktualisieren"-Button entfernt**: gleiche Begründung wie beim
+  Dashboard - jede Navigation zu "Mein Profil" ruft ohnehin `Load()` neu
+  auf.
+- **7 statt 3 Stat-Kacheln**: Der Mockup zeigt nur Siegquote/Längste
+  Serie/Satzdifferenz. Spiele/Siege/Niederlagen/Längste Niederlagenserie
+  bleiben in einer zweiten Kachel-Reihe darunter, statt entfernt zu
+  werden.

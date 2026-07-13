@@ -1,200 +1,178 @@
 <UserControl x:Class="PingPongStats.App.Views.ProfileView"
+             x:Name="Root"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:controls="clr-namespace:PingPongStats.App.Controls">
     <StackPanel>
-        <Grid Margin="0,0,0,16">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="*" />
-                <ColumnDefinition Width="Auto" />
-            </Grid.ColumnDefinitions>
-            <TextBlock Grid.Column="0" Text="Mein Profil" Style="{StaticResource HeadingText}" />
-            <Button Grid.Column="1" Content="Aktualisieren" Style="{StaticResource SecondaryButton}"
-                    Command="{Binding RefreshCommand}" />
-        </Grid>
-
-        <StackPanel Orientation="Horizontal" Margin="0,0,0,16">
-            <controls:AvatarControl Player="{Binding Player}" DataPath="{Binding DataPath}" Size="L" />
-            <StackPanel VerticalAlignment="Center" Margin="16,0,0,0">
-                <TextBlock Text="{Binding Player.DisplayName}" Style="{StaticResource HeadingText}" FontSize="18" />
-                <TextBlock Text="{Binding EloLabel, StringFormat='Elo: {0}'}" Style="{StaticResource StatLabelText}" Margin="0,4,0,0" />
+        <!-- Header card (mockup): L avatar, Display 32px name, mut summary
+             line, badge pills. -->
+        <controls:CardControl Margin="0,0,0,14">
+            <StackPanel Orientation="Horizontal">
+                <controls:AvatarControl Player="{Binding Player}" DataPath="{Binding DataPath}" Size="L" />
+                <StackPanel VerticalAlignment="Center" Margin="18,0,0,0">
+                    <TextBlock Text="{Binding Player.DisplayName}" FontFamily="{DynamicResource Font.Display}"
+                               FontWeight="ExtraBold" FontSize="32" />
+                    <TextBlock Foreground="{DynamicResource Brush.Muted}" Margin="0,4,0,0">
+                        <Run Text="{Binding EloLabel, StringFormat='Elo {0}', Mode=OneWay}" />
+                        <Run Text=" · " />
+                        <Run Text="{Binding RankLabel, Mode=OneWay}" />
+                        <Run Text=" · " />
+                        <Run Text="{Binding Played, Mode=OneWay}" />
+                        <Run Text=" Spiele" />
+                    </TextBlock>
+                    <TextBlock Text="Noch keine Abzeichen verdient." Style="{StaticResource Typo.Small}"
+                               Foreground="{DynamicResource Brush.Muted}" Margin="0,10,0,0"
+                               Visibility="{Binding HasBadges, Converter={StaticResource InverseBoolToVisibilityConverter}}" />
+                    <ItemsControl ItemsSource="{Binding Badges}" Margin="0,10,0,0"
+                                  Visibility="{Binding HasBadges, Converter={StaticResource BoolToVisibilityConverter}}">
+                        <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <WrapPanel Orientation="Horizontal" />
+                            </ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Border Background="{DynamicResource Brush.Panel2}" BorderBrush="{DynamicResource Brush.Line}"
+                                        BorderThickness="1" CornerRadius="20" Padding="8,6,12,6" Margin="0,0,8,8">
+                                    <Border.ToolTip>
+                                        <TextBlock MaxWidth="280" TextWrapping="Wrap">
+                                            <Run Text="{Binding Description, Mode=OneWay}" />
+                                            <LineBreak />
+                                            <Run Text="Verdient am: " FontWeight="SemiBold" />
+                                            <Run Text="{Binding EarnedAt, StringFormat='dd.MM.yyyy', Mode=OneWay}" />
+                                        </TextBlock>
+                                    </Border.ToolTip>
+                                    <StackPanel Orientation="Horizontal">
+                                        <TextBlock Text="{Binding Icon}" FontSize="14" VerticalAlignment="Center" />
+                                        <TextBlock Text="{Binding BadgeName}" FontSize="12.5" Margin="7,0,0,0" VerticalAlignment="Center" />
+                                    </StackPanel>
+                                </Border>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </StackPanel>
             </StackPanel>
-        </StackPanel>
+        </controls:CardControl>
 
-        <Border Style="{StaticResource CardBorder}" Margin="0,0,0,16">
-            <StackPanel>
-                <TextBlock Text="Abzeichen" Style="{StaticResource SectionLabelText}" Margin="0,0,0,8" />
-                <TextBlock Text="Noch keine Abzeichen verdient." Style="{StaticResource StatLabelText}"
-                           Visibility="{Binding HasBadges, Converter={StaticResource InverseBoolToVisibilityConverter}}" />
-                <ItemsControl ItemsSource="{Binding Badges}"
-                              Visibility="{Binding HasBadges, Converter={StaticResource BoolToVisibilityConverter}}">
-                    <ItemsControl.ItemsPanel>
-                        <ItemsPanelTemplate>
-                            <WrapPanel Orientation="Horizontal" />
-                        </ItemsPanelTemplate>
-                    </ItemsControl.ItemsPanel>
-                    <ItemsControl.ItemTemplate>
-                        <DataTemplate>
-                            <Border Background="{DynamicResource Brush.NavHover}" CornerRadius="14" Padding="10,6" Margin="0,0,8,8">
-                                <Border.ToolTip>
-                                    <TextBlock MaxWidth="280" TextWrapping="Wrap">
-                                        <Run Text="{Binding Description, Mode=OneWay}" />
-                                        <LineBreak />
-                                        <Run Text="Verdient am: " FontWeight="SemiBold" />
-                                        <Run Text="{Binding EarnedAt, StringFormat='dd.MM.yyyy', Mode=OneWay}" />
-                                    </TextBlock>
-                                </Border.ToolTip>
-                                <StackPanel Orientation="Horizontal">
-                                    <TextBlock Text="{Binding Icon}" FontSize="16" VerticalAlignment="Center" />
-                                    <TextBlock Text="{Binding BadgeName}" Margin="6,0,0,0" VerticalAlignment="Center" />
-                                </StackPanel>
-                            </Border>
-                        </DataTemplate>
-                    </ItemsControl.ItemTemplate>
-                </ItemsControl>
-            </StackPanel>
-        </Border>
-
-        <UniformGrid Rows="2" Columns="4" Margin="0,0,0,16">
-            <Border Style="{StaticResource CardBorder}" Margin="0,0,8,8">
-                <StackPanel>
-                    <TextBlock Text="SPIELE" Style="{StaticResource StatLabelText}" />
-                    <TextBlock Text="{Binding Played}" Style="{StaticResource StatValueText}" />
-                </StackPanel>
-            </Border>
-            <Border Style="{StaticResource CardBorder}" Margin="0,0,8,8">
-                <StackPanel>
-                    <TextBlock Text="SIEGE" Style="{StaticResource StatLabelText}" />
-                    <TextBlock Text="{Binding Wins}" Style="{StaticResource StatValueText}" />
-                </StackPanel>
-            </Border>
-            <Border Style="{StaticResource CardBorder}" Margin="0,0,8,8">
-                <StackPanel>
-                    <TextBlock Text="NIEDERLAGEN" Style="{StaticResource StatLabelText}" />
-                    <TextBlock Text="{Binding Losses}" Style="{StaticResource StatValueText}" />
-                </StackPanel>
-            </Border>
-            <Border Style="{StaticResource CardBorder}" Margin="0,0,0,8">
-                <StackPanel>
-                    <TextBlock Text="SIEGQUOTE" Style="{StaticResource StatLabelText}" />
-                    <TextBlock Text="{Binding WinRateLabel}" Style="{StaticResource StatValueText}" />
-                </StackPanel>
-            </Border>
-            <Border Style="{StaticResource CardBorder}" Margin="0,0,8,0">
-                <StackPanel>
-                    <TextBlock Text="LÄNGSTE SIEGESSERIE" Style="{StaticResource StatLabelText}" />
-                    <TextBlock Text="{Binding LongestWinStreakLabel}" Style="{StaticResource StatValueText}" />
-                </StackPanel>
-            </Border>
-            <Border Style="{StaticResource CardBorder}" Margin="0,0,8,0">
-                <StackPanel>
-                    <TextBlock Text="LÄNGSTE NIEDERLAGENSERIE" Style="{StaticResource StatLabelText}" />
-                    <TextBlock Text="{Binding LongestLossStreakLabel}" Style="{StaticResource StatValueText}" />
-                </StackPanel>
-            </Border>
-            <Border Style="{StaticResource CardBorder}">
-                <StackPanel>
-                    <TextBlock Text="SATZDIFFERENZ" Style="{StaticResource StatLabelText}" />
-                    <TextBlock Text="{Binding SetDifferenceLabel}" Style="{StaticResource StatValueText}" />
-                </StackPanel>
-            </Border>
+        <!-- Siegquote / Längste Serie / Satzdifferenz (mockup g3) -->
+        <UniformGrid Rows="1" Columns="3" Margin="0,0,0,14">
+            <controls:StatTile Label="Siegquote" Value="{Binding WinRateLabel}" SubText="{Binding Played, StringFormat='{}{0} Spiele'}"
+                                ValueBrush="{DynamicResource Brush.Ball}" Margin="0,0,10,0" />
+            <controls:StatTile Label="Längste Serie" Value="{Binding LongestWinStreakLabel}" Margin="0,0,10,0" />
+            <controls:StatTile Label="Satzdifferenz" Value="{Binding SetDifferenceLabel}" ValueBrush="{DynamicResource Brush.Win}" />
         </UniformGrid>
 
-        <Grid Margin="0,0,0,16">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="*" />
-                <ColumnDefinition Width="16" />
-                <ColumnDefinition Width="*" />
-            </Grid.ColumnDefinitions>
-            <Border Grid.Column="0" Style="{StaticResource CardBorder}">
-                <StackPanel>
-                    <TextBlock Text="ANGSTGEGNER" Style="{StaticResource StatLabelText}" Margin="0,0,0,8" />
-                    <StackPanel Visibility="{Binding HasNemesis, Converter={StaticResource BoolToVisibilityConverter}}">
-                        <TextBlock Text="{Binding NemesisDisplayName}" Style="{StaticResource StatValueText}" FontSize="16" />
-                        <TextBlock Text="{Binding NemesisRecordLabel}" Style="{StaticResource StatLabelText}" Margin="0,4,0,0" />
-                    </StackPanel>
-                    <TextBlock Text="Noch zu wenig Spiele." Style="{StaticResource StatLabelText}"
-                               Visibility="{Binding HasNemesis, Converter={StaticResource InverseBoolToVisibilityConverter}}" />
-                </StackPanel>
-            </Border>
-            <Border Grid.Column="2" Style="{StaticResource CardBorder}">
-                <StackPanel>
-                    <TextBlock Text="LIEBLINGSGEGNER" Style="{StaticResource StatLabelText}" Margin="0,0,0,8" />
-                    <StackPanel Visibility="{Binding HasFavoriteOpponent, Converter={StaticResource BoolToVisibilityConverter}}">
-                        <TextBlock Text="{Binding FavoriteOpponentDisplayName}" Style="{StaticResource StatValueText}" FontSize="16" />
-                        <TextBlock Text="{Binding FavoriteOpponentRecordLabel}" Style="{StaticResource StatLabelText}" Margin="0,4,0,0" />
-                    </StackPanel>
-                    <TextBlock Text="Noch zu wenig Spiele." Style="{StaticResource StatLabelText}"
-                               Visibility="{Binding HasFavoriteOpponent, Converter={StaticResource InverseBoolToVisibilityConverter}}" />
-                </StackPanel>
-            </Border>
-        </Grid>
+        <!-- Remaining stats (Spiele/Siege/Niederlagen/Serien) - not in the
+             mockup's 3-tile summary but kept, not dropped (see
+             ABWEICHUNGEN.md). -->
+        <UniformGrid Rows="1" Columns="4" Margin="0,0,0,14">
+            <controls:StatTile Label="Spiele" Value="{Binding Played}" Margin="0,0,10,0" />
+            <controls:StatTile Label="Siege" Value="{Binding Wins}" Margin="0,0,10,0" />
+            <controls:StatTile Label="Niederlagen" Value="{Binding Losses}" Margin="0,0,10,0" />
+            <controls:StatTile Label="Längste Niederlagenserie" Value="{Binding LongestLossStreakLabel}" />
+        </UniformGrid>
 
-        <Border Style="{StaticResource CardBorder}" Margin="0,0,0,16">
+        <!-- Angstgegner / Lieblingsgegner -->
+        <controls:CardControl Margin="0,0,0,14">
             <StackPanel>
-                <TextBlock Text="Bilanz-Countdown" Style="{StaticResource SectionLabelText}" Margin="0,0,0,8" />
-                <TextBlock Text="Noch keine Gegner mit genügend Spielen." Style="{StaticResource StatLabelText}"
+                <controls:EyebrowLabel Text="Angstgegner" />
+                <Grid Visibility="{Binding HasNemesis, Converter={StaticResource BoolToVisibilityConverter}}">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="12" />
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <controls:AvatarControl Grid.Column="0" Player="{Binding NemesisPlayer}" DataPath="{Binding DataPath}" Size="M" />
+                    <StackPanel Grid.Column="2" VerticalAlignment="Center">
+                        <TextBlock Text="{Binding NemesisDisplayName}" FontWeight="Bold" />
+                        <TextBlock Style="{StaticResource Typo.Small}" Foreground="{DynamicResource Brush.Muted}" Margin="0,2,0,0">
+                            <Run Text="Bilanz " />
+                            <Run Text="{Binding NemesisRecordLabel, Mode=OneWay}" />
+                        </TextBlock>
+                    </StackPanel>
+                    <controls:Pill Grid.Column="3" Text="😰" Variant="Bad" VerticalAlignment="Center" />
+                </Grid>
+                <TextBlock Text="Noch zu wenig Spiele." Style="{StaticResource Typo.Small}" Foreground="{DynamicResource Brush.Muted}"
+                           Visibility="{Binding HasNemesis, Converter={StaticResource InverseBoolToVisibilityConverter}}" />
+
+                <Border Height="1" Background="{DynamicResource Brush.Line}" Margin="0,14" />
+
+                <controls:EyebrowLabel Text="Lieblingsgegner" />
+                <Grid Visibility="{Binding HasFavoriteOpponent, Converter={StaticResource BoolToVisibilityConverter}}">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="12" />
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <controls:AvatarControl Grid.Column="0" Player="{Binding FavoriteOpponentPlayer}" DataPath="{Binding DataPath}" Size="M" />
+                    <StackPanel Grid.Column="2" VerticalAlignment="Center">
+                        <TextBlock Text="{Binding FavoriteOpponentDisplayName}" FontWeight="Bold" />
+                        <TextBlock Style="{StaticResource Typo.Small}" Foreground="{DynamicResource Brush.Muted}" Margin="0,2,0,0">
+                            <Run Text="Bilanz " />
+                            <Run Text="{Binding FavoriteOpponentRecordLabel, Mode=OneWay}" />
+                        </TextBlock>
+                    </StackPanel>
+                    <controls:Pill Grid.Column="3" Text="😎" Variant="Win" VerticalAlignment="Center" />
+                </Grid>
+                <TextBlock Text="Noch zu wenig Spiele." Style="{StaticResource Typo.Small}" Foreground="{DynamicResource Brush.Muted}"
+                           Visibility="{Binding HasFavoriteOpponent, Converter={StaticResource InverseBoolToVisibilityConverter}}" />
+            </StackPanel>
+        </controls:CardControl>
+
+        <!-- Bilanz-Countdown: no opponent Player object is available here
+             (StatsService only returns a display name), so rows show no
+             avatar rather than fabricate one - matching the Dashboard
+             Comeback card's precedent (see ABWEICHUNGEN.md). -->
+        <controls:CardControl Margin="0,0,0,14">
+            <StackPanel>
+                <controls:EyebrowLabel Text="Bilanz-Countdown" />
+                <TextBlock Text="Noch keine Gegner mit genügend Spielen." Style="{StaticResource Typo.Small}"
+                           Foreground="{DynamicResource Brush.Muted}"
                            Visibility="{Binding HasBalanceCountdowns, Converter={StaticResource InverseBoolToVisibilityConverter}}" />
                 <ItemsControl ItemsSource="{Binding BalanceCountdowns}"
                               Visibility="{Binding HasBalanceCountdowns, Converter={StaticResource BoolToVisibilityConverter}}">
                     <ItemsControl.ItemTemplate>
                         <DataTemplate>
-                            <TextBlock Text="{Binding StatusLabel}" Margin="0,0,0,4" />
+                            <controls:RowItem NameText="{Binding OpponentDisplayName}" ValueText="{Binding StatusLabel}" AvatarDataPath="{Binding ElementName=Root, Path=DataContext.DataPath}" />
                         </DataTemplate>
                     </ItemsControl.ItemTemplate>
                 </ItemsControl>
             </StackPanel>
-        </Border>
+        </controls:CardControl>
 
-        <Border Style="{StaticResource CardBorder}" Margin="0,0,0,16">
+        <!-- Siegquote nach Tageszeit (mockup .bar-row list) -->
+        <controls:CardControl Margin="0,0,0,14">
             <StackPanel>
-                <TextBlock Text="Tageszeit-Statistik" Style="{StaticResource SectionLabelText}" Margin="0,0,0,12" />
+                <controls:EyebrowLabel Text="Siegquote nach Tageszeit" />
                 <ItemsControl ItemsSource="{Binding TimeOfDayChart}">
-                    <ItemsControl.ItemsPanel>
-                        <ItemsPanelTemplate>
-                            <StackPanel Orientation="Horizontal" VerticalAlignment="Bottom" Height="160" />
-                        </ItemsPanelTemplate>
-                    </ItemsControl.ItemsPanel>
                     <ItemsControl.ItemTemplate>
                         <DataTemplate>
-                            <StackPanel Width="90" Margin="3,0" VerticalAlignment="Bottom">
-                                <TextBlock Text="{Binding DisplayValue}" HorizontalAlignment="Center"
-                                           Foreground="{DynamicResource Brush.TextSecondary}" FontSize="11" />
-                                <Border CornerRadius="3,3,0,0" Height="{Binding NormalizedHeight, Converter={StaticResource BarHeightConverter}, ConverterParameter=100}">
-                                    <Border.Style>
-                                        <Style TargetType="Border">
-                                            <Setter Property="Background" Value="{DynamicResource Brush.Accent}" />
-                                            <Style.Triggers>
-                                                <DataTrigger Binding="{Binding IsLowSample}" Value="True">
-                                                    <Setter Property="Background" Value="{DynamicResource Brush.Border}" />
-                                                </DataTrigger>
-                                            </Style.Triggers>
-                                        </Style>
-                                    </Border.Style>
-                                </Border>
-                                <TextBlock Text="{Binding Label}" HorizontalAlignment="Center" TextWrapping="Wrap"
-                                           FontSize="10" Foreground="{DynamicResource Brush.TextSecondary}" Margin="0,4,0,0" />
-                                <TextBlock Text="{Binding Played, StringFormat='{}{0} Spiele'}" HorizontalAlignment="Center"
-                                           FontSize="9" Foreground="{DynamicResource Brush.TextSecondary}" />
-                            </StackPanel>
+                            <controls:BarRow LabelText="{Binding Label}" ValueText="{Binding DisplayValue}"
+                                              NormalizedValue="{Binding NormalizedHeight}" IsDim="{Binding IsLowSample}" />
                         </DataTemplate>
                     </ItemsControl.ItemTemplate>
                 </ItemsControl>
-                <TextBlock Text="{Binding BestTimeOfDayLabel}" Style="{StaticResource StatLabelText}" Margin="0,12,0,0"
+                <TextBlock Text="{Binding BestTimeOfDayLabel}" Style="{StaticResource Typo.Small}" Foreground="{DynamicResource Brush.Muted}"
+                           Margin="0,8,0,0" TextWrapping="Wrap"
                            Visibility="{Binding HasBestTimeOfDay, Converter={StaticResource BoolToVisibilityConverter}}" />
             </StackPanel>
-        </Border>
+        </controls:CardControl>
 
-        <Border Style="{StaticResource CardBorder}">
+        <!-- Elo-Verlauf: existing hand-rolled polyline chart, unchanged
+             internally, just wrapped in CardControl. -->
+        <controls:CardControl>
             <StackPanel>
-                <TextBlock Text="Elo-Verlauf" Style="{StaticResource SectionLabelText}" Margin="0,0,0,12" />
-                <TextBlock Text="Noch keine Spiele mit Elo-Verlauf erfasst." Style="{StaticResource StatLabelText}"
+                <controls:EyebrowLabel Text="Elo-Verlauf" />
+                <TextBlock Text="Noch keine Spiele mit Elo-Verlauf erfasst." Style="{StaticResource Typo.Small}"
+                           Foreground="{DynamicResource Brush.Muted}"
                            Visibility="{Binding HasEloHistory, Converter={StaticResource InverseBoolToVisibilityConverter}}" />
                 <Grid Width="600" Height="160" HorizontalAlignment="Left"
                       Visibility="{Binding HasEloHistory, Converter={StaticResource BoolToVisibilityConverter}}">
                     <Canvas Width="600" Height="160">
                         <Polyline Points="{Binding EloHistoryChart, Converter={StaticResource EloPointsToPolylineConverter}, ConverterParameter='600,160'}"
-                                  Stroke="{DynamicResource Brush.Accent}" StrokeThickness="2" />
+                                  Stroke="{DynamicResource Brush.Ball}" StrokeThickness="2" />
                     </Canvas>
                     <ItemsControl ItemsSource="{Binding EloHistoryChart}">
                         <ItemsControl.ItemsPanel>
@@ -212,13 +190,12 @@
                         </ItemsControl.ItemContainerStyle>
                         <ItemsControl.ItemTemplate>
                             <DataTemplate>
-                                <Ellipse Width="6" Height="6" Fill="{DynamicResource Brush.Accent}"
-                                         Margin="-3,-3,0,0" />
+                                <Ellipse Width="6" Height="6" Fill="{DynamicResource Brush.Ball}" Margin="-3,-3,0,0" />
                             </DataTemplate>
                         </ItemsControl.ItemTemplate>
                     </ItemsControl>
                 </Grid>
             </StackPanel>
-        </Border>
+        </controls:CardControl>
     </StackPanel>
 </UserControl>

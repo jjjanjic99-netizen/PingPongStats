@@ -28,12 +28,19 @@ public partial class ProfileViewModel : ObservableObject
     [ObservableProperty] private string setDifferenceLabel = "–";
     [ObservableProperty] private bool hasEloHistory;
 
+    /// <summary>"Rang X von Y" (mockup profile header): this player's position
+    /// in the same Elo-descending order Dashboard already ranks by - not a new
+    /// metric, just exposing that existing ordering on this page too.</summary>
+    [ObservableProperty] private string rankLabel = string.Empty;
+
     [ObservableProperty] private bool hasNemesis;
     [ObservableProperty] private string nemesisDisplayName = string.Empty;
     [ObservableProperty] private string nemesisRecordLabel = string.Empty;
+    [ObservableProperty] private Player? nemesisPlayer;
     [ObservableProperty] private bool hasFavoriteOpponent;
     [ObservableProperty] private string favoriteOpponentDisplayName = string.Empty;
     [ObservableProperty] private string favoriteOpponentRecordLabel = string.Empty;
+    [ObservableProperty] private Player? favoriteOpponentPlayer;
 
     public ObservableCollection<EloChartPoint> EloHistoryChart { get; } = new();
     public ObservableCollection<BadgeAward> Badges { get; } = new();
@@ -81,6 +88,10 @@ public partial class ProfileViewModel : ObservableObject
         var eloRatings = EloService.ComputeRatings(matches, _dataService.Players.Select(p => p.Id));
         EloLabel = eloRatings.GetValueOrDefault(_playerId, EloService.DefaultInitialRating).ToString("F0");
 
+        var eloOrderedIds = eloRatings.OrderByDescending(kv => kv.Value).Select(kv => kv.Key).ToList();
+        var rankIndex = eloOrderedIds.IndexOf(_playerId);
+        RankLabel = rankIndex >= 0 ? $"Rang {rankIndex + 1} von {eloOrderedIds.Count}" : string.Empty;
+
         LongestWinStreakLabel = StatsService.GetLongestWinStreak(matches, _playerId).ToString();
         LongestLossStreakLabel = StatsService.GetLongestLossStreak(matches, _playerId).ToString();
         var setDiff = StatsService.GetSetDifference(matches, _playerId);
@@ -109,16 +120,26 @@ public partial class ProfileViewModel : ObservableObject
         HasNemesis = nemesis is not null;
         if (nemesis is not null)
         {
-            NemesisDisplayName = playersById.GetValueOrDefault(nemesis.OpponentId)?.DisplayName ?? "?";
+            NemesisPlayer = playersById.GetValueOrDefault(nemesis.OpponentId);
+            NemesisDisplayName = NemesisPlayer?.DisplayName ?? "?";
             NemesisRecordLabel = $"{nemesis.Wins}S / {nemesis.Losses}N ({nemesis.WinRatePct:F0}%)";
+        }
+        else
+        {
+            NemesisPlayer = null;
         }
 
         var favorite = StatsService.GetFavoriteOpponent(matches, _playerId);
         HasFavoriteOpponent = favorite is not null;
         if (favorite is not null)
         {
-            FavoriteOpponentDisplayName = playersById.GetValueOrDefault(favorite.OpponentId)?.DisplayName ?? "?";
+            FavoriteOpponentPlayer = playersById.GetValueOrDefault(favorite.OpponentId);
+            FavoriteOpponentDisplayName = FavoriteOpponentPlayer?.DisplayName ?? "?";
             FavoriteOpponentRecordLabel = $"{favorite.Wins}S / {favorite.Losses}N ({favorite.WinRatePct:F0}%)";
+        }
+        else
+        {
+            FavoriteOpponentPlayer = null;
         }
 
         var badgeContext = BadgeEngine.BuildContext(_dataService.Players, _dataService.Matches, _dataService.DoubleMatches, _dataService.Tournaments, _dataService.Bets, _dataService.ActiveSeason);
