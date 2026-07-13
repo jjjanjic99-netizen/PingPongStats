@@ -57,6 +57,11 @@ public partial class DoublesViewModel : ObservableObject
     [ObservableProperty] private string predictionTeamALabel = string.Empty;
     [ObservableProperty] private string predictionTeamBLabel = string.Empty;
 
+    /// <summary>0..1 fraction for the mockup's prognosis progress bar - the
+    /// same win probability UpdatePrediction() already computes for the two
+    /// labels, just also exposed as a raw fraction.</summary>
+    [ObservableProperty] private double predictionAFraction;
+
     public IRelayCommand RefreshCommand { get; }
     public IRelayCommand NewMatchCommand { get; }
     public IRelayCommand CancelFormCommand { get; }
@@ -129,6 +134,7 @@ public partial class DoublesViewModel : ObservableObject
             HasPrediction = false;
             PredictionTeamALabel = string.Empty;
             PredictionTeamBLabel = string.Empty;
+            PredictionAFraction = 0.5;
             return;
         }
 
@@ -139,11 +145,13 @@ public partial class DoublesViewModel : ObservableObject
         var teamBElo = EloPredictionService.ComputeTeamElo(
             eloRatings.GetValueOrDefault(TeamBPlayer1.Id, EloService.DefaultInitialRating),
             eloRatings.GetValueOrDefault(TeamBPlayer2.Id, EloService.DefaultInitialRating));
-        var probabilityAPercent = EloPredictionService.ComputeWinProbability(teamAElo, teamBElo) * 100;
+        var probabilityA = EloPredictionService.ComputeWinProbability(teamAElo, teamBElo);
+        var probabilityAPercent = probabilityA * 100;
 
         HasPrediction = true;
         PredictionTeamALabel = $"{TeamAPlayer1.DisplayName} & {TeamAPlayer2.DisplayName}: {probabilityAPercent:F0}%";
         PredictionTeamBLabel = $"{TeamBPlayer1.DisplayName} & {TeamBPlayer2.DisplayName}: {100 - probabilityAPercent:F0}%";
+        PredictionAFraction = probabilityA;
     }
 
     public void Load()

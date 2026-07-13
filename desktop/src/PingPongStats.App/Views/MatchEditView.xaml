@@ -1,73 +1,112 @@
 <UserControl x:Class="PingPongStats.App.Views.MatchEditView"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
-    <Border Style="{StaticResource CardBorder}" MaxWidth="640" HorizontalAlignment="Left">
+    <!-- Mockup .dialog: dark card, no table-line (that's specific to .card),
+         Display dlg-title, mono uppercase field labels, a red/teal prognosis
+         bar, ghost/primary action pair. The app navigates to this as a full
+         page rather than a modal scrim overlay - a pre-existing structural
+         difference, not something this visual pass changes (see
+         ABWEICHUNGEN.md). -->
+    <Border Background="{DynamicResource Brush.Panel}" BorderBrush="{DynamicResource Brush.Line}" BorderThickness="1"
+            CornerRadius="14" Padding="20" MaxWidth="480" HorizontalAlignment="Left">
         <StackPanel>
-            <TextBlock Text="{Binding Title}" Style="{StaticResource HeadingText}" Margin="0,0,0,16" />
+            <TextBlock Text="{Binding Title}" FontFamily="{DynamicResource Font.Display}" FontWeight="Bold" FontSize="26" Margin="0,0,0,16" />
 
-            <Border Style="{StaticResource CardBorder}" Margin="0,0,0,12" Padding="10"
+            <Border Background="{DynamicResource Brush.Panel2}" BorderBrush="{DynamicResource Brush.Line}" BorderThickness="1"
+                    CornerRadius="{DynamicResource Radius.Control}" Margin="0,0,0,13" Padding="11"
                     Visibility="{Binding IsTournamentMatch, Converter={StaticResource BoolToVisibilityConverter}}">
-                <TextBlock Text="Turnier-Partie: Die Spieler sind durch die Turnierpaarung vorgegeben." TextWrapping="Wrap" />
+                <TextBlock Text="Turnier-Partie: Die Spieler sind durch die Turnierpaarung vorgegeben." TextWrapping="Wrap"
+                           Style="{StaticResource Typo.Small}" Foreground="{DynamicResource Brush.Muted}" />
             </Border>
 
-            <Border Style="{StaticResource CardBorder}" Margin="0,0,0,12" Padding="10"
+            <Border Background="{DynamicResource Brush.Panel2}" BorderBrush="{DynamicResource Brush.Line}" BorderThickness="1"
+                    CornerRadius="{DynamicResource Radius.Control}" Margin="0,0,0,13" Padding="11"
                     Visibility="{Binding IsPendingMatch, Converter={StaticResource BoolToVisibilityConverter}}">
-                <TextBlock Text="Getippte Partie: Die Spieler sind durch die im Tippspiel angelegte Paarung vorgegeben." TextWrapping="Wrap" />
+                <TextBlock Text="Getippte Partie: Die Spieler sind durch die im Tippspiel angelegte Paarung vorgegeben." TextWrapping="Wrap"
+                           Style="{StaticResource Typo.Small}" Foreground="{DynamicResource Brush.Muted}" />
             </Border>
 
-            <Grid Margin="0,0,0,12">
+            <Grid Margin="0,0,0,13">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*" />
                     <ColumnDefinition Width="16" />
                     <ColumnDefinition Width="120" />
                 </Grid.ColumnDefinitions>
                 <StackPanel Grid.Column="0">
-                    <TextBlock Text="Datum" Style="{StaticResource StatLabelText}" Margin="0,0,0,4" />
+                    <TextBlock Text="Datum" FontFamily="{DynamicResource Font.Mono}" FontSize="10.5" CharacterSpacing="120"
+                               Foreground="{DynamicResource Brush.Muted}" Margin="0,0,0,6" />
                     <DatePicker SelectedDate="{Binding PlayedAtDate}" />
                 </StackPanel>
                 <StackPanel Grid.Column="2">
-                    <TextBlock Text="Uhrzeit (HH:mm)" Style="{StaticResource StatLabelText}" Margin="0,0,0,4" />
+                    <TextBlock Text="Uhrzeit (HH:mm)" FontFamily="{DynamicResource Font.Mono}" FontSize="10.5" CharacterSpacing="120"
+                               Foreground="{DynamicResource Brush.Muted}" Margin="0,0,0,6" />
                     <TextBox Text="{Binding PlayedAtTime, UpdateSourceTrigger=PropertyChanged}" />
                 </StackPanel>
             </Grid>
 
-            <Grid Margin="0,0,0,12">
+            <Grid Margin="0,0,0,13">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*" />
                     <ColumnDefinition Width="16" />
                     <ColumnDefinition Width="*" />
                 </Grid.ColumnDefinitions>
                 <StackPanel Grid.Column="0">
-                    <TextBlock Text="Spieler A" Style="{StaticResource StatLabelText}" Margin="0,0,0,4" />
+                    <TextBlock Text="Spieler A" FontFamily="{DynamicResource Font.Mono}" FontSize="10.5" CharacterSpacing="120"
+                               Foreground="{DynamicResource Brush.Muted}" Margin="0,0,0,6" />
                     <ComboBox ItemsSource="{Binding AvailablePlayers}" DisplayMemberPath="DisplayName"
                               SelectedItem="{Binding PlayerA}" IsEnabled="{Binding ArePlayerSelectorsEnabled}" />
                 </StackPanel>
                 <StackPanel Grid.Column="2">
-                    <TextBlock Text="Spieler B" Style="{StaticResource StatLabelText}" Margin="0,0,0,4" />
+                    <TextBlock Text="Spieler B" FontFamily="{DynamicResource Font.Mono}" FontSize="10.5" CharacterSpacing="120"
+                               Foreground="{DynamicResource Brush.Muted}" Margin="0,0,0,6" />
                     <ComboBox ItemsSource="{Binding AvailablePlayers}" DisplayMemberPath="DisplayName"
                               SelectedItem="{Binding PlayerB}" IsEnabled="{Binding ArePlayerSelectorsEnabled}" />
                 </StackPanel>
             </Grid>
 
-            <Border Style="{StaticResource CardBorder}" Margin="0,0,0,12" Padding="10"
+            <!-- Prognose (mockup .prognose/.prog-track/.prog-fill): a Rubber
+                 track with a Table fill sized to PlayerA's win probability. -->
+            <Border Background="{DynamicResource Brush.Panel2}" BorderBrush="{DynamicResource Brush.Line}" BorderThickness="1"
+                    CornerRadius="9" Padding="11,13" Margin="0,0,0,13"
                     Visibility="{Binding HasPrediction, Converter={StaticResource BoolToVisibilityConverter}}">
-                <StackPanel Orientation="Horizontal">
-                    <TextBlock Text="Prognose:" Style="{StaticResource StatLabelText}" VerticalAlignment="Center" Margin="0,0,8,0" />
-                    <TextBlock Text="{Binding PredictionPlayerALabel}" VerticalAlignment="Center" Margin="0,0,16,0" />
-                    <TextBlock Text="{Binding PredictionPlayerBLabel}" VerticalAlignment="Center" />
+                <StackPanel>
+                    <Grid Margin="0,0,0,8">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Grid.Column="0" Text="{Binding PredictionPlayerALabel}" FontFamily="{DynamicResource Font.Mono}"
+                                   FontSize="11" Foreground="{DynamicResource Brush.Muted}" />
+                        <TextBlock Grid.Column="1" Text="Prognose (Elo)" FontFamily="{DynamicResource Font.Mono}" FontSize="11"
+                                   Foreground="{DynamicResource Brush.Muted}" Margin="16,0" />
+                        <TextBlock Grid.Column="2" Text="{Binding PredictionPlayerBLabel}" FontFamily="{DynamicResource Font.Mono}"
+                                   FontSize="11" Foreground="{DynamicResource Brush.Muted}" HorizontalAlignment="Right" />
+                    </Grid>
+                    <Border Height="8" CornerRadius="6" Background="{DynamicResource Brush.Rubber}" ClipToBounds="True">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="{Binding PredictionAFraction, Converter={StaticResource FractionToGridLengthConverter}}" />
+                                <ColumnDefinition Width="{Binding PredictionAFraction, Converter={StaticResource FractionToGridLengthConverter}, ConverterParameter=Invert}" />
+                            </Grid.ColumnDefinitions>
+                            <Border Grid.Column="0" Background="{DynamicResource Brush.Table}" CornerRadius="6,0,0,6" />
+                        </Grid>
+                    </Border>
                 </StackPanel>
             </Border>
 
-            <TextBlock Text="Gewinner (für Schnellauswahl)" Style="{StaticResource StatLabelText}" Margin="0,0,0,4" />
-            <StackPanel Orientation="Horizontal" Margin="0,0,0,12">
+            <TextBlock Text="Gewinner (für Schnellauswahl)" FontFamily="{DynamicResource Font.Mono}" FontSize="10.5"
+                       CharacterSpacing="120" Foreground="{DynamicResource Brush.Muted}" Margin="0,0,0,6" />
+            <StackPanel Orientation="Horizontal" Margin="0,0,0,13">
                 <RadioButton Content="Spieler A" GroupName="WinnerSide" Margin="0,0,16,0" VerticalAlignment="Center"
                              IsChecked="{Binding WinnerSide, Converter={StaticResource StringEqualsConverter}, ConverterParameter=A}" />
                 <RadioButton Content="Spieler B" GroupName="WinnerSide" VerticalAlignment="Center"
                              IsChecked="{Binding WinnerSide, Converter={StaticResource StringEqualsConverter}, ConverterParameter=B}" />
             </StackPanel>
 
-            <TextBlock Text="Schnellauswahl Ergebnis (Sätze Gewinner:Verlierer)" Style="{StaticResource StatLabelText}" Margin="0,0,0,4" />
-            <ItemsControl ItemsSource="{Binding QuickResults}" Margin="0,0,0,12">
+            <TextBlock Text="Schnellauswahl Ergebnis (Sätze Gewinner:Verlierer)" FontFamily="{DynamicResource Font.Mono}"
+                       FontSize="10.5" CharacterSpacing="120" Foreground="{DynamicResource Brush.Muted}" Margin="0,0,0,6" />
+            <ItemsControl ItemsSource="{Binding QuickResults}" Margin="0,0,0,13">
                 <ItemsControl.ItemsPanel>
                     <ItemsPanelTemplate>
                         <WrapPanel />
@@ -82,36 +121,40 @@
                 </ItemsControl.ItemTemplate>
             </ItemsControl>
 
-            <Grid Margin="0,0,0,12">
+            <Grid Margin="0,0,0,13">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="120" />
                     <ColumnDefinition Width="16" />
                     <ColumnDefinition Width="120" />
                 </Grid.ColumnDefinitions>
                 <StackPanel Grid.Column="0">
-                    <TextBlock Text="Sätze Spieler A" Style="{StaticResource StatLabelText}" Margin="0,0,0,4" />
+                    <TextBlock Text="Sätze Spieler A" FontFamily="{DynamicResource Font.Mono}" FontSize="10.5" CharacterSpacing="120"
+                               Foreground="{DynamicResource Brush.Muted}" Margin="0,0,0,6" />
                     <TextBox Text="{Binding PlayerASets, UpdateSourceTrigger=PropertyChanged}" />
                 </StackPanel>
                 <StackPanel Grid.Column="2">
-                    <TextBlock Text="Sätze Spieler B" Style="{StaticResource StatLabelText}" Margin="0,0,0,4" />
+                    <TextBlock Text="Sätze Spieler B" FontFamily="{DynamicResource Font.Mono}" FontSize="10.5" CharacterSpacing="120"
+                               Foreground="{DynamicResource Brush.Muted}" Margin="0,0,0,6" />
                     <TextBox Text="{Binding PlayerBSets, UpdateSourceTrigger=PropertyChanged}" />
                 </StackPanel>
             </Grid>
 
-            <TextBlock Text="Satzergebnisse (optional)" Style="{StaticResource StatLabelText}" Margin="0,0,0,4" />
+            <TextBlock Text="Satzergebnisse (optional)" FontFamily="{DynamicResource Font.Mono}" FontSize="10.5" CharacterSpacing="120"
+                       Foreground="{DynamicResource Brush.Muted}" Margin="0,0,0,6" />
             <ItemsControl ItemsSource="{Binding SetEntries}" ItemTemplate="{StaticResource SetResultEntryTemplate}" Margin="0,0,0,4" />
             <Button Content="+ Satz hinzufügen" Style="{StaticResource SecondaryButton}" HorizontalAlignment="Left"
-                    Margin="0,0,0,12" Command="{Binding AddSetCommand}" />
+                    Margin="0,0,0,13" Command="{Binding AddSetCommand}" />
 
-            <TextBlock Text="Kommentar / Notiz" Style="{StaticResource StatLabelText}" Margin="0,0,0,4" />
-            <TextBox Text="{Binding Notes, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,12" />
+            <TextBlock Text="Kommentar / Notiz" FontFamily="{DynamicResource Font.Mono}" FontSize="10.5" CharacterSpacing="120"
+                       Foreground="{DynamicResource Brush.Muted}" Margin="0,0,0,6" />
+            <TextBox Text="{Binding Notes, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,13" />
 
-            <TextBlock Text="{Binding ErrorMessage}" Foreground="{DynamicResource Brush.Danger}"
-                       TextWrapping="Wrap" Margin="0,0,0,12"
+            <TextBlock Text="{Binding ErrorMessage}" Foreground="{DynamicResource Brush.Lose}"
+                       TextWrapping="Wrap" Margin="0,0,0,13"
                        Visibility="{Binding ErrorMessage, Converter={StaticResource StringToVisibilityConverter}}" />
 
             <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
-                <Button Content="Abbrechen" Style="{StaticResource SecondaryButton}" Margin="0,0,8,0"
+                <Button Content="Abbrechen" Style="{StaticResource SecondaryButton}" Margin="0,0,9,0"
                         Command="{Binding CancelCommand}" />
                 <Button Content="Speichern" Style="{StaticResource PrimaryButton}"
                         Command="{Binding SaveCommand}" />

@@ -39,6 +39,12 @@ public partial class MatchEditViewModel : ObservableObject
     [ObservableProperty] private string predictionPlayerALabel = string.Empty;
     [ObservableProperty] private string predictionPlayerBLabel = string.Empty;
 
+    /// <summary>0..1 fraction for the mockup's prognosis progress bar - the
+    /// same win probability UpdatePrediction() already computes for the two
+    /// labels, just also exposed as a raw fraction instead of only baked into
+    /// formatted strings.</summary>
+    [ObservableProperty] private double predictionAFraction;
+
     public ObservableCollection<Player> AvailablePlayers { get; } = new();
 
     /// <summary>Optional set-by-set score entry. Empty = no set detail recorded
@@ -144,17 +150,20 @@ public partial class MatchEditViewModel : ObservableObject
             HasPrediction = false;
             PredictionPlayerALabel = string.Empty;
             PredictionPlayerBLabel = string.Empty;
+            PredictionAFraction = 0.5;
             return;
         }
 
         var eloRatings = EloService.ComputeRatings(_dataService.Matches, _dataService.Players.Select(p => p.Id));
         var eloA = eloRatings.GetValueOrDefault(PlayerA.Id, EloService.DefaultInitialRating);
         var eloB = eloRatings.GetValueOrDefault(PlayerB.Id, EloService.DefaultInitialRating);
-        var probabilityAPercent = EloPredictionService.ComputeWinProbability(eloA, eloB) * 100;
+        var probabilityA = EloPredictionService.ComputeWinProbability(eloA, eloB);
+        var probabilityAPercent = probabilityA * 100;
 
         HasPrediction = true;
         PredictionPlayerALabel = $"{PlayerA.DisplayName}: {probabilityAPercent:F0}%";
         PredictionPlayerBLabel = $"{PlayerB.DisplayName}: {100 - probabilityAPercent:F0}%";
+        PredictionAFraction = probabilityA;
     }
 
     private void AddSet()

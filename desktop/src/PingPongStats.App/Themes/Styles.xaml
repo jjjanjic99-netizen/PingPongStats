@@ -30,6 +30,7 @@
     <converters:StreakTypeToArrowConverter x:Key="StreakTypeToArrowConverter" />
     <converters:StreakTypeToTrendBrushConverter x:Key="StreakTypeToTrendBrushConverter" />
     <converters:FirstPlayerConverter x:Key="FirstPlayerConverter" />
+    <converters:FractionToGridLengthConverter x:Key="FractionToGridLengthConverter" />
 
     <!-- Shared bar-chart item template/panel, used by Dashboard and Doubles views
          so both render identical hand-rolled bar charts without duplicating XAML.

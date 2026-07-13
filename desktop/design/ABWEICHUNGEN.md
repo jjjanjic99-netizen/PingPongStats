@@ -340,3 +340,32 @@ nötig war. Reihenfolge: chronologisch nach Phase (D1–D4).
   vorhanden, siehe bestehenden Beschreibungstext oben auf der Seite).
 - **"Aktualisieren"-Button entfernt**: gleiche Begründung wie bei den
   anderen Seiten.
+
+## Phase D4 — Erfassungs-Dialog (MatchEditView / DoublesView)
+
+- **Kein echter modaler Dialog**: Der Mockup zeigt die Spiel-Erfassung als
+  `.scrim`/`.dialog` - ein Overlay über der ganzen App. Die App navigiert
+  stattdessen zu einer vollflächigen Ersatz-View (`CurrentViewModel`-Swap
+  wie jede andere Seite) - das war schon vor dieser Überarbeitung so und
+  ist eine strukturelle Navigations-Entscheidung, keine rein optische;
+  sie zu ändern (z. B. auf ein echtes `Popup`/eigenes Fenster) wäre eine
+  Funktionsänderung und bleibt daher aussen vor. Die Karte selbst
+  (Rahmen, Radius 14, `dlg-title`, `.field`-Label-Optik, Prognose-Balken,
+  Ghost/Primary-Aktionspaar) ist optisch 1:1 an den Mockup angeglichen.
+- **Kein `.card` für den Dialog**: Bewusst kein `CardControl` (keine
+  Tischlinie am unteren Rand) für die Dialog-Karte, da der Mockup
+  `.dialog` explizit von `.card` unterscheidet (kein `::after` bei
+  `.dialog`).
+- **Neue `PredictionAFraction`-Eigenschaft** auf `MatchEditViewModel` und
+  `DoublesViewModel`: dieselbe Elo-Gewinnwahrscheinlichkeit, die
+  `UpdatePrediction()` bereits für die beiden Beschriftungen berechnet,
+  zusätzlich als rohe 0..1-Zahl - keine neue Formel, nur zusätzlich
+  freigegeben, damit der Prognose-Balken (mockup `.prog-fill`) eine
+  Breite hat. Ein neuer `FractionToGridLengthConverter` (App-Layer)
+  setzt sie in zwei sternbemessene Grid-Spalten um, nach demselben
+  Muster wie `BarRow` (Phase D3).
+- **Doppel-Seite bleibt eine echte Navigationsseite**: "Doppel" ist im
+  Mockup nicht enthalten (siehe Shell-Abschnitt); nur der eingebettete
+  Erfassungs-Abschnitt wurde an den Dialog-Look angeglichen, der Rest der
+  Seite (Statistiken, Team-Rangliste, Spielverlauf) bleibt strukturell
+  unverändert, nur mit den neuen Bausteinen/Farben.
