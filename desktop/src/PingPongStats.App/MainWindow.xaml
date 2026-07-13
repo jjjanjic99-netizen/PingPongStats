@@ -7,7 +7,7 @@
         Title="PingPongStats"
         Width="1200" Height="800"
         MinWidth="900" MinHeight="600"
-        Background="{DynamicResource Brush.Background}">
+        Background="{DynamicResource Brush.Deep}">
 
     <Window.Resources>
         <DataTemplate DataType="{x:Type vm:DashboardViewModel}">
@@ -58,36 +58,187 @@
         </Grid.LayoutTransform>
 
         <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="220" />
+            <ColumnDefinition Width="212" />
             <ColumnDefinition Width="*" />
         </Grid.ColumnDefinitions>
 
-        <!-- Sidebar navigation -->
-        <Border Grid.Column="0" Background="{DynamicResource Brush.Surface}"
-                BorderBrush="{DynamicResource Brush.Border}" BorderThickness="0,0,1,0">
-            <StackPanel Margin="12">
-                <TextBlock Text="🏓 PingPongStats" FontSize="16" FontWeight="Bold"
-                           Foreground="{DynamicResource Brush.TextPrimary}" Margin="8,8,8,20" />
+        <!-- Rail (mockup .rail): brand, primary nav (mockup pages), a second
+             "Verwaltung" nav group for app features the mockup doesn't show
+             (Spieler/Spiele/Doppel/Head-to-Head/Einstellungen - the mockup is
+             a partial demo, not the full app; see ABWEICHUNGEN.md), then the
+             logged-in player + logout pinned to the bottom. -->
+        <Border Grid.Column="0" Background="{DynamicResource Brush.Panel}"
+                BorderBrush="{DynamicResource Brush.Line}" BorderThickness="0,0,1,0">
+            <DockPanel Margin="14,20,14,20">
+                <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Margin="6,0,6,22">
+                    <Ellipse Width="22" Height="22">
+                        <Ellipse.Fill>
+                            <RadialGradientBrush Center="0.32,0.3" GradientOrigin="0.32,0.3" RadiusX="0.85" RadiusY="0.85">
+                                <GradientStop Color="#FFC48A" Offset="0" />
+                                <GradientStop Color="{StaticResource Color.Ball}" Offset="0.62" />
+                            </RadialGradientBrush>
+                        </Ellipse.Fill>
+                        <Ellipse.Effect>
+                            <DropShadowEffect Color="{StaticResource Color.Ball}" Opacity="0.5" BlurRadius="14" ShadowDepth="0" />
+                        </Ellipse.Effect>
+                    </Ellipse>
+                    <TextBlock FontFamily="{DynamicResource Font.Display}" FontWeight="ExtraBold" FontSize="23"
+                               VerticalAlignment="Center" Margin="9,0,0,0">
+                        <Run Text="PING" Foreground="{DynamicResource Brush.Chalk}" />
+                        <Run Text="PONG" Foreground="{DynamicResource Brush.Ball}" />
+                    </TextBlock>
+                </StackPanel>
 
-                <Button Content="Dashboard" Style="{StaticResource NavButton}" Command="{Binding ShowDashboardCommand}" />
-                <Button Content="Spieler" Style="{StaticResource NavButton}" Command="{Binding ShowPlayersCommand}" />
-                <Button Content="Spiele" Style="{StaticResource NavButton}" Command="{Binding ShowMatchesCommand}" />
-                <Button Content="Neues Spiel" Style="{StaticResource NavButton}" Command="{Binding ShowNewMatchCommand}" />
-                <Button Content="Doppel" Style="{StaticResource NavButton}" Command="{Binding ShowDoublesCommand}" />
-                <Button Content="Head-to-Head" Style="{StaticResource NavButton}" Command="{Binding ShowHeadToHeadCommand}" />
-                <Button Content="Liga" Style="{StaticResource NavButton}" Command="{Binding ShowLeagueCommand}" />
-                <Button Content="Turnier" Style="{StaticResource NavButton}" Command="{Binding ShowTournamentCommand}" />
-                <Button Content="Tippspiel" Style="{StaticResource NavButton}" Command="{Binding ShowBettingCommand}" />
-                <Button Content="Hall of Fame" Style="{StaticResource NavButton}" Command="{Binding ShowHallOfFameCommand}" />
-                <Button Content="Einstellungen" Style="{StaticResource NavButton}" Command="{Binding ShowSettingsCommand}" />
-                <Button Content="Mein Profil" Style="{StaticResource NavButton}" Command="{Binding ShowProfileCommand}"
-                        Visibility="{Binding IsLoggedIn, Converter={StaticResource BoolToVisibilityConverter}}" />
-                <Button Content="Anmelden" Style="{StaticResource NavButton}" Command="{Binding ShowLoginCommand}"
-                        Visibility="{Binding IsLoggedIn, Converter={StaticResource InverseBoolToVisibilityConverter}}" />
-            </StackPanel>
+                <!-- rail-foot (mockup .rail-foot): logged-in player + logout,
+                     or a compact "Anmelden" prompt when nobody is logged in. -->
+                <Grid DockPanel.Dock="Bottom" Margin="0,16,0,0">
+                    <Border BorderBrush="{DynamicResource Brush.Line}" BorderThickness="0,1,0,0" Padding="0,14,0,0">
+                        <StackPanel Visibility="{Binding IsLoggedIn, Converter={StaticResource BoolToVisibilityConverter}}">
+                            <StackPanel Orientation="Horizontal" Margin="4,0,4,6">
+                                <controls:AvatarControl Player="{Binding CurrentPlayer}" DataPath="{Binding Dashboard.DataPath}" Size="S" />
+                                <StackPanel Margin="9,0,0,0" VerticalAlignment="Center">
+                                    <TextBlock Text="{Binding CurrentPlayer.DisplayName}" FontWeight="Bold" FontSize="13.5" />
+                                    <TextBlock Text="{Binding Profile.EloLabel, StringFormat='Elo {0}'}"
+                                               FontFamily="{DynamicResource Font.Mono}" FontSize="11"
+                                               Foreground="{DynamicResource Brush.Ball}" />
+                                </StackPanel>
+                            </StackPanel>
+                            <Button Content="Abmelden" Command="{Binding LogoutCommand}" HorizontalAlignment="Left"
+                                    FontSize="11.5" Foreground="{DynamicResource Brush.Muted}" Padding="4,2"
+                                    Background="Transparent" BorderThickness="0" Cursor="Hand">
+                                <Button.Style>
+                                    <Style TargetType="Button" BasedOn="{StaticResource BaseButton}">
+                                        <Setter Property="Background" Value="Transparent" />
+                                        <Setter Property="Foreground" Value="{DynamicResource Brush.Muted}" />
+                                        <Setter Property="TextBlock.TextDecorations" Value="Underline" />
+                                    </Style>
+                                </Button.Style>
+                            </Button>
+                        </StackPanel>
+                    </Border>
+                    <Button Content="Anmelden" Style="{StaticResource SecondaryButton}" Command="{Binding ShowLoginCommand}"
+                            HorizontalAlignment="Stretch" Margin="0,14,0,0"
+                            Visibility="{Binding IsLoggedIn, Converter={StaticResource InverseBoolToVisibilityConverter}}" />
+                </Grid>
+
+                <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+                    <StackPanel>
+                        <StackPanel>
+                            <Button Command="{Binding ShowDashboardCommand}">
+                                <Button.Style>
+                                    <Style TargetType="Button" BasedOn="{StaticResource NavButton}">
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding ActiveSection}" Value="Dashboard">
+                                                <Setter Property="Background" Value="{DynamicResource Brush.Table}" />
+                                                <Setter Property="Foreground" Value="White" />
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </Button.Style>
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock Text="&#x25E7;" Width="16" TextAlignment="Center" Opacity="0.85" />
+                                    <TextBlock Text="Dashboard" Margin="10,0,0,0" />
+                                </StackPanel>
+                            </Button>
+                            <Button Command="{Binding ShowProfileCommand}"
+                                    Visibility="{Binding IsLoggedIn, Converter={StaticResource BoolToVisibilityConverter}}">
+                                <Button.Style>
+                                    <Style TargetType="Button" BasedOn="{StaticResource NavButton}">
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding ActiveSection}" Value="Mein Profil">
+                                                <Setter Property="Background" Value="{DynamicResource Brush.Table}" />
+                                                <Setter Property="Foreground" Value="White" />
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </Button.Style>
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock Text="&#x25C9;" Width="16" TextAlignment="Center" Opacity="0.85" />
+                                    <TextBlock Text="Mein Profil" Margin="10,0,0,0" />
+                                </StackPanel>
+                            </Button>
+                            <Button Command="{Binding ShowLeagueCommand}">
+                                <Button.Style>
+                                    <Style TargetType="Button" BasedOn="{StaticResource NavButton}">
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding ActiveSection}" Value="Liga">
+                                                <Setter Property="Background" Value="{DynamicResource Brush.Table}" />
+                                                <Setter Property="Foreground" Value="White" />
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </Button.Style>
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock Text="&#x25A4;" Width="16" TextAlignment="Center" Opacity="0.85" />
+                                    <TextBlock Text="Liga" Margin="10,0,0,0" />
+                                </StackPanel>
+                            </Button>
+                            <Button Command="{Binding ShowTournamentCommand}">
+                                <Button.Style>
+                                    <Style TargetType="Button" BasedOn="{StaticResource NavButton}">
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding ActiveSection}" Value="Turnier">
+                                                <Setter Property="Background" Value="{DynamicResource Brush.Table}" />
+                                                <Setter Property="Foreground" Value="White" />
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </Button.Style>
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock Text="&#x2442;" Width="16" TextAlignment="Center" Opacity="0.85" />
+                                    <TextBlock Text="Turnier" Margin="10,0,0,0" />
+                                </StackPanel>
+                            </Button>
+                            <Button Command="{Binding ShowHallOfFameCommand}">
+                                <Button.Style>
+                                    <Style TargetType="Button" BasedOn="{StaticResource NavButton}">
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding ActiveSection}" Value="Hall of Fame">
+                                                <Setter Property="Background" Value="{DynamicResource Brush.Table}" />
+                                                <Setter Property="Foreground" Value="White" />
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </Button.Style>
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock Text="&#x2605;" Width="16" TextAlignment="Center" Opacity="0.85" />
+                                    <TextBlock Text="Hall of Fame" Margin="10,0,0,0" />
+                                </StackPanel>
+                            </Button>
+                            <Button Command="{Binding ShowBettingCommand}">
+                                <Button.Style>
+                                    <Style TargetType="Button" BasedOn="{StaticResource NavButton}">
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding ActiveSection}" Value="Tippspiel">
+                                                <Setter Property="Background" Value="{DynamicResource Brush.Table}" />
+                                                <Setter Property="Foreground" Value="White" />
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </Button.Style>
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock Text="&#x25C6;" Width="16" TextAlignment="Center" Opacity="0.85" />
+                                    <TextBlock Text="Tippspiel" Margin="10,0,0,0" />
+                                </StackPanel>
+                            </Button>
+                        </StackPanel>
+
+                        <Border Height="1" Background="{DynamicResource Brush.Line}" Margin="6,12" />
+                        <controls:EyebrowLabel Text="Verwaltung" Margin="10,0,0,6" />
+
+                        <StackPanel>
+                            <Button Content="Spieler" Style="{StaticResource NavButton}" Command="{Binding ShowPlayersCommand}" />
+                            <Button Content="Spiele" Style="{StaticResource NavButton}" Command="{Binding ShowMatchesCommand}" />
+                            <Button Content="Doppel" Style="{StaticResource NavButton}" Command="{Binding ShowDoublesCommand}" />
+                            <Button Content="Head-to-Head" Style="{StaticResource NavButton}" Command="{Binding ShowHeadToHeadCommand}" />
+                            <Button Content="Einstellungen" Style="{StaticResource NavButton}" Command="{Binding ShowSettingsCommand}" />
+                        </StackPanel>
+                    </StackPanel>
+                </ScrollViewer>
+            </DockPanel>
         </Border>
 
-        <!-- Content area -->
+        <!-- Main -->
         <Grid Grid.Column="1">
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto" />
@@ -95,32 +246,95 @@
                 <RowDefinition Height="*" />
             </Grid.RowDefinitions>
 
-            <Border Grid.Row="0" Background="{DynamicResource Brush.Surface}"
-                    BorderBrush="{DynamicResource Brush.Border}" BorderThickness="0,0,0,1"
-                    Padding="16,8">
+            <!-- Topbar (mockup .topbar): page title, the shared time-range
+                 segmented control (applies to Dashboard/Doppel), the primary
+                 "+ Spiel erfassen" CTA. -->
+            <Border Grid.Row="0" Background="{DynamicResource Brush.Deep}"
+                    BorderBrush="{DynamicResource Brush.Line}" BorderThickness="0,0,0,1"
+                    Padding="26,18">
                 <Grid>
-                    <TextBlock Text="Nicht angemeldet" Style="{StaticResource StatLabelText}" HorizontalAlignment="Right"
-                               VerticalAlignment="Center"
-                               Visibility="{Binding IsLoggedIn, Converter={StaticResource InverseBoolToVisibilityConverter}}" />
-                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right"
-                                Visibility="{Binding IsLoggedIn, Converter={StaticResource BoolToVisibilityConverter}}">
-                        <controls:AvatarControl Player="{Binding CurrentPlayer}" DataPath="{Binding Dashboard.DataPath}" Size="S" />
-                        <TextBlock Text="{Binding CurrentPlayer.DisplayName}" VerticalAlignment="Center" Margin="8,0,12,0" />
-                        <Button Content="Abmelden" Style="{StaticResource CompactSecondaryButton}" Command="{Binding LogoutCommand}" />
-                    </StackPanel>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="14" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+
+                    <TextBlock Grid.Column="0" Text="{Binding ActiveSection}" Style="{StaticResource Typo.H1}"
+                               VerticalAlignment="Center" />
+
+                    <Border Grid.Column="1" Style="{StaticResource SegmentGroupBorder}">
+                        <StackPanel Orientation="Horizontal">
+                            <Button Content="7T" Style="{StaticResource SegmentButton}"
+                                    Command="{Binding SelectRangeCommand}" CommandParameter="{x:Static vm:DashboardRangePreset.Last7Days}">
+                                <Button.Style>
+                                    <Style TargetType="Button" BasedOn="{StaticResource SegmentButton}">
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding RangeFilter.SelectedPreset}" Value="Last7Days">
+                                                <Setter Property="Background" Value="{DynamicResource Brush.Table}" />
+                                                <Setter Property="Foreground" Value="White" />
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </Button.Style>
+                            </Button>
+                            <Button Content="30T" Style="{StaticResource SegmentButton}"
+                                    Command="{Binding SelectRangeCommand}" CommandParameter="{x:Static vm:DashboardRangePreset.Last30Days}">
+                                <Button.Style>
+                                    <Style TargetType="Button" BasedOn="{StaticResource SegmentButton}">
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding RangeFilter.SelectedPreset}" Value="Last30Days">
+                                                <Setter Property="Background" Value="{DynamicResource Brush.Table}" />
+                                                <Setter Property="Foreground" Value="White" />
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </Button.Style>
+                            </Button>
+                            <Button Content="90T" Style="{StaticResource SegmentButton}"
+                                    Command="{Binding SelectRangeCommand}" CommandParameter="{x:Static vm:DashboardRangePreset.Last90Days}">
+                                <Button.Style>
+                                    <Style TargetType="Button" BasedOn="{StaticResource SegmentButton}">
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding RangeFilter.SelectedPreset}" Value="Last90Days">
+                                                <Setter Property="Background" Value="{DynamicResource Brush.Table}" />
+                                                <Setter Property="Foreground" Value="White" />
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </Button.Style>
+                            </Button>
+                            <Button Content="Alle" Style="{StaticResource SegmentButton}"
+                                    Command="{Binding SelectRangeCommand}" CommandParameter="{x:Static vm:DashboardRangePreset.AllTime}">
+                                <Button.Style>
+                                    <Style TargetType="Button" BasedOn="{StaticResource SegmentButton}">
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding RangeFilter.SelectedPreset}" Value="AllTime">
+                                                <Setter Property="Background" Value="{DynamicResource Brush.Table}" />
+                                                <Setter Property="Foreground" Value="White" />
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </Button.Style>
+                            </Button>
+                        </StackPanel>
+                    </Border>
+
+                    <Button Grid.Column="3" Content="+ Spiel erfassen" Style="{StaticResource PrimaryButton}"
+                            Command="{Binding ShowNewMatchCommand}" />
                 </Grid>
             </Border>
 
             <Border Grid.Row="1"
                     Background="{Binding IsErrorStatus, Converter={StaticResource StatusBackgroundConverter}}"
                     Visibility="{Binding StatusMessage, Converter={StaticResource StringToVisibilityConverter}}"
-                    Padding="16,10">
+                    Padding="26,10">
                 <TextBlock Text="{Binding StatusMessage}" FontWeight="SemiBold"
                            Foreground="{Binding IsErrorStatus, Converter={StaticResource StatusForegroundConverter}}" />
             </Border>
 
-            <ScrollViewer Grid.Row="2" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto" Padding="24">
-                <ContentControl Content="{Binding CurrentViewModel}" />
+            <ScrollViewer Grid.Row="2" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto">
+                <ContentControl Content="{Binding CurrentViewModel}" Margin="26,22,26,60" />
             </ScrollViewer>
         </Grid>
     </Grid>

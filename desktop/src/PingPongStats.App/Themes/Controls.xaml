@@ -189,6 +189,28 @@
         <Setter Property="FontSize" Value="12" />
     </Style>
 
+    <!-- Mockup .range: a pill-shaped group container plus mono segment
+         buttons inside - used for the topbar time-range filter and the
+         Liga Einzel/Doppel toggle (Phase D4). The active segment's
+         Table-fill/white-text state is applied per-button via a DataTrigger
+         where each button lives, since it depends on view-specific state. -->
+    <Style x:Key="SegmentGroupBorder" TargetType="Border">
+        <Setter Property="Background" Value="{DynamicResource Brush.Panel}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource Brush.Line}" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="CornerRadius" Value="{DynamicResource Radius.Control}" />
+        <Setter Property="Padding" Value="3" />
+    </Style>
+
+    <Style x:Key="SegmentButton" TargetType="Button" BasedOn="{StaticResource BaseButton}">
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="Foreground" Value="{DynamicResource Brush.Muted}" />
+        <Setter Property="FontFamily" Value="{DynamicResource Font.Mono}" />
+        <Setter Property="FontSize" Value="11.5" />
+        <Setter Property="Padding" Value="10,5" />
+        <Setter Property="Margin" Value="0" />
+    </Style>
+
     <Style x:Key="CompactDangerButton" TargetType="Button" BasedOn="{StaticResource DangerButton}">
         <Setter Property="Padding" Value="10,6" />
         <Setter Property="FontSize" Value="12" />

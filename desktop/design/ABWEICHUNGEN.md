@@ -102,3 +102,65 @@ nötig war. Reihenfolge: chronologisch nach Phase (D1–D4).
   ändern sich, wodurch sich bestehende Zuordnungen zwischen den Farben in
   der Praxis verschieben können. Kein Test prüft konkrete Farbwerte, daher
   unkritisch.
+- **Bugfix in `CardControl` (noch vor dem ersten produktiven Einsatz in D4
+  gefunden)**: Die ursprüngliche Fassung liess den inneren
+  `ContentPresenter` auf die von `UserControl` geerbte `Content`-Eigenschaft
+  zurückbinden - dieselbe Eigenschaft, über die `CardControl.xaml`s eigener
+  Wurzelknoten (der Rahmen mit der Tischlinie) implizit gesetzt wird. Jede
+  Verwendung mit eigenem Inhalt (z. B. `StatTile`, das ein `StackPanel` in
+  eine `CardControl` einbettet) hätte dadurch den gesamten Rahmen/die Linie
+  stillschweigend überschrieben und durch den nackten Inhalt ohne jede
+  Dekoration ersetzt. Behoben durch eine eigene `CardContent`-Property
+  (plus `[ContentProperty(nameof(CardContent))]`), sodass die bestehende
+  Verwendungssyntax (`&lt;controls:CardControl&gt;...&lt;/controls:CardControl&gt;`)
+  unverändert bleibt, aber jetzt korrekt in einen separaten Slot fliesst statt
+  mit der eigenen Rahmen-Definition zu kollidieren.
+
+## Phase D4 — Shell (Rail + Topbar)
+
+- **Zusätzliche Nav-Einträge**: Der Mockup zeigt nur sechs Seiten
+  (Dashboard, Mein Profil, Liga, Turnier, Hall of Fame, Tippspiel) - er ist
+  eine Demo, kein vollständiges Abbild der App. Spieler, Spiele, Doppel,
+  Head-to-Head und Einstellungen existieren real und müssen erreichbar
+  bleiben; sie stehen als zweite, mit "Verwaltung" (`EyebrowLabel`)
+  abgetrennte Gruppe unterhalb der Mockup-Navigation, optisch gleich
+  gestylt aber ohne eigenes Icon-Glyph (der Mockup definiert dafür keine
+  Symbole).
+  Aktiv-Zustand jeder Nav-Schaltfläche (Table-Füllung, weisser Text) wird
+  über einen `DataTrigger` auf `ActiveSection` (bereits vorhandene
+  Property auf `MainViewModel`, wird bei jeder `Navigate(...)` gesetzt)
+  gesetzt statt über einen zusätzlichen Enum/Converter.
+- **Icon-Glyphe der Mockup-Navigation**: Die Unicode-Symbole aus dem
+  Mockup (◧ ◉ ▤ ⑂ ★ ◆) werden 1:1 übernommen. Ob alle auf einem
+  Windows-System mit der Body-Schrift-Fallback-Kette sauber rendern
+  (insbesondere ⑂, ein selteneres CJK-Zeichen), lässt sich von hier aus
+  nicht prüfen - **bitte auf dem Windows-Rechner sichtprüfen**; im
+  Zweifel ist ein Ersatz-Glyph eine rein kosmetische Änderung ohne
+  Funktionsauswirkung.
+- **Rail-Fuss ohne Elo-Trendpfeil**: Der Mockup zeigt "Elo 1287 ▲" im
+  `.me`-Block. Ein Trendpfeil braucht eine Vergleichsbasis (z. B. "seit
+  wann"), die für den eingeloggten Spieler an dieser Stelle nicht ohne
+  Weiteres verfügbar ist (anders als in der Rangliste, wo die aktuelle
+  Sieg-/Verlustserie als Näherung dient - siehe Dashboard-Abschnitt
+  unten). Der Rail-Fuss zeigt daher nur `Elo {gerundeter Wert}` ohne
+  Pfeil - keine erfundene Kennzahl.
+- **Topbar-Zeitraum-Filter wirkt nicht auf jede Seite**: Das gemeinsame
+  `RangeFilter` (bereits aus Task #16 vorhanden) steuert weiterhin nur
+  Dashboard und Doppel-Dashboard; auf allen anderen Seiten ist die
+  Segment-Auswahl in der Topbar sichtbar, aber ohne Wirkung. Das
+  entspricht dem Mockup (dort ist der Filter rein dekorativ/global ohne
+  Seitenbezug) und ändert an bestehender Funktionalität nichts.
+- **"Nicht angemeldet"-Hinweis entfernt**: Die alte Kopfzeile zeigte einen
+  Text-Hinweis "Nicht angemeldet", wenn kein Spieler eingeloggt war. Der
+  neue Rail-Fuss zeigt in diesem Fall stattdessen direkt einen
+  "Anmelden"-Button (wie im Mockup), wodurch der separate Hinweistext
+  überflüssig wird.
+- **CTA "+ Spiel erfassen" öffnet weiterhin nur den Einzel-Dialog**: Der
+  Mockup-Dialog hat ein "Modus"-Dropdown (Einzel/Doppel) in einem
+  gemeinsamen Formular. Die App trennt Einzel- und Doppel-Erfassung
+  strukturell (eigene ViewModels/Navigation, siehe "Doppel" in der
+  Verwaltungs-Gruppe) - das zusammenzulegen wäre eine funktionale
+  Änderung der Navigation, nicht nur eine optische, und bleibt daher
+  bewusst ausserhalb dieser rein visuellen Überarbeitung. Beide Dialoge
+  werden in der Erfassungs-Dialog-Phase optisch an den Mockup angeglichen,
+  bleiben aber als zwei getrennte Flows bestehen.

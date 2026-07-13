@@ -16,8 +16,7 @@
             ClipToBounds="True">
         <Grid>
             <ContentPresenter Margin="{DynamicResource Spacing.CardPadding}"
-                              Content="{Binding ElementName=Root, Path=Content}"
-                              ContentTemplate="{Binding ElementName=Root, Path=ContentTemplate}" />
+                              Content="{Binding ElementName=Root, Path=CardContent}" />
             <Border VerticalAlignment="Bottom" Height="2" IsHitTestVisible="False">
                 <Border.Background>
                     <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">

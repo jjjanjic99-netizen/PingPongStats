@@ -84,6 +84,12 @@ public partial class MainViewModel : ObservableObject
     public IRelayCommand ShowBettingCommand { get; }
     public IRelayCommand ShowHallOfFameCommand { get; }
 
+    /// <summary>Shell topbar's segmented time-range filter (Phase D4): sets
+    /// the same RangeFilter instance passed to Dashboard/Doubles, so the
+    /// always-visible topbar control works regardless of which page is
+    /// currently shown.</summary>
+    public IRelayCommand<DashboardRangePreset> SelectRangeCommand { get; }
+
     public MainViewModel(
         PingPongDataService dataService,
         ISettingsRepository settingsRepository,
@@ -148,6 +154,7 @@ public partial class MainViewModel : ObservableObject
         ShowTournamentCommand = new RelayCommand(() => Navigate("Turnier", Tournament, () => Tournament.Load()));
         ShowBettingCommand = new RelayCommand(() => Navigate("Tippspiel", Betting, () => Betting.Load()));
         ShowHallOfFameCommand = new RelayCommand(() => Navigate("Hall of Fame", HallOfFame, () => HallOfFame.Load()));
+        SelectRangeCommand = new RelayCommand<DashboardRangePreset>(preset => RangeFilter.SelectedPreset = preset);
 
         CurrentViewModel = Dashboard;
         InitializeKnownBadges();
