@@ -4,6 +4,7 @@
         xmlns:vm="clr-namespace:PingPongStats.Core.ViewModels;assembly=PingPongStats.Core"
         xmlns:views="clr-namespace:PingPongStats.App.Views"
         xmlns:controls="clr-namespace:PingPongStats.App.Controls"
+        xmlns:doc="clr-namespace:System.Windows.Documents;assembly=PresentationFramework"
         Title="PingPongStats"
         Width="1200" Height="800"
         MinWidth="900" MinHeight="600"
@@ -265,7 +266,7 @@
 
                     <Border Grid.Column="1" Style="{StaticResource SegmentGroupBorder}">
                         <StackPanel Orientation="Horizontal">
-                            <Button Content="7T" Style="{StaticResource SegmentButton}"
+                            <Button Content="7T"
                                     Command="{Binding SelectRangeCommand}" CommandParameter="{x:Static vm:DashboardRangePreset.Last7Days}">
                                 <Button.Style>
                                     <Style TargetType="Button" BasedOn="{StaticResource SegmentButton}">
@@ -278,7 +279,7 @@
                                     </Style>
                                 </Button.Style>
                             </Button>
-                            <Button Content="30T" Style="{StaticResource SegmentButton}"
+                            <Button Content="30T"
                                     Command="{Binding SelectRangeCommand}" CommandParameter="{x:Static vm:DashboardRangePreset.Last30Days}">
                                 <Button.Style>
                                     <Style TargetType="Button" BasedOn="{StaticResource SegmentButton}">
@@ -291,7 +292,7 @@
                                     </Style>
                                 </Button.Style>
                             </Button>
-                            <Button Content="90T" Style="{StaticResource SegmentButton}"
+                            <Button Content="90T"
                                     Command="{Binding SelectRangeCommand}" CommandParameter="{x:Static vm:DashboardRangePreset.Last90Days}">
                                 <Button.Style>
                                     <Style TargetType="Button" BasedOn="{StaticResource SegmentButton}">
@@ -304,7 +305,7 @@
                                     </Style>
                                 </Button.Style>
                             </Button>
-                            <Button Content="Alle" Style="{StaticResource SegmentButton}"
+                            <Button Content="Alle"
                                     Command="{Binding SelectRangeCommand}" CommandParameter="{x:Static vm:DashboardRangePreset.AllTime}">
                                 <Button.Style>
                                     <Style TargetType="Button" BasedOn="{StaticResource SegmentButton}">
@@ -364,7 +365,7 @@
                                FontSize="30" Foreground="{DynamicResource Brush.Ball}" HorizontalAlignment="Center" />
                 </StackPanel>
 
-                <TextBlock Text="SIEGER" FontFamily="{DynamicResource Font.Mono}" FontSize="11" CharacterSpacing="300"
+                <TextBlock Text="SIEGER" FontFamily="{DynamicResource Font.Mono}" FontSize="11" doc:TextElement.CharacterSpacing="300"
                            Foreground="{DynamicResource Brush.Ball}" HorizontalAlignment="Center" Margin="0,0,0,8" />
 
                 <StackPanel HorizontalAlignment="Center"
@@ -400,7 +401,7 @@
                         HorizontalAlignment="Center"
                         Visibility="{Binding WinAnimationIsComeback, Converter={StaticResource BoolToVisibilityConverter}}">
                     <TextBlock Text="COMEBACK!" FontFamily="{DynamicResource Font.Display}" FontWeight="ExtraBold" FontSize="17"
-                               CharacterSpacing="40" Foreground="White" />
+                               doc:TextElement.CharacterSpacing="40" Foreground="White" />
                 </Border>
 
                 <TextBlock Text="{Binding WinAnimationQuote}" FontSize="15" FontStyle="Italic" Foreground="#BEDCE4"

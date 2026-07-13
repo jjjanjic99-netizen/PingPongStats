@@ -394,3 +394,51 @@ nötig war. Reihenfolge: chronologisch nach Phase (D1–D4).
 - Kicker/Name/Score/COMEBACK-Badge/Zitat/Hinweistext sind 1:1 nach
   Mockup-Werten (Display 52px Name, Rubber-Badge, italic Zitat,
   Mono-Hinweistext) umgesetzt.
+
+## Build-Fehler behoben (gemeldet vom ersten echten Windows-Build)
+
+Diese Überarbeitung wurde vollständig in einer Linux-Sandbox erstellt, in der
+`PingPongStats.App` (WPF) nicht kompiliert werden kann - nur `xmllint` und ein
+Ressourcenschlüssel-Abgleich waren möglich. Der erste echte Build in Visual
+Studio deckte drei reale Fehler auf, die diese statische Prüfung nicht
+erkennen konnte:
+
+1. **`CharacterSpacing` ist kein Property von `TextBlock`**: Anders als
+   angenommen ist `CharacterSpacing` keine eigene `TextBlock`-Eigenschaft,
+   sondern eine angehängte Eigenschaft von
+   `System.Windows.Documents.TextElement`. Ein blosses
+   `CharacterSpacing="17"` bzw. `<Setter Property="CharacterSpacing" .../>`
+   ist daher ungültig. Behoben durch die vollqualifizierte angehängte
+   Schreibweise (`xmlns:doc="clr-namespace:System.Windows.Documents;
+   assembly=PresentationFramework"`, dann `doc:TextElement.CharacterSpacing`)
+   in `DesignTokens.xaml`, `MainWindow.xaml`, `DashboardView.xaml`,
+   `MatchEditView.xaml` und `DoublesView.xaml`. Da `DesignTokens.xaml` von
+   praktisch jeder anderen Ressourcen-Datei/View transitiv geladen wird,
+   liess dieser eine Fehler dort das gesamte Ressourcen-Wörterbuch (und
+   damit fast jede `{Static/DynamicResource}`-Auflösung in der ganzen App)
+   fehlschlagen - das erklärt die grosse Zahl an "Ressource nicht
+   gefunden"/"Typ nicht gefunden"-Folgefehlern in der ursprünglichen
+   Fehlerliste.
+2. **Doppelt gesetzte `Style`-Eigenschaft** (`MainWindow.xaml`, die vier
+   Zeitraum-Segment-Buttons "7T"/"30T"/"90T"/"Alle"): Jeder Button hatte
+   sowohl ein `Style="{StaticResource SegmentButton}"`-Attribut als auch
+   einen `<Button.Style>`-Block - WPF erlaubt eine Eigenschaft nur einmal
+   pro Element. Das Attribut war überflüssig (der `<Button.Style>`-Block
+   verwendet ohnehin `BasedOn="{StaticResource SegmentButton}"`) und wurde
+   entfernt.
+3. **`DataTemplate` mit zwei Wurzel-Elementen** (`HallOfFameView.xaml`,
+   Rekord-Tafel-Zeile): Die Rekord-Zeile (`Grid`) und der
+   "noch kein Rekord"-Text (`TextBlock`) waren zwei nebeneinanderstehende
+   Kind-Elemente desselben `DataTemplate` - ein `DataTemplate` akzeptiert
+   aber nur genau ein Wurzelelement. Behoben, indem beide (über
+   `Visibility` bereits gegenseitig ausschliessend) in ein gemeinsames
+   `Grid` gepackt wurden.
+
+Alle drei Fehler wurden per statischer Analyse verifiziert (u. a. ein
+Python-Skript, das jedes `DataTemplate`/`Border`/`ContentControl` im
+gesamten App-Projekt auf mehr als ein echtes Kind-Element prüft, und ein
+Abgleich aller Elemente mit gleichzeitigem `Style`-Attribut und
+`*.Style`-Kind-Element) - keine weiteren Vorkommen gefunden. Ein
+tatsächlicher `dotnet build`/Kompilierlauf war in dieser Umgebung weiterhin
+nicht möglich; die nächste Windows-Rückmeldung sollte zeigen, ob damit alle
+gemeldeten Fehler behoben sind.

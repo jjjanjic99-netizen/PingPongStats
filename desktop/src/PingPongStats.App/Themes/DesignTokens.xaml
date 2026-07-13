@@ -1,6 +1,7 @@
 <ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-                    xmlns:sys="clr-namespace:System;assembly=mscorlib">
+                    xmlns:sys="clr-namespace:System;assembly=mscorlib"
+                    xmlns:doc="clr-namespace:System.Windows.Documents;assembly=PresentationFramework">
 
     <!-- ══════════════════════════════════════════════════════════════════
          Phase D1: design tokens, transcribed exactly from
@@ -76,12 +77,16 @@
 
     <!-- ── Typography scale (exact px/letter-spacing from the mockup) ───── -->
     <!-- letter-spacing 0.5px @ 30px ≈ CharacterSpacing 17 (1000ths of font size,
-         WPF's own unit for TextBlock.CharacterSpacing - added .NET Core 3.0+). -->
+         WPF's unit for character spacing). This is TextElement's attached
+         property (Run/Span/Inlines), not a TextBlock-owned one - TextBlock
+         still honors it on itself via GetValue, but Style Setters and plain
+         XAML attributes both need the qualified doc:TextElement.* name;
+         the bare "CharacterSpacing" name does not resolve on TextBlock. -->
     <Style x:Key="Typo.H1" TargetType="TextBlock">
         <Setter Property="FontFamily" Value="{StaticResource Font.Display}" />
         <Setter Property="FontWeight" Value="ExtraBold" />
         <Setter Property="FontSize" Value="30" />
-        <Setter Property="CharacterSpacing" Value="17" />
+        <Setter Property="doc:TextElement.CharacterSpacing" Value="17" />
         <Setter Property="Foreground" Value="{StaticResource Brush.Chalk}" />
     </Style>
 
@@ -123,7 +128,7 @@
     <Style x:Key="Typo.Eyebrow" TargetType="TextBlock">
         <Setter Property="FontFamily" Value="{StaticResource Font.Mono}" />
         <Setter Property="FontSize" Value="10.5" />
-        <Setter Property="CharacterSpacing" Value="152" />
+        <Setter Property="doc:TextElement.CharacterSpacing" Value="152" />
         <Setter Property="Foreground" Value="{StaticResource Brush.Muted}" />
     </Style>
 

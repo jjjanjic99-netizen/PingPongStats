@@ -2,7 +2,8 @@
              x:Name="Root"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:controls="clr-namespace:PingPongStats.App.Controls">
+             xmlns:controls="clr-namespace:PingPongStats.App.Controls"
+             xmlns:doc="clr-namespace:System.Windows.Documents;assembly=PresentationFramework">
     <StackPanel>
         <!-- Hero "Spieler der Woche" (mockup .hero): Table-colored surface with
              a radial orange glow top-right, XL avatar, hero-name/line/score. -->
@@ -18,7 +19,7 @@
                 <controls:AvatarControl Player="{Binding PlayerOfTheWeek}" DataPath="{Binding DataPath}" Size="XL" />
                 <StackPanel VerticalAlignment="Center" Margin="22,0,0,0">
                     <TextBlock Text="SPIELER DER WOCHE" FontFamily="{DynamicResource Font.Mono}" FontSize="10.5"
-                               Foreground="{DynamicResource Brush.Ball}" CharacterSpacing="152" />
+                               Foreground="{DynamicResource Brush.Ball}" doc:TextElement.CharacterSpacing="152" />
                     <TextBlock Text="{Binding PlayerOfTheWeek.DisplayName}" Style="{StaticResource Typo.HeroName}" Margin="0,5,0,0" />
                     <TextBlock Foreground="#CDE6EC" FontSize="13.5" Margin="0,7,0,0">
                         <Run Text="{Binding PlayerOfTheWeekRecordLabel, Mode=OneWay}" />

@@ -81,29 +81,35 @@
                 <ItemsControl ItemsSource="{Binding RecordBoard}">
                     <ItemsControl.ItemTemplate>
                         <DataTemplate>
-                            <Grid Margin="0,11" Visibility="{Binding HasRecord, Converter={StaticResource BoolToVisibilityConverter}}">
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="Auto" />
-                                    <ColumnDefinition Width="12" />
-                                    <ColumnDefinition Width="*" />
-                                </Grid.ColumnDefinitions>
-                                <controls:AvatarControl Grid.Column="0" Player="{Binding Player}"
-                                                         DataPath="{Binding ElementName=Root, Path=DataContext.DataPath}"
-                                                         Size="M" VerticalAlignment="Center" />
-                                <StackPanel Grid.Column="2" VerticalAlignment="Center">
-                                    <TextBlock Text="{Binding Title}" FontWeight="Bold" FontSize="13.5" />
-                                    <TextBlock Foreground="{DynamicResource Brush.Muted}" FontSize="12.5" Margin="0,2,0,0">
-                                        <Run Text="{Binding DisplayName, Mode=OneWay}" />
-                                        <Run Text=" · " />
-                                        <Run Text="{Binding ValueLabel, Mode=OneWay}" />
-                                    </TextBlock>
-                                    <TextBlock Text="{Binding DateLabel}" FontFamily="{DynamicResource Font.Mono}" FontSize="10.5"
-                                               Foreground="{DynamicResource Brush.Muted}" Margin="0,2,0,0" />
-                                </StackPanel>
+                            <!-- DataTemplate accepts exactly one root child - the
+                                 record row and the "no record yet" fallback text
+                                 (mutually exclusive via Visibility) both live
+                                 inside this single wrapping Grid. -->
+                            <Grid>
+                                <Grid Margin="0,11" Visibility="{Binding HasRecord, Converter={StaticResource BoolToVisibilityConverter}}">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto" />
+                                        <ColumnDefinition Width="12" />
+                                        <ColumnDefinition Width="*" />
+                                    </Grid.ColumnDefinitions>
+                                    <controls:AvatarControl Grid.Column="0" Player="{Binding Player}"
+                                                             DataPath="{Binding ElementName=Root, Path=DataContext.DataPath}"
+                                                             Size="M" VerticalAlignment="Center" />
+                                    <StackPanel Grid.Column="2" VerticalAlignment="Center">
+                                        <TextBlock Text="{Binding Title}" FontWeight="Bold" FontSize="13.5" />
+                                        <TextBlock Foreground="{DynamicResource Brush.Muted}" FontSize="12.5" Margin="0,2,0,0">
+                                            <Run Text="{Binding DisplayName, Mode=OneWay}" />
+                                            <Run Text=" · " />
+                                            <Run Text="{Binding ValueLabel, Mode=OneWay}" />
+                                        </TextBlock>
+                                        <TextBlock Text="{Binding DateLabel}" FontFamily="{DynamicResource Font.Mono}" FontSize="10.5"
+                                                   Foreground="{DynamicResource Brush.Muted}" Margin="0,2,0,0" />
+                                    </StackPanel>
+                                </Grid>
+                                <TextBlock Text="{Binding Title, StringFormat='{}{0}: noch kein Rekord vorhanden.'}"
+                                           Style="{StaticResource Typo.Small}" Foreground="{DynamicResource Brush.Muted}" Margin="0,6,0,6"
+                                           Visibility="{Binding HasRecord, Converter={StaticResource InverseBoolToVisibilityConverter}}" />
                             </Grid>
-                            <TextBlock Text="{Binding Title, StringFormat='{}{0}: noch kein Rekord vorhanden.'}"
-                                       Style="{StaticResource Typo.Small}" Foreground="{DynamicResource Brush.Muted}" Margin="0,6,0,6"
-                                       Visibility="{Binding HasRecord, Converter={StaticResource InverseBoolToVisibilityConverter}}" />
                         </DataTemplate>
                     </ItemsControl.ItemTemplate>
                 </ItemsControl>
