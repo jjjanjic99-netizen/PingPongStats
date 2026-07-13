@@ -322,3 +322,21 @@ nötig war. Reihenfolge: chronologisch nach Phase (D1–D4).
   bereits vorhandenen `HasCompletedSeasons`, für den Leerzustand der
   Turnier-Sieger-Liste - keine neue Logik, nur `CompletedTournaments.Count
   > 0`.
+
+## Phase D4 — Tippspiel
+
+- **Offene Partien ohne Zwei-Avatar-"vs"-Layout**: `PendingMatchRow`
+  exponiert nur ein bereits kombiniertes `Label` ("Marco Brunner vs.
+  Dario Frei"), keine einzelnen Spieler-Referenzen pro Seite. Der Mockup
+  zeigt zwei Avatare links/rechts von einem "vs". Ohne die zugrunde
+  liegenden Spieler-IDs zusätzlich durchzureichen (eine strukturelle,
+  nicht rein optische Änderung), bleibt die Karte bei der vorhandenen
+  einzeiligen Beschriftung.
+- **Tipp-Optionen als Segment-Buttons statt Sekundär-/Primär-Style-Swap**:
+  Gleiche visuelle Wirkung wie vorher (aktiver Tipp = Ball-Fläche), jetzt
+  über `SegmentButton` als Basis, um am mockup-typischen
+  "Timo · 1 Pkt"/"Dario · 3 Pkt ⚡"-Look näher dran zu sein (der
+  Undogod-Bonus-Hinweistext ist bereits als eigener Satz unterhalb
+  vorhanden, siehe bestehenden Beschreibungstext oben auf der Seite).
+- **"Aktualisieren"-Button entfernt**: gleiche Begründung wie bei den
+  anderen Seiten.
