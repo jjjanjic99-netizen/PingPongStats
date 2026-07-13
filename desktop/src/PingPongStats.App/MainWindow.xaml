@@ -339,10 +339,15 @@
         </Grid>
     </Grid>
 
-    <!-- Phase 6 win/confetti overlay: sits above everything else in this outer
-         Grid, dismissible by clicking anywhere, auto-hidden after ~3s by
-         MainViewModel.IsWinAnimationVisible. -->
-    <Border x:Name="WinAnimationOverlay" Background="#CC0F172A"
+    <!-- Sieg-Overlay (mockup .win): fullscreen dark scrim, XL avatar(s) with
+         the orange ring AvatarControl already draws at Size="XL", Display
+         52px name, italic quote, Rubber COMEBACK badge, ping-pong-ball
+         confetti (MainWindow.xaml.cs). Dismissible by clicking anywhere,
+         auto-hidden after ~3s by MainViewModel.IsWinAnimationVisible - which
+         is only ever set when Settings.ShowWinAnimation is on, so that
+         existing setting already doubles as this overlay's reduced-motion
+         toggle (see ABWEICHUNGEN.md). -->
+    <Border x:Name="WinAnimationOverlay" Background="#E6041117"
             Visibility="{Binding IsWinAnimationVisible, Converter={StaticResource BoolToVisibilityConverter}}"
             IsVisibleChanged="OnWinAnimationOverlayIsVisibleChanged"
             MouseLeftButtonDown="OnWinAnimationOverlayClick">
@@ -352,50 +357,59 @@
             <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
                 <!-- Phase 12: bigger trophy treatment when this win completed a
                      tournament, shown above the normal win overlay content. -->
-                <StackPanel HorizontalAlignment="Center" Margin="0,0,0,8"
+                <StackPanel HorizontalAlignment="Center" Margin="0,0,0,10"
                             Visibility="{Binding WinAnimationIsTournamentFinal, Converter={StaticResource BoolToVisibilityConverter}}">
                     <TextBlock Text="🏆" FontSize="56" HorizontalAlignment="Center" />
-                    <TextBlock Text="TURNIERSIEGER!" FontSize="30" FontWeight="Bold"
-                               Foreground="{DynamicResource Brush.Accent}" HorizontalAlignment="Center" />
+                    <TextBlock Text="TURNIERSIEGER!" FontFamily="{DynamicResource Font.Display}" FontWeight="ExtraBold"
+                               FontSize="30" Foreground="{DynamicResource Brush.Ball}" HorizontalAlignment="Center" />
                 </StackPanel>
+
+                <TextBlock Text="SIEGER" FontFamily="{DynamicResource Font.Mono}" FontSize="11" CharacterSpacing="300"
+                           Foreground="{DynamicResource Brush.Ball}" HorizontalAlignment="Center" Margin="0,0,0,8" />
 
                 <StackPanel HorizontalAlignment="Center"
                             Visibility="{Binding WinAnimationIsDoubles, Converter={StaticResource InverseBoolToVisibilityConverter}}">
                     <controls:AvatarControl Player="{Binding WinAnimationPlayer1}" DataPath="{Binding Dashboard.DataPath}"
-                                             Size="L" HorizontalAlignment="Center" />
-                    <TextBlock Text="{Binding WinAnimationPlayer1.DisplayName}" FontSize="24" FontWeight="Bold"
-                               Foreground="White" HorizontalAlignment="Center" Margin="0,16,0,0" />
+                                             Size="XL" HorizontalAlignment="Center" />
+                    <TextBlock Text="{Binding WinAnimationPlayer1.DisplayName}" Style="{StaticResource Typo.WinName}"
+                               HorizontalAlignment="Center" TextAlignment="Center" Margin="0,16,0,0" />
                 </StackPanel>
 
                 <StackPanel Orientation="Horizontal" HorizontalAlignment="Center"
                             Visibility="{Binding WinAnimationIsDoubles, Converter={StaticResource BoolToVisibilityConverter}}">
-                    <StackPanel Margin="0,0,24,0">
+                    <StackPanel Margin="0,0,20,0">
                         <controls:AvatarControl Player="{Binding WinAnimationPlayer1}" DataPath="{Binding Dashboard.DataPath}"
-                                                 Size="L" HorizontalAlignment="Center" />
-                        <TextBlock Text="{Binding WinAnimationPlayer1.DisplayName}" FontSize="18" FontWeight="Bold"
-                                   Foreground="White" HorizontalAlignment="Center" Margin="0,12,0,0" />
+                                                 Size="XL" HorizontalAlignment="Center" />
+                        <TextBlock Text="{Binding WinAnimationPlayer1.DisplayName}" FontFamily="{DynamicResource Font.Display}"
+                                   FontWeight="ExtraBold" FontSize="30" Foreground="{DynamicResource Brush.Chalk}"
+                                   HorizontalAlignment="Center" TextAlignment="Center" Margin="0,14,0,0" />
                     </StackPanel>
                     <StackPanel>
                         <controls:AvatarControl Player="{Binding WinAnimationPlayer2}" DataPath="{Binding Dashboard.DataPath}"
-                                                 Size="L" HorizontalAlignment="Center" />
-                        <TextBlock Text="{Binding WinAnimationPlayer2.DisplayName}" FontSize="18" FontWeight="Bold"
-                                   Foreground="White" HorizontalAlignment="Center" Margin="0,12,0,0" />
+                                                 Size="XL" HorizontalAlignment="Center" />
+                        <TextBlock Text="{Binding WinAnimationPlayer2.DisplayName}" FontFamily="{DynamicResource Font.Display}"
+                                   FontWeight="ExtraBold" FontSize="30" Foreground="{DynamicResource Brush.Chalk}"
+                                   HorizontalAlignment="Center" TextAlignment="Center" Margin="0,14,0,0" />
                     </StackPanel>
                 </StackPanel>
 
-                <TextBlock Text="{Binding WinAnimationScoreLabel}" FontSize="32" FontWeight="Bold"
-                           Foreground="White" HorizontalAlignment="Center" Margin="0,16,0,0" />
+                <TextBlock Text="{Binding WinAnimationScoreLabel}" FontFamily="{DynamicResource Font.Mono}" FontSize="20"
+                           Foreground="{DynamicResource Brush.Chalk}" HorizontalAlignment="Center" Margin="0,10,0,0" />
 
-                <Border Background="{DynamicResource Brush.Accent}" CornerRadius="6" Padding="16,6" Margin="0,16,0,0"
+                <Border Background="{DynamicResource Brush.Rubber}" CornerRadius="6" Padding="14,5" Margin="0,14,0,0"
                         HorizontalAlignment="Center"
                         Visibility="{Binding WinAnimationIsComeback, Converter={StaticResource BoolToVisibilityConverter}}">
-                    <TextBlock Text="COMEBACK!" FontSize="18" FontWeight="Bold" Foreground="{DynamicResource Brush.AccentText}" />
+                    <TextBlock Text="COMEBACK!" FontFamily="{DynamicResource Font.Display}" FontWeight="ExtraBold" FontSize="17"
+                               CharacterSpacing="40" Foreground="White" />
                 </Border>
 
-                <TextBlock Text="{Binding WinAnimationQuote}" FontSize="16" FontStyle="Italic" Foreground="White"
-                           HorizontalAlignment="Center" TextWrapping="Wrap" MaxWidth="480" TextAlignment="Center"
+                <TextBlock Text="{Binding WinAnimationQuote}" FontSize="15" FontStyle="Italic" Foreground="#BEDCE4"
+                           HorizontalAlignment="Center" TextWrapping="Wrap" MaxWidth="330" TextAlignment="Center"
                            Margin="0,16,0,0"
                            Visibility="{Binding WinAnimationQuote, Converter={StaticResource StringToVisibilityConverter}}" />
+
+                <TextBlock Text="Tippen zum Schliessen · abschaltbar in den Einstellungen" FontFamily="{DynamicResource Font.Mono}"
+                           FontSize="10.5" Foreground="{DynamicResource Brush.Muted}" HorizontalAlignment="Center" Margin="0,26,0,0" />
             </StackPanel>
         </Grid>
     </Border>

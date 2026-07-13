@@ -677,6 +677,65 @@ Alle Animationen (Konfetti/Ping-Pong-Bälle im Sieg-Overlay, Übergänge) prüfe
 die bestehende Einstellung und lassen sich global abschalten - siehe
 Settings.
 
+### Views (Phase D4)
+
+Alle Seiten wurden in dieser Reihenfolge auf den Mockup umgestellt: Shell
+(Rail + Topbar) → Dashboard → Profil → Liga → Turnier → Hall of Fame →
+Tippspiel → Erfassungs-Dialog (MatchEditView/DoublesView) → Sieg-Overlay.
+Nicht im Mockup enthaltene, aber real existierende Seiten (Spieler, Spiele,
+Head-to-Head, Einstellungen, Anmeldung) erben die neue Palette/Control-Styles
+automatisch über die weiterhin bestehenden `CardBorder`/`HeadingText`/
+`StatLabelText`/`StatValueText`/`SectionLabelText`-Alias-Styles, wurden aber
+nicht einzeln auf die neuen Bausteine (`CardControl`, `RowItem`, ...)
+umgestellt. Jede Abweichung vom Mockup (fehlende Datenfelder, bewusste
+Vereinfachungen, kleine ehrliche ViewModel-Ergänzungen wie `RankLabel` oder
+`PredictionAFraction`) ist chronologisch in `desktop/design/ABWEICHUNGEN.md`
+dokumentiert.
+
+### Windows-Sichtprüfung erforderlich
+
+Diese Überarbeitung wurde vollständig in einer Linux-Sandbox erstellt und nur
+statisch geprüft (`xmllint`, Ressourcenschlüssel-Abgleich, Core-Build +
+Tests) - **die WPF-App konnte nicht kompiliert oder gerendert werden.**
+Bitte auf einem Windows-Rechner mit Visual Studio/`dotnet build` sichtprüfen:
+
+1. **Kompiliert die App überhaupt fehlerfrei** (`dotnet build
+   src/PingPongStats.App/PingPongStats.App.csproj`) - das war in dieser
+   Umgebung nie möglich, alle Prüfungen waren rein statisch.
+2. **Schriften**: Ohne die (bewusst nicht heruntergeladenen) Font-Dateien
+   unter `Assets/Fonts/` fällt die App auf Segoe UI zurück - prüfen, dass
+   das nicht abstürzt und optisch akzeptabel aussieht; mit den Dateien
+   prüfen, dass Big Shoulders Display/Space Grotesk/JetBrains Mono korrekt
+   geladen werden (siehe `Assets/Fonts/README.md` für die exakten Dateinamen).
+3. **Dunkle Titelleiste** (`DarkTitleBar.cs`, DWM Immersive-Dark-Mode) -
+   prüfen auf Windows 10 2004+/Windows 11; auf älteren Builds sollte es ein
+   stiller No-op sein (Standard-Titelleiste, kein Absturz).
+4. **ComboBox-Dropdowns und ToolTips**: waren vor der Überarbeitung weiss auf
+   weiss unlesbar (u. a. Badge-Tooltips wie "Aschenputtel") - jetzt mit
+   explizitem `ControlTemplate`/Style behoben; bitte an mehreren Stellen
+   (Turnier-Teilnehmerauswahl, Liga/Turnier-ComboBoxen, Badge-Tooltips)
+   gegenprüfen.
+5. **DatePicker-Kalender-Popup**: nur das Eingabefeld ist neu gestylt, das
+   aufklappende Kalender-Popup selbst verwendet weiterhin WPFs
+   Standard-Template - lesbar auf dunklem Grund?
+6. **CharacterSpacing-Werte** (px→WPF-Einheiten-Umrechnung für Eyebrow-Labels,
+   H1, Sieg-Overlay-Kicker) - wirken die Abstände wie im Mockup oder zu
+   eng/weit?
+7. **Avatar-Ring bei Grösse L/XL**: `Ellipse.Stroke` liegt zentriert auf dem
+   Rand statt (wie CSS `border`/`box-shadow`) innen - wirkt der Ring dünner/
+   dicker als im Mockup?
+8. **Konfetti/Ping-Pong-Bälle im Sieg-Overlay**: Fall-/Rotationsanimation,
+   Farbverlauf (Highlight oben-links), weisse Bälle (~15%) - Performance und
+   Optik bei einem echten Fenster prüfen (in der Sandbox nicht renderbar).
+9. **Unicode-Icon-Glyphen der Rail-Navigation** (◧ ◉ ▤ ⑂ ★ ◆) - rendern alle
+   sauber mit der Body-Schrift-Fallback-Kette, insbesondere das seltenere ⑂?
+10. **UI-Skalierung** (Einstellungen → Klein/Mittel/Gross) weiterhin korrekt
+    mit den neuen, teils grösseren Schriftgrössen (Display 44/52px)?
+11. **Fenstergrösse/Resize**: Rail (212px fix) + Topbar-Segmentsteuerung bei
+    kleineren Fensterbreiten - bricht das Layout um oder läuft über?
+12. **Reduced-Motion-Einstellung** ("Gewinn-Animation anzeigen" in den
+    Einstellungen) tatsächlich das gesamte Sieg-Overlay inkl. Konfetti aus?
+
 ## Backup-Konzept
 
 Vor **jedem** Schreibvorgang wird die bestehende Datei nach

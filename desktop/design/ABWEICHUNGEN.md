@@ -369,3 +369,28 @@ nötig war. Reihenfolge: chronologisch nach Phase (D1–D4).
   Erfassungs-Abschnitt wurde an den Dialog-Look angeglichen, der Rest der
   Seite (Statistiken, Team-Rangliste, Spielverlauf) bleibt strukturell
   unverändert, nur mit den neuen Bausteinen/Farben.
+
+## Phase D4 — Sieg-Overlay
+
+- **Konfetti-Bälle statt Rechtecke**: `MainWindow.xaml.cs`s `StartConfetti()`
+  zeichnete bisher farbige, rotierende Rechtecke. Ersetzt durch `Ellipse`-
+  Elemente mit einem `RadialGradientBrush` (Highlight oben-links → Ball-
+  Orange), ca. 15% davon rein weiss statt orange (mockup `.pball`) - Fall-
+  und Rotations-Animation (`TranslateTransform`/`RotateTransform`,
+  gestaffelte Dauer/Verzögerung pro Ball) blieb unverändert, nur Form und
+  Farbe geändert.
+  Der zweite CSS-Gradient-Stop des Mockups liegt bei 65% statt 100% - für
+  eine ~12-22px kleine Kreisfläche ist der Unterschied kaum wahrnehmbar,
+  daher der einfachere 2-Stop-`RadialGradientBrush`-Konstruktor statt
+  eines expliziten 3-Stop-Gradienten.
+- **Reduced-Motion-Einstellung bereits vorhanden**: Die geforderte
+  "Animationen müssen abschaltbar sein"-Vorgabe ist bereits durch die
+  bestehende `Settings.ShowWinAnimation`-Option erfüllt - sie schaltet
+  das gesamte Overlay (inkl. Konfetti) aus, `MainViewModel` prüft sie vor
+  jedem Anzeigen. Keine neue Einstellung nötig.
+- **XL-Avatar-Ring**: kommt automatisch aus `AvatarControl` (Phase D3,
+  4px solider Ball-Rahmen bei Size="XL") - keine zusätzliche Änderung
+  hier nötig.
+- Kicker/Name/Score/COMEBACK-Badge/Zitat/Hinweistext sind 1:1 nach
+  Mockup-Werten (Display 52px Name, Rubber-Badge, italic Zitat,
+  Mono-Hinweistext) umgesetzt.
