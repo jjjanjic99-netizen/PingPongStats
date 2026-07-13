@@ -207,7 +207,6 @@ Beispiel `appsettings.json`:
 ```json
 {
   "DataPath": "\\\\fileserver\\PingPongStats\\",
-  "DarkMode": false,
   "UiScale": "Medium",
   "ShowWinAnimation": true
 }
@@ -644,6 +643,25 @@ läuft die App normal weiter und fällt automatisch auf Segoe UI zurück (WPFs
 eingebauter Fallback über eine kommagetrennte `FontFamily`-Liste) - kein
 Absturz.
 
+### Control-Styles (`Themes/Controls.xaml`)
+
+Überschreibt WPFs Standard-Optik für Window, Button (Primary/Ghost/Nav),
+TextBox, ComboBox (inkl. eines vollständigen `ControlTemplate` fürs
+Dropdown-Popup - siehe unten), CheckBox/RadioButton, DataGrid/DataGridCell,
+ListView, ScrollBar (schmal, ohne Pfeil-Buttons) und ToolTip. Kein
+Standard-Chrome (graue Buttons, weisse Popups, Systemblau bei Selektion)
+bleibt sichtbar. Fenster bekommen zusätzlich eine dunkel eingefärbte native
+Titelleiste (`DarkTitleBar.cs`, siehe `ABWEICHUNGEN.md` für die Begründung
+gegen eine komplett eigene Titelleiste).
+
+Zwei konkrete Lesbarkeits-Bugs aus der alten (nur per Property-Setter
+gestylten) Optik sind damit behoben: aufgeklappte ComboBox-Listen und
+ToolTips waren weiss auf weiss/hell nicht lesbar - beide haben jetzt einen
+expliziten dunklen Hintergrund (`Brush.Panel2`) statt der WPF-Systemfarbe.
+
+Der bestehende Hell/Dunkel-Umschalter wurde vollständig entfernt (nicht nur
+stillgelegt) - die App zeigt jetzt ausschliesslich die Mockup-Palette.
+
 ### Bausteine
 
 Wiederverwendbare Controls (`Controls/`): `AvatarControl` (Grössen S/M/L/XL,
@@ -778,6 +796,13 @@ abgeleitet, nie direkt vom UI gesetzt.
   Zeitraum wird ab Fensteranfang neu von 1000 berechnet, nicht als Fortsetzung
   der Gesamt-Historie - ein bewusster Kompromiss für Konsistenz "alles bezieht
   sich auf den gewählten Zeitraum").
+- **Dashboard-Kachel "Siegquote 30 Tage" entfernt**: War eine feste
+  30-Tage-Kennzahl unabhängig vom Zeitraum-Filter - seit dieser den
+  gleichen Zeitraum bereits abdeckt (inkl. der Voreinstellung "30T"), war
+  die Kachel redundant. Die pro Spieler feste 30-Tage-Siegquote in der
+  Ranking-Tabelle ("Siegquote 30T"-Spalte) bleibt unverändert bestehen -
+  das ist eine andere, unabhängig vom Zeitraum-Filter immer gleich
+  berechnete Kennzahl.
 - **UI-Grösse**: Drei Stufen (Klein/Mittel/Gross), persistiert pro Benutzer.
   Skaliert per `LayoutTransform` den gesamten Fensterinhalt gleichmässig -
   einfacher und robuster als jede Style-Grösse einzeln zu parametrisieren.

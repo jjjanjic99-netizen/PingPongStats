@@ -4,7 +4,10 @@
     <Application.Resources>
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
-                <ResourceDictionary Source="Themes/Light.xaml" />
+                <!-- Styles.xaml merges DesignTokens.xaml and Controls.xaml itself
+                     (see its own MergedDictionaries) so this stays a single entry
+                     point; nested merges still fully flatten for DynamicResource/
+                     FindResource lookups at runtime. -->
                 <ResourceDictionary Source="Themes/Styles.xaml" />
             </ResourceDictionary.MergedDictionaries>
         </ResourceDictionary>

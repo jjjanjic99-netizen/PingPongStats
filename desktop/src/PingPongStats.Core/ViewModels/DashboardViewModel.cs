@@ -19,7 +19,6 @@ public partial class DashboardViewModel : ObservableObject
     [ObservableProperty] private int activePlayerCount;
     [ObservableProperty] private string mostWinsLabel = "–";
     [ObservableProperty] private string highestOverallWinRateLabel = "–";
-    [ObservableProperty] private string highestWinRateLastMonthLabel = "–";
     [ObservableProperty] private string bestCurrentStreakLabel = "–";
     [ObservableProperty] private bool hasData;
 
@@ -102,9 +101,6 @@ public partial class DashboardViewModel : ObservableObject
         HighestOverallWinRateLabel = snapshot.HighestOverallWinRate is null
             ? "–"
             : $"{snapshot.HighestOverallWinRate.DisplayName} ({snapshot.HighestOverallWinRate.WinRatePct:F0}%)";
-        HighestWinRateLastMonthLabel = snapshot.HighestWinRateLastMonth is null
-            ? "–"
-            : $"{snapshot.HighestWinRateLastMonth.DisplayName} ({snapshot.HighestWinRateLastMonth.WinRateLast30dPct:F0}%)";
         BestCurrentStreakLabel = snapshot.BestCurrentStreak is null
             ? "–"
             : $"{snapshot.BestCurrentStreak.DisplayName} ({snapshot.BestCurrentStreak.CurrentStreak.Length}x)";

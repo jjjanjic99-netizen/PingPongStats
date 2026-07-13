@@ -67,8 +67,6 @@ public partial class App : Application
             settingsRepository.Save(settings);
         }
 
-        ThemeManager.Apply(settings.DarkMode);
-
         var playerRepository = new PlayerXmlRepository(settings.DataPath);
         var matchRepository = new MatchXmlRepository(settings.DataPath);
         var doubleMatchRepository = new DoubleMatchXmlRepository(settings.DataPath);

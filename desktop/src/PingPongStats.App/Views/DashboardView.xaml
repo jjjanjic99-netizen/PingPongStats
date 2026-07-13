@@ -108,7 +108,7 @@
             </StackPanel>
         </Border>
 
-        <UniformGrid Rows="1" Columns="6" Margin="0,0,0,16">
+        <UniformGrid Rows="1" Columns="5" Margin="0,0,0,16">
             <Border Style="{StaticResource CardBorder}" Margin="0,0,8,0">
                 <StackPanel>
                     <TextBlock Text="SPIELE TOTAL" Style="{StaticResource StatLabelText}" />
@@ -131,12 +131,6 @@
                 <StackPanel>
                     <TextBlock Text="SIEGQUOTE OVERALL" Style="{StaticResource StatLabelText}" />
                     <TextBlock Text="{Binding HighestOverallWinRateLabel}" Style="{StaticResource StatValueText}" FontSize="15" TextWrapping="Wrap" />
-                </StackPanel>
-            </Border>
-            <Border Style="{StaticResource CardBorder}" Margin="0,0,8,0">
-                <StackPanel>
-                    <TextBlock Text="SIEGQUOTE 30 TAGE" Style="{StaticResource StatLabelText}" />
-                    <TextBlock Text="{Binding HighestWinRateLastMonthLabel}" Style="{StaticResource StatValueText}" FontSize="15" TextWrapping="Wrap" />
                 </StackPanel>
             </Border>
             <Border Style="{StaticResource CardBorder}">

@@ -28,7 +28,6 @@ public partial class SettingsViewModel : ObservableObject
     };
 
     [ObservableProperty] private string currentDataPath = string.Empty;
-    [ObservableProperty] private bool darkMode;
     [ObservableProperty] private string selectedUiScale = "Medium";
     [ObservableProperty] private bool showWinAnimation = true;
     [ObservableProperty] private bool soundEnabled = true;
@@ -84,7 +83,6 @@ public partial class SettingsViewModel : ObservableObject
 
         var settings = _settingsRepository.Load();
         CurrentDataPath = settings.DataPath;
-        DarkMode = settings.DarkMode;
         SelectedUiScale = string.IsNullOrWhiteSpace(settings.UiScale) ? "Medium" : settings.UiScale;
         ShowWinAnimation = settings.ShowWinAnimation;
         SoundEnabled = settings.SoundEnabled;
@@ -143,13 +141,6 @@ public partial class SettingsViewModel : ObservableObject
             _notifications.NotifyError(ex.Message);
             Logger.Error("ToggleSeasonActive failed", ex);
         }
-    }
-
-    partial void OnDarkModeChanged(bool value)
-    {
-        var settings = _settingsRepository.Load();
-        settings.DarkMode = value;
-        _settingsRepository.Save(settings);
     }
 
     partial void OnSelectedUiScaleChanged(string value)

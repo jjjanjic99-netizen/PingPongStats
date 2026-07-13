@@ -2,6 +2,17 @@
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
                     xmlns:converters="clr-namespace:PingPongStats.App.Converters">
 
+    <!-- StaticResource lookups only see the CURRENT dictionary plus whatever
+         it merges itself (not sibling dictionaries merged alongside it at the
+         App.xaml level) - this file's own Styles reference Typo.*/Color.*
+         (DesignTokens.xaml) and CompactDangerButton (Controls.xaml) via
+         StaticResource, so both are merged in here directly rather than
+         relying on App.xaml's merge order. -->
+    <ResourceDictionary.MergedDictionaries>
+        <ResourceDictionary Source="DesignTokens.xaml" />
+        <ResourceDictionary Source="Controls.xaml" />
+    </ResourceDictionary.MergedDictionaries>
+
     <!-- All app-wide converters live here (not in App.xaml) so every StaticResource
          reference to them from within this same file resolves at parse time -
          a ResourceDictionary cannot see sibling merged dictionaries' keys via
@@ -18,218 +29,65 @@
     <converters:EloPointsToPolylineConverter x:Key="EloPointsToPolylineConverter" />
 
     <!-- Shared bar-chart item template/panel, used by Dashboard and Doubles views
-         so both render identical hand-rolled bar charts without duplicating XAML. -->
+         so both render identical hand-rolled bar charts without duplicating XAML.
+         Table→Ball gradient fill, matching the mockup's .bar-fill. -->
+    <LinearGradientBrush x:Key="Brush.BarGradient" StartPoint="0,0" EndPoint="1,0">
+        <GradientStop Color="{StaticResource Color.Table}" Offset="0" />
+        <GradientStop Color="{StaticResource Color.Ball}" Offset="1" />
+    </LinearGradientBrush>
+
     <DataTemplate x:Key="ChartBarItemTemplate">
         <StackPanel Width="55" Margin="3,0" VerticalAlignment="Bottom">
             <TextBlock Text="{Binding DisplayValue}" HorizontalAlignment="Center"
-                       Foreground="{DynamicResource Brush.TextSecondary}" FontSize="11" />
-            <Border Background="{DynamicResource Brush.Accent}" CornerRadius="3,3,0,0"
+                       FontFamily="{DynamicResource Font.Mono}"
+                       Foreground="{DynamicResource Brush.Muted}" FontSize="11" />
+            <Border Background="{StaticResource Brush.BarGradient}" CornerRadius="3,3,0,0"
                     Height="{Binding NormalizedHeight, Converter={StaticResource BarHeightConverter}, ConverterParameter=140}" />
             <TextBlock Text="{Binding Label}" HorizontalAlignment="Center" TextWrapping="Wrap"
-                       FontSize="10" Foreground="{DynamicResource Brush.TextSecondary}" Margin="0,4,0,0" />
+                       FontSize="10" Foreground="{DynamicResource Brush.Muted}" Margin="0,4,0,0" />
         </StackPanel>
     </DataTemplate>
     <ItemsPanelTemplate x:Key="ChartItemsPanel">
         <StackPanel Orientation="Horizontal" VerticalAlignment="Bottom" Height="200" />
     </ItemsPanelTemplate>
 
+    <!-- Mockup .card: Panel fill, 1px Line border, 12px radius. The signature
+         bottom "table line" gradient (Phase D3's CardControl) isn't available
+         on a plain Border (a Border/Decorator can't host the extra visual) -
+         views not yet migrated to CardControl keep this flatter look; see
+         desktop/design/ABWEICHUNGEN.md. -->
     <Style x:Key="CardBorder" TargetType="Border">
-        <Setter Property="Background" Value="{DynamicResource Brush.Surface}" />
-        <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border}" />
+        <Setter Property="Background" Value="{DynamicResource Brush.Panel}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource Brush.Line}" />
         <Setter Property="BorderThickness" Value="1" />
-        <Setter Property="CornerRadius" Value="8" />
-        <Setter Property="Padding" Value="16" />
+        <Setter Property="CornerRadius" Value="{DynamicResource Radius.Card}" />
+        <Setter Property="Padding" Value="{DynamicResource Spacing.CardPadding}" />
     </Style>
 
-    <Style x:Key="HeadingText" TargetType="TextBlock">
-        <Setter Property="FontSize" Value="20" />
-        <Setter Property="FontWeight" Value="SemiBold" />
-        <Setter Property="Foreground" Value="{DynamicResource Brush.TextPrimary}" />
+    <!-- Page titles (mockup .page-title / Typo.H1: Display ExtraBold 30px). -->
+    <Style x:Key="HeadingText" TargetType="TextBlock" BasedOn="{StaticResource Typo.H1}" />
+
+    <!-- Card section headers (mockup .eyebrow: mono, small, tracked, muted -
+         text case itself is authored per call site, WPF can't transform bound
+         text declaratively; see EyebrowLabel, Phase D3, for the cases where a
+         control does it in code). -->
+    <Style x:Key="SectionLabelText" TargetType="TextBlock" BasedOn="{StaticResource Typo.Eyebrow}" />
+
+    <!-- Large standalone stat numbers (mockup's 42px "grosse Kennzahl"). Many
+         call sites already override FontSize/Foreground inline for their
+         specific context. -->
+    <Style x:Key="StatValueText" TargetType="TextBlock" BasedOn="{StaticResource Typo.BigStat}">
+        <Setter Property="FontSize" Value="32" />
     </Style>
 
-    <Style x:Key="SectionLabelText" TargetType="TextBlock">
-        <Setter Property="FontSize" Value="11" />
-        <Setter Property="FontWeight" Value="SemiBold" />
-        <Setter Property="Foreground" Value="{DynamicResource Brush.TextSecondary}" />
-    </Style>
-
-    <Style x:Key="StatValueText" TargetType="TextBlock">
-        <Setter Property="FontSize" Value="24" />
-        <Setter Property="FontWeight" Value="Bold" />
-        <Setter Property="Foreground" Value="{DynamicResource Brush.TextPrimary}" />
-    </Style>
-
-    <Style x:Key="StatLabelText" TargetType="TextBlock">
-        <Setter Property="FontSize" Value="11" />
-        <Setter Property="Foreground" Value="{DynamicResource Brush.TextSecondary}" />
-    </Style>
+    <Style x:Key="StatLabelText" TargetType="TextBlock" BasedOn="{StaticResource Typo.Small}" />
 
     <!-- Implicit (keyless) default so every plain TextBlock without an explicit
-         Style still gets a theme-aware color instead of the system default black. -->
+         Style still gets the mockup's body font/color instead of the system
+         default (Segoe UI black). -->
     <Style TargetType="TextBlock">
-        <Setter Property="Foreground" Value="{DynamicResource Brush.TextPrimary}" />
-    </Style>
-
-    <Style TargetType="CheckBox">
-        <Setter Property="Foreground" Value="{DynamicResource Brush.TextPrimary}" />
-        <Setter Property="FontSize" Value="13" />
-    </Style>
-
-    <Style TargetType="RadioButton">
-        <Setter Property="Foreground" Value="{DynamicResource Brush.TextPrimary}" />
-        <Setter Property="FontSize" Value="13" />
-    </Style>
-
-    <Style x:Key="BaseButton" TargetType="Button">
-        <Setter Property="Padding" Value="14,8" />
-        <Setter Property="FontSize" Value="13" />
-        <Setter Property="Cursor" Value="Hand" />
-        <Setter Property="BorderThickness" Value="0" />
-        <Setter Property="Template">
-            <Setter.Value>
-                <ControlTemplate TargetType="Button">
-                    <Border Background="{TemplateBinding Background}"
-                            BorderBrush="{TemplateBinding BorderBrush}"
-                            BorderThickness="{TemplateBinding BorderThickness}"
-                            CornerRadius="6">
-                        <ContentPresenter HorizontalAlignment="Center"
-                                          VerticalAlignment="Center"
-                                          Margin="{TemplateBinding Padding}" />
-                    </Border>
-                    <ControlTemplate.Triggers>
-                        <Trigger Property="IsMouseOver" Value="True">
-                            <Setter Property="Opacity" Value="0.9" />
-                        </Trigger>
-                        <Trigger Property="IsEnabled" Value="False">
-                            <Setter Property="Opacity" Value="0.5" />
-                        </Trigger>
-                    </ControlTemplate.Triggers>
-                </ControlTemplate>
-            </Setter.Value>
-        </Setter>
-    </Style>
-
-    <Style x:Key="PrimaryButton" TargetType="Button" BasedOn="{StaticResource BaseButton}">
-        <Setter Property="Background" Value="{DynamicResource Brush.Accent}" />
-        <Setter Property="Foreground" Value="{DynamicResource Brush.AccentText}" />
-        <Setter Property="FontWeight" Value="SemiBold" />
-    </Style>
-
-    <Style x:Key="SecondaryButton" TargetType="Button" BasedOn="{StaticResource BaseButton}">
-        <Setter Property="Background" Value="{DynamicResource Brush.NavHover}" />
-        <Setter Property="Foreground" Value="{DynamicResource Brush.TextPrimary}" />
-    </Style>
-
-    <Style x:Key="DangerButton" TargetType="Button" BasedOn="{StaticResource BaseButton}">
-        <Setter Property="Background" Value="{DynamicResource Brush.DangerSurface}" />
-        <Setter Property="Foreground" Value="{DynamicResource Brush.Danger}" />
-        <Setter Property="FontWeight" Value="SemiBold" />
-    </Style>
-
-    <Style x:Key="NavButton" TargetType="Button" BasedOn="{StaticResource BaseButton}">
-        <Setter Property="Background" Value="Transparent" />
-        <Setter Property="Foreground" Value="{DynamicResource Brush.TextPrimary}" />
-        <Setter Property="HorizontalContentAlignment" Value="Left" />
-        <Setter Property="Padding" Value="14,10" />
-        <Setter Property="Margin" Value="0,0,0,4" />
-        <Setter Property="FontSize" Value="14" />
-        <Style.Triggers>
-            <Trigger Property="IsMouseOver" Value="True">
-                <Setter Property="Background" Value="{DynamicResource Brush.NavHover}" />
-            </Trigger>
-        </Style.Triggers>
-    </Style>
-
-    <Style TargetType="TextBox">
-        <Setter Property="Padding" Value="8,6" />
-        <Setter Property="Background" Value="{DynamicResource Brush.InputBackground}" />
-        <Setter Property="Foreground" Value="{DynamicResource Brush.TextPrimary}" />
-        <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border}" />
-        <Setter Property="BorderThickness" Value="1" />
-        <Setter Property="FontSize" Value="13" />
-    </Style>
-
-    <Style TargetType="ComboBox">
-        <Setter Property="Padding" Value="8,6" />
-        <Setter Property="Background" Value="{DynamicResource Brush.InputBackground}" />
-        <Setter Property="Foreground" Value="{DynamicResource Brush.TextPrimary}" />
-        <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border}" />
-        <Setter Property="FontSize" Value="13" />
-    </Style>
-
-    <!-- Without this, dropdown popup items render with the system default (black)
-         text regardless of theme, which is unreadable in dark mode. -->
-    <Style TargetType="ComboBoxItem">
-        <Setter Property="Background" Value="{DynamicResource Brush.InputBackground}" />
-        <Setter Property="Foreground" Value="{DynamicResource Brush.TextPrimary}" />
-        <Setter Property="Padding" Value="8,6" />
-        <Style.Triggers>
-            <Trigger Property="IsHighlighted" Value="True">
-                <Setter Property="Background" Value="{DynamicResource Brush.NavHover}" />
-            </Trigger>
-        </Style.Triggers>
-    </Style>
-
-    <Style TargetType="DatePicker">
-        <Setter Property="Padding" Value="6,4" />
-        <Setter Property="Background" Value="{DynamicResource Brush.InputBackground}" />
-        <Setter Property="Foreground" Value="{DynamicResource Brush.TextPrimary}" />
-        <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border}" />
-        <Setter Property="FontSize" Value="13" />
-    </Style>
-
-    <Style TargetType="DataGrid">
-        <Setter Property="Background" Value="{DynamicResource Brush.Surface}" />
-        <Setter Property="Foreground" Value="{DynamicResource Brush.TextPrimary}" />
-        <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border}" />
-        <Setter Property="BorderThickness" Value="1" />
-        <Setter Property="RowBackground" Value="{DynamicResource Brush.Surface}" />
-        <Setter Property="AlternatingRowBackground" Value="{DynamicResource Brush.RowAlternate}" />
-        <Setter Property="GridLinesVisibility" Value="Horizontal" />
-        <Setter Property="HorizontalGridLinesBrush" Value="{DynamicResource Brush.Border}" />
-        <Setter Property="HeadersVisibility" Value="Column" />
-        <Setter Property="AutoGenerateColumns" Value="False" />
-        <Setter Property="CanUserAddRows" Value="False" />
-        <Setter Property="CanUserDeleteRows" Value="False" />
-        <Setter Property="IsReadOnly" Value="True" />
-        <Setter Property="RowHeight" Value="48" />
-        <Setter Property="SelectionMode" Value="Single" />
-    </Style>
-
-    <Style TargetType="DataGridColumnHeader">
-        <Setter Property="Background" Value="{DynamicResource Brush.Background}" />
-        <Setter Property="Foreground" Value="{DynamicResource Brush.TextSecondary}" />
-        <Setter Property="FontWeight" Value="SemiBold" />
-        <Setter Property="Padding" Value="8,6" />
-        <Setter Property="HorizontalContentAlignment" Value="Left" />
-    </Style>
-
-    <!-- Centers cell content vertically so template columns (e.g. action buttons)
-         are never clipped by the row height, and removes the default cell
-         selection border/padding that fought with our own control padding. -->
-    <Style TargetType="DataGridCell">
-        <Setter Property="Background" Value="Transparent" />
-        <Setter Property="BorderThickness" Value="0" />
-        <Setter Property="Padding" Value="8,4" />
-        <Setter Property="VerticalContentAlignment" Value="Center" />
-        <Style.Triggers>
-            <Trigger Property="IsSelected" Value="True">
-                <Setter Property="Background" Value="{DynamicResource Brush.NavHover}" />
-                <Setter Property="Foreground" Value="{DynamicResource Brush.TextPrimary}" />
-            </Trigger>
-        </Style.Triggers>
-    </Style>
-
-    <!-- Smaller-footprint button variants for DataGrid action columns, where
-         several buttons must fit side by side within a compact row. -->
-    <Style x:Key="CompactSecondaryButton" TargetType="Button" BasedOn="{StaticResource SecondaryButton}">
-        <Setter Property="Padding" Value="10,5" />
-        <Setter Property="FontSize" Value="12" />
-    </Style>
-
-    <Style x:Key="CompactDangerButton" TargetType="Button" BasedOn="{StaticResource DangerButton}">
-        <Setter Property="Padding" Value="10,5" />
-        <Setter Property="FontSize" Value="12" />
+        <Setter Property="FontFamily" Value="{DynamicResource Font.Body}" />
+        <Setter Property="Foreground" Value="{DynamicResource Brush.Chalk}" />
     </Style>
 
     <!-- Shared optional set-score entry row, used by MatchEditView and DoublesView.
@@ -246,7 +104,7 @@
                 <ColumnDefinition Width="Auto" />
             </Grid.ColumnDefinitions>
             <TextBlock Grid.Column="0" Text="{Binding SetNumber, StringFormat='Satz {0}'}"
-                       VerticalAlignment="Center" Foreground="{DynamicResource Brush.TextSecondary}" />
+                       VerticalAlignment="Center" Foreground="{DynamicResource Brush.Muted}" />
             <TextBox Grid.Column="1" Text="{Binding PointsA, UpdateSourceTrigger=PropertyChanged}" />
             <TextBox Grid.Column="3" Text="{Binding PointsB, UpdateSourceTrigger=PropertyChanged}" />
             <Button Grid.Column="5" Content="Entfernen" Style="{StaticResource CompactDangerButton}"

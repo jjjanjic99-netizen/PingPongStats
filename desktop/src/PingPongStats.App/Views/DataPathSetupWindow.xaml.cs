@@ -9,6 +9,7 @@ public partial class DataPathSetupWindow : Window
     {
         InitializeComponent();
         DataContextChanged += OnDataContextChanged;
+        SourceInitialized += (_, _) => DarkTitleBar.Apply(this);
     }
 
     private void OnDataContextChanged(object sender, DependencyPropertyChangedEventArgs e)

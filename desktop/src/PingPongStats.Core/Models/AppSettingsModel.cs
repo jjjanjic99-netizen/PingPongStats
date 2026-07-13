@@ -8,7 +8,6 @@ namespace PingPongStats.Core.Models;
 public class AppSettingsModel
 {
     public string DataPath { get; set; } = string.Empty;
-    public bool DarkMode { get; set; }
 
     /// <summary>One of "Small", "Medium", "Large". Controls the app-wide UI scale
     /// (see PingPongStats.App.UiScaleManager). Defaults to "Medium".</summary>

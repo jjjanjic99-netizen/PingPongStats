@@ -22,6 +22,7 @@ public partial class MainWindow : Window
     {
         InitializeComponent();
         DataContextChanged += OnDataContextChanged;
+        SourceInitialized += (_, _) => DarkTitleBar.Apply(this);
     }
 
     private void OnDataContextChanged(object sender, DependencyPropertyChangedEventArgs e)
@@ -42,11 +43,7 @@ public partial class MainWindow : Window
     {
         if (sender is not SettingsViewModel settingsViewModel) return;
 
-        if (e.PropertyName == nameof(SettingsViewModel.DarkMode))
-        {
-            ThemeManager.Apply(settingsViewModel.DarkMode);
-        }
-        else if (e.PropertyName == nameof(SettingsViewModel.SelectedUiScale))
+        if (e.PropertyName == nameof(SettingsViewModel.SelectedUiScale))
         {
             ApplyUiScale(settingsViewModel.SelectedUiScale);
         }
