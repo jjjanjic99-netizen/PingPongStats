@@ -290,4 +290,35 @@ nötig war. Reihenfolge: chronologisch nach Phase (D1–D4).
   Spieler darstellen. Ein neuer `FirstPlayerConverter` (App-Layer, keine
   Core-Änderung) wählt den ersten Spieler des Teams - eine rein optische
   Vereinfachung, der Name-Text zeigt weiterhin beide Namen
-  ("Frei &amp; Baumann" via `EntrantX.Label`).
+  ("Frei & Baumann" via `EntrantX.Label`).
+
+## Phase D4 — Hall of Fame
+
+- **Kein Rekord-Wert als reine Zahl**: `HallOfFameRecord.ValueLabel` ist
+  ein vollständiger, beschreibender Satz ("9 Spiele an einem Tag", "Sieg
+  mit nur 9% Prognose"), keine separate blosse Zahl wie im Mockup
+  ("9", "9%"). Ohne eine neue, separate numerische Eigenschaft zu erfinden
+  (oder den bestehenden String fragil zu parsen), wird `ValueLabel`
+  weiterhin als vollständiger Text neben dem Spielernamen gezeigt statt
+  als grosse Display-Schrift-Zahl.
+- **Saison-Sieger-Liste ohne Kurzcode**: Der Mockup zeigt kompakte
+  Saison-Codes wie "Q2/26". `Season.Name` ist ein freier Text ohne
+  garantierte Kürze und passt nicht in `RowItem`s schmale 20px-Pos-Spalte
+  - der Name steht daher zusammen mit dem Sieger-Namen in der
+  Hauptspalte, statt in "Pos" abgeschnitten zu werden. Ebenso zeigt die
+  Zeile die Gesamt-Spielzahl der Saison statt einer "Punkte"-Zahl, da
+  Punkte auf dieser Zusammenfassungsebene nicht vorliegen (nur pro
+  Spieler im Podest, siehe "Saison-Details" darunter).
+- **Turnier-Sieger ohne Avatar/Saison-Zuordnung**: `TournamentSummaryRow`
+  hat keine Spieler-Referenz für den Sieger (nur `WinnerLabel` als Text)
+  und keine Zuordnung zu einer Saison (der Mockup zeigt "Frühling"/
+  "Winter"/"Herbst" als Pos) - beides nicht vorhanden, daher weggelassen
+  statt erfunden.
+- **Saison-Details bleibt erhalten**: Die bereits bestehende, reichhaltigere
+  Pro-Saison-Karte (Doppel-Sieger, Podest mit Punkten) zeigt mehr als der
+  Mockup - wird nicht entfernt, sondern als zusätzlicher Abschnitt unter
+  der kompakten Mockup-Liste weitergeführt.
+- **Neue, triviale `HasCompletedTournaments`-Eigenschaft**: analog zum
+  bereits vorhandenen `HasCompletedSeasons`, für den Leerzustand der
+  Turnier-Sieger-Liste - keine neue Logik, nur `CompletedTournaments.Count
+  > 0`.

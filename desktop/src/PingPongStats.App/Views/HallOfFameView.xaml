@@ -1,140 +1,184 @@
 <UserControl x:Class="PingPongStats.App.Views.HallOfFameView"
+             x:Name="Root"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:controls="clr-namespace:PingPongStats.App.Controls">
     <StackPanel>
-        <Grid Margin="0,0,0,16">
+        <!-- Saison-Sieger / Turnier-Sieger (mockup g2 quick lists). The
+             season row shows total games rather than "points" - a season's
+             points total isn't exposed at this summary level, only per
+             player in the (richer) season detail card below - see
+             ABWEICHUNGEN.md. -->
+        <Grid Margin="0,0,0,14">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*" />
-                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="14" />
+                <ColumnDefinition Width="*" />
             </Grid.ColumnDefinitions>
-            <TextBlock Grid.Column="0" Text="Hall of Fame" Style="{StaticResource HeadingText}" />
-            <Button Grid.Column="1" Content="Aktualisieren" Style="{StaticResource SecondaryButton}"
-                    Command="{Binding RefreshCommand}" />
+
+            <controls:CardControl Grid.Column="0">
+                <StackPanel>
+                    <controls:EyebrowLabel Text="Saison-Sieger" />
+                    <TextBlock Text="Noch keine abgeschlossene Saison." Style="{StaticResource Typo.Small}"
+                               Foreground="{DynamicResource Brush.Muted}"
+                               Visibility="{Binding HasCompletedSeasons, Converter={StaticResource InverseBoolToVisibilityConverter}}" />
+                    <ItemsControl ItemsSource="{Binding CompletedSeasons}"
+                                  Visibility="{Binding HasCompletedSeasons, Converter={StaticResource BoolToVisibilityConverter}}">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <!-- No short season code (like the mockup's
+                                     "Q2/26") exists - Season.Name is a
+                                     freeform, potentially long string, so it
+                                     goes in the name column together with the
+                                     winner rather than the narrow Pos slot. -->
+                                <controls:RowItem AvatarPlayer="{Binding SinglesWinner}"
+                                                   AvatarDataPath="{Binding ElementName=Root, Path=DataContext.DataPath}"
+                                                   ValueText="{Binding TotalGames, StringFormat='{}{0} Spiele'}">
+                                    <controls:RowItem.NameText>
+                                        <MultiBinding StringFormat="{}{0} · {1}">
+                                            <Binding Path="Name" />
+                                            <Binding Path="SinglesWinner.DisplayName" />
+                                        </MultiBinding>
+                                    </controls:RowItem.NameText>
+                                </controls:RowItem>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </StackPanel>
+            </controls:CardControl>
+
+            <controls:CardControl Grid.Column="2">
+                <StackPanel>
+                    <controls:EyebrowLabel Text="Turnier-Sieger" />
+                    <TextBlock Text="Noch kein abgeschlossenes Turnier." Style="{StaticResource Typo.Small}"
+                               Foreground="{DynamicResource Brush.Muted}"
+                               Visibility="{Binding HasCompletedTournaments, Converter={StaticResource InverseBoolToVisibilityConverter}}" />
+                    <ItemsControl ItemsSource="{Binding CompletedTournaments}"
+                                  Visibility="{Binding HasCompletedTournaments, Converter={StaticResource BoolToVisibilityConverter}}">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <controls:RowItem NameText="{Binding WinnerLabel}" ValueText="">
+                                    <controls:RowItem.TrailingContent>
+                                        <controls:Pill Text="{Binding ModeLabel}" />
+                                    </controls:RowItem.TrailingContent>
+                                </controls:RowItem>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </StackPanel>
+            </controls:CardControl>
         </Grid>
 
-        <TextBlock Text="Abgeschlossene Saisons" Style="{StaticResource SectionLabelText}" Margin="0,0,0,12" />
-        <Border Style="{StaticResource CardBorder}" Margin="0,0,0,16"
-                Visibility="{Binding HasCompletedSeasons, Converter={StaticResource InverseBoolToVisibilityConverter}}">
-            <TextBlock Text="Noch keine abgeschlossene Saison (Saison-Enddatum liegt noch nicht in der Vergangenheit)."
-                       Style="{StaticResource StatLabelText}" TextWrapping="Wrap" />
-        </Border>
-        <ItemsControl ItemsSource="{Binding CompletedSeasons}" Margin="0,0,0,16"
-                      Visibility="{Binding HasCompletedSeasons, Converter={StaticResource BoolToVisibilityConverter}}">
-            <ItemsControl.ItemTemplate>
-                <DataTemplate>
-                    <Border Style="{StaticResource CardBorder}" Margin="0,0,0,12">
-                        <StackPanel>
-                            <Grid Margin="0,0,0,8">
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="*" />
-                                    <ColumnDefinition Width="Auto" />
-                                </Grid.ColumnDefinitions>
-                                <TextBlock Grid.Column="0" Text="{Binding Name}" FontWeight="SemiBold" FontSize="16" />
-                                <TextBlock Grid.Column="1" Text="{Binding DateRangeLabel}" Style="{StaticResource StatLabelText}" VerticalAlignment="Center" />
-                            </Grid>
-                            <TextBlock Text="{Binding TotalGames, StringFormat='{}{0} Spiele in dieser Saison'}"
-                                       Style="{StaticResource StatLabelText}" Margin="0,0,0,12" />
-
-                            <Grid>
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="*" />
-                                    <ColumnDefinition Width="16" />
-                                    <ColumnDefinition Width="*" />
-                                </Grid.ColumnDefinitions>
-                                <StackPanel Grid.Column="0" Orientation="Horizontal">
-                                    <controls:AvatarControl Player="{Binding SinglesWinner}"
-                                                             DataPath="{Binding DataContext.DataPath, RelativeSource={RelativeSource AncestorType=UserControl}}"
-                                                             Size="M" />
-                                    <StackPanel VerticalAlignment="Center" Margin="8,0,0,0">
-                                        <TextBlock Text="SIEGER EINZEL" Style="{StaticResource StatLabelText}" />
-                                        <TextBlock Text="{Binding SinglesWinner.DisplayName}" FontWeight="SemiBold" />
-                                    </StackPanel>
-                                </StackPanel>
-                                <StackPanel Grid.Column="2" Orientation="Horizontal">
-                                    <controls:AvatarControl Player="{Binding DoublesWinner}"
-                                                             DataPath="{Binding DataContext.DataPath, RelativeSource={RelativeSource AncestorType=UserControl}}"
-                                                             Size="M" />
-                                    <StackPanel VerticalAlignment="Center" Margin="8,0,0,0">
-                                        <TextBlock Text="SIEGER DOPPEL" Style="{StaticResource StatLabelText}" />
-                                        <TextBlock Text="{Binding DoublesWinner.DisplayName}" FontWeight="SemiBold" />
-                                    </StackPanel>
-                                </StackPanel>
-                            </Grid>
-
-                            <TextBlock Text="Podest (Einzel)" Style="{StaticResource StatLabelText}" Margin="0,12,0,4" />
-                            <ItemsControl ItemsSource="{Binding SinglesPodium}">
-                                <ItemsControl.ItemsPanel>
-                                    <ItemsPanelTemplate>
-                                        <StackPanel Orientation="Horizontal" />
-                                    </ItemsPanelTemplate>
-                                </ItemsControl.ItemsPanel>
-                                <ItemsControl.ItemTemplate>
-                                    <DataTemplate>
-                                        <Border Style="{StaticResource CardBorder}" Width="140" Margin="0,0,8,0">
-                                            <StackPanel HorizontalAlignment="Center">
-                                                <TextBlock Text="{Binding Rank, StringFormat='#{0}'}" Style="{StaticResource SectionLabelText}"
-                                                           HorizontalAlignment="Center" Margin="0,0,0,8" />
-                                                <controls:AvatarControl Player="{Binding Player}"
-                                                                         DataPath="{Binding DataContext.DataPath, RelativeSource={RelativeSource AncestorType=UserControl}}"
-                                                                         Size="S" HorizontalAlignment="Center" />
-                                                <TextBlock Text="{Binding DisplayName}" HorizontalAlignment="Center" Margin="0,8,0,0"
-                                                           TextWrapping="Wrap" TextAlignment="Center" />
-                                                <TextBlock Text="{Binding Points, StringFormat='{}{0} Punkte'}" Style="{StaticResource StatLabelText}"
-                                                           HorizontalAlignment="Center" />
-                                            </StackPanel>
-                                        </Border>
-                                    </DataTemplate>
-                                </ItemsControl.ItemTemplate>
-                            </ItemsControl>
-                        </StackPanel>
-                    </Border>
-                </DataTemplate>
-            </ItemsControl.ItemTemplate>
-        </ItemsControl>
-
-        <TextBlock Text="Abgeschlossene Turniere" Style="{StaticResource SectionLabelText}" Margin="0,0,0,12" />
-        <Border Style="{StaticResource CardBorder}" Padding="0" Margin="0,0,0,16">
+        <!-- Rekord-Tafel (mockup .rec list). ValueLabel here is a full
+             descriptive sentence ("9 Spiele an einem Tag"), not a bare
+             number like the mockup's compact rec-val - HallOfFameRecord
+             doesn't separately expose a raw numeric value, so it's shown as
+             normal text rather than forced into a giant Display-font number
+             (see ABWEICHUNGEN.md). -->
+        <controls:CardControl Margin="0,0,0,14">
             <StackPanel>
-                <DataGrid ItemsSource="{Binding CompletedTournaments}" BorderThickness="0" AutoGenerateColumns="False">
-                    <DataGrid.Columns>
-                        <DataGridTextColumn Header="Name" Binding="{Binding Name}" Width="180" />
-                        <DataGridTextColumn Header="Modus" Binding="{Binding ModeLabel}" Width="90" />
-                        <DataGridTextColumn Header="Status" Binding="{Binding StatusLabel}" Width="110" />
-                        <DataGridTextColumn Header="Sieger" Binding="{Binding WinnerLabel}" Width="200" />
-                    </DataGrid.Columns>
-                </DataGrid>
-            </StackPanel>
-        </Border>
-
-        <TextBlock Text="Rekord-Tafel (all-time)" Style="{StaticResource SectionLabelText}" Margin="0,0,0,12" />
-        <ItemsControl ItemsSource="{Binding RecordBoard}">
-            <ItemsControl.ItemsPanel>
-                <ItemsPanelTemplate>
-                    <UniformGrid Columns="2" />
-                </ItemsPanelTemplate>
-            </ItemsControl.ItemsPanel>
-            <ItemsControl.ItemTemplate>
-                <DataTemplate>
-                    <Border Style="{StaticResource CardBorder}" Margin="0,0,8,8">
-                        <StackPanel>
-                            <TextBlock Text="{Binding Title}" Style="{StaticResource StatLabelText}" Margin="0,0,0,8" />
-                            <StackPanel Orientation="Horizontal" Visibility="{Binding HasRecord, Converter={StaticResource BoolToVisibilityConverter}}">
-                                <controls:AvatarControl Player="{Binding Player}"
-                                                         DataPath="{Binding DataContext.DataPath, RelativeSource={RelativeSource AncestorType=UserControl}}"
-                                                         Size="M" />
-                                <StackPanel VerticalAlignment="Center" Margin="8,0,0,0">
-                                    <TextBlock Text="{Binding DisplayName}" FontWeight="SemiBold" />
-                                    <TextBlock Text="{Binding ValueLabel}" />
-                                    <TextBlock Text="{Binding DateLabel}" Style="{StaticResource StatLabelText}" />
+                <controls:EyebrowLabel Text="Rekord-Tafel · All-Time" />
+                <ItemsControl ItemsSource="{Binding RecordBoard}">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <Grid Margin="0,11" Visibility="{Binding HasRecord, Converter={StaticResource BoolToVisibilityConverter}}">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="12" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                <controls:AvatarControl Grid.Column="0" Player="{Binding Player}"
+                                                         DataPath="{Binding ElementName=Root, Path=DataContext.DataPath}"
+                                                         Size="M" VerticalAlignment="Center" />
+                                <StackPanel Grid.Column="2" VerticalAlignment="Center">
+                                    <TextBlock Text="{Binding Title}" FontWeight="Bold" FontSize="13.5" />
+                                    <TextBlock Foreground="{DynamicResource Brush.Muted}" FontSize="12.5" Margin="0,2,0,0">
+                                        <Run Text="{Binding DisplayName, Mode=OneWay}" />
+                                        <Run Text=" · " />
+                                        <Run Text="{Binding ValueLabel, Mode=OneWay}" />
+                                    </TextBlock>
+                                    <TextBlock Text="{Binding DateLabel}" FontFamily="{DynamicResource Font.Mono}" FontSize="10.5"
+                                               Foreground="{DynamicResource Brush.Muted}" Margin="0,2,0,0" />
                                 </StackPanel>
-                            </StackPanel>
-                            <TextBlock Text="Noch kein Rekord vorhanden." Style="{StaticResource StatLabelText}"
+                            </Grid>
+                            <TextBlock Text="{Binding Title, StringFormat='{}{0}: noch kein Rekord vorhanden.'}"
+                                       Style="{StaticResource Typo.Small}" Foreground="{DynamicResource Brush.Muted}" Margin="0,6,0,6"
                                        Visibility="{Binding HasRecord, Converter={StaticResource InverseBoolToVisibilityConverter}}" />
-                        </StackPanel>
-                    </Border>
-                </DataTemplate>
-            </ItemsControl.ItemTemplate>
-        </ItemsControl>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </StackPanel>
+        </controls:CardControl>
+
+        <!-- Saison-Details: richer per-season info (Doppel-Sieger, Podest) the
+             mockup's compact "Saison-Sieger" list doesn't show - kept rather
+             than dropped (see ABWEICHUNGEN.md). -->
+        <StackPanel Visibility="{Binding HasCompletedSeasons, Converter={StaticResource BoolToVisibilityConverter}}">
+            <TextBlock Text="Saison-Details" Style="{StaticResource SectionLabelText}" Margin="0,0,0,10" />
+            <ItemsControl ItemsSource="{Binding CompletedSeasons}" Margin="0,0,0,14">
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                        <controls:CardControl Margin="0,0,0,12">
+                            <StackPanel>
+                                <Grid Margin="0,0,0,8">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="Auto" />
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Grid.Column="0" Text="{Binding Name}" FontWeight="Bold" FontSize="16" />
+                                    <TextBlock Grid.Column="1" Text="{Binding DateRangeLabel}" FontFamily="{DynamicResource Font.Mono}"
+                                               FontSize="11" Foreground="{DynamicResource Brush.Muted}" VerticalAlignment="Center" />
+                                </Grid>
+                                <TextBlock Text="{Binding TotalGames, StringFormat='{}{0} Spiele in dieser Saison'}"
+                                           Style="{StaticResource Typo.Small}" Foreground="{DynamicResource Brush.Muted}" Margin="0,0,0,12" />
+
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="16" />
+                                        <ColumnDefinition Width="*" />
+                                    </Grid.ColumnDefinitions>
+                                    <StackPanel Grid.Column="0" Orientation="Horizontal">
+                                        <controls:AvatarControl Player="{Binding SinglesWinner}"
+                                                                 DataPath="{Binding ElementName=Root, Path=DataContext.DataPath}"
+                                                                 Size="M" />
+                                        <StackPanel VerticalAlignment="Center" Margin="8,0,0,0">
+                                            <controls:EyebrowLabel Text="Sieger Einzel" Margin="0" />
+                                            <TextBlock Text="{Binding SinglesWinner.DisplayName}" FontWeight="Bold" />
+                                        </StackPanel>
+                                    </StackPanel>
+                                    <StackPanel Grid.Column="2" Orientation="Horizontal">
+                                        <controls:AvatarControl Player="{Binding DoublesWinner}"
+                                                                 DataPath="{Binding ElementName=Root, Path=DataContext.DataPath}"
+                                                                 Size="M" />
+                                        <StackPanel VerticalAlignment="Center" Margin="8,0,0,0">
+                                            <controls:EyebrowLabel Text="Sieger Doppel" Margin="0" />
+                                            <TextBlock Text="{Binding DoublesWinner.DisplayName}" FontWeight="Bold" />
+                                        </StackPanel>
+                                    </StackPanel>
+                                </Grid>
+
+                                <controls:EyebrowLabel Text="Podest (Einzel)" Margin="0,14,0,8" />
+                                <ItemsControl ItemsSource="{Binding SinglesPodium}">
+                                    <ItemsControl.ItemsPanel>
+                                        <ItemsPanelTemplate>
+                                            <StackPanel Orientation="Horizontal" />
+                                        </ItemsPanelTemplate>
+                                    </ItemsControl.ItemsPanel>
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate>
+                                            <controls:StatTile Label="{Binding Rank, StringFormat='Rang {0}'}"
+                                                                Value="{Binding DisplayName}"
+                                                                SubText="{Binding Points, StringFormat='{}{0} Punkte'}"
+                                                                Margin="0,0,10,0" />
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                            </StackPanel>
+                        </controls:CardControl>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+        </StackPanel>
     </StackPanel>
 </UserControl>

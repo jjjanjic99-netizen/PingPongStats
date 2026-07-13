@@ -18,6 +18,7 @@ public partial class HallOfFameViewModel : ObservableObject
     public string DataPath => _settingsRepository.Load().DataPath;
 
     [ObservableProperty] private bool hasCompletedSeasons;
+    [ObservableProperty] private bool hasCompletedTournaments;
 
     public ObservableCollection<SeasonHallOfFameRow> CompletedSeasons { get; } = new();
     public ObservableCollection<TournamentSummaryRow> CompletedTournaments { get; } = new();
@@ -68,6 +69,8 @@ public partial class HallOfFameViewModel : ObservableObject
         {
             CompletedTournaments.Add(new TournamentSummaryRow { Tournament = t, WinnerLabel = BuildTournamentWinnerLabel(t, playersById) });
         }
+
+        HasCompletedTournaments = CompletedTournaments.Count > 0;
 
         var board = HallOfFameService.BuildRecordBoard(_dataService.Players, _dataService.Matches, _dataService.DoubleMatches);
         RecordBoard.Clear();
