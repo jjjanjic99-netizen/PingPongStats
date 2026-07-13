@@ -268,3 +268,26 @@ nötig war. Reihenfolge: chronologisch nach Phase (D1–D4).
   gewesen (die App hatte bereits Rank/Player/DisplayName/Played/Wins/
   Losses/SetDifferenceLabel/Points in exakt der vom Mockup benötigten
   Form).
+
+## Phase D4 — Turnier
+
+- **Kein Setup-Formular im Mockup**: Der Mockup zeigt nur ein bereits
+  laufendes Turnier, kein Erstellungsformular. Das bestehende
+  Setup-Formular (Name, Doppel-Checkbox, Teilnehmerauswahl, Team-Zuteilung)
+  bleibt funktional unverändert, nur mit den neuen Bausteinen/Farben
+  eingefärbt.
+- **Kein Zahlen-Score pro Bracket-Seite**: Der Mockup zeigt pro Partie
+  eine Satzzahl (z. B. "3"/"0"). `TournamentSlotRow` speichert nur
+  `WinnerEntrantId`/`WinnerLabel`, keinen Satz-Score pro Seite. Statt eine
+  neue Zahl zu erfinden, zeigt die gewonnene Partie stattdessen
+  "Sieger: {Name}" in Win-Grün unterhalb der beiden Seiten - dieselbe
+  Information, nur nicht als Zahlenspalte.
+  Ist ein Slot spielbar (`IsPlayable`), erhält die Karte den
+  Ball-Rahmen (mockup `.match.live`); ein `?`/kursiv-muted Name für TBD-
+  Seiten (mockup `.match.next`) kommt über `EntrantX.IsTbd`.
+- **Doppel-Bracket zeigt nur einen Avatar pro Team**: `EntrantX.Players`
+  enthält bei Doppel zwei Spieler, `AvatarControl` kann aber nur einen
+  Spieler darstellen. Ein neuer `FirstPlayerConverter` (App-Layer, keine
+  Core-Änderung) wählt den ersten Spieler des Teams - eine rein optische
+  Vereinfachung, der Name-Text zeigt weiterhin beide Namen
+  ("Frei &amp; Baumann" via `EntrantX.Label`).
