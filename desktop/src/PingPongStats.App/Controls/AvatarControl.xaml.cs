@@ -67,27 +67,44 @@ public partial class AvatarControl : UserControl
         ((AvatarControl)d).Refresh();
     }
 
+    /// <summary>Exact mockup .av sizes/fonts (S/M/L/XL) - L and XL additionally
+    /// get a ring border (subtle white / solid Ball orange).</summary>
     private void Refresh()
     {
         var diameter = Size switch
         {
-            "S" => 32.0,
-            "L" => 96.0,
-            _ => 48.0,
+            "S" => 30.0,
+            "L" => 76.0,
+            "XL" => 118.0,
+            _ => 44.0,
         };
         var fontSize = Size switch
         {
-            "S" => 12.0,
-            "L" => 32.0,
-            _ => 16.0,
+            "S" => 14.0,
+            "L" => 33.0,
+            "XL" => 50.0,
+            _ => 19.0,
         };
+        var strokeThickness = Size switch
+        {
+            "L" => 3.0,
+            "XL" => 4.0,
+            _ => 0.0,
+        };
+        Brush strokeBrush = Size == "XL"
+            ? Application.Current.TryFindResource("Brush.Ball") as Brush ?? Brushes.Transparent
+            : new SolidColorBrush(Color.FromArgb(41, 255, 255, 255)); // rgba(255,255,255,.16)
 
         RootGrid.Width = diameter;
         RootGrid.Height = diameter;
         FallbackEllipse.Width = diameter;
         FallbackEllipse.Height = diameter;
+        FallbackEllipse.Stroke = strokeBrush;
+        FallbackEllipse.StrokeThickness = strokeThickness;
         ImageEllipse.Width = diameter;
         ImageEllipse.Height = diameter;
+        ImageEllipse.Stroke = strokeBrush;
+        ImageEllipse.StrokeThickness = strokeThickness;
         InitialsText.FontSize = fontSize;
 
         var player = Player;
@@ -96,7 +113,7 @@ public partial class AvatarControl : UserControl
 
         var colorHex = player is not null
             ? AvatarService.GetAvatarColorHex(player.Id)
-            : "#94A3B8";
+            : "#79A2AF";
         FallbackEllipse.Fill = (Brush)new BrushConverter().ConvertFromString(colorHex)!;
 
         string? resolvedPath = null;

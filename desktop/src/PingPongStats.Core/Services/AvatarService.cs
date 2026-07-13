@@ -17,11 +17,13 @@ public static class AvatarService
 
     /// <summary>Deterministic, evenly distributed hues for the fallback avatar
     /// background, picked by hashing the player id - same player always gets
-    /// the same color, independent of insertion order.</summary>
+    /// the same color, independent of insertion order. Exact palette from
+    /// desktop/design/mockup.html's example avatars (soft pastels, readable
+    /// with the dark #08222C initials text the mockup pairs them with).</summary>
     private static readonly string[] FallbackColors =
     {
-        "#2563EB", "#DC2626", "#16A34A", "#D97706",
-        "#7C3AED", "#DB2777", "#0891B2", "#65A30D",
+        "#F2B25C", "#8FB8F0", "#7ED0C0", "#C6A0F5",
+        "#F0A0B4", "#9FD98C", "#EFD07A", "#A8BCC4",
     };
 
     public static string GetAvatarsDirectory(string dataPath) => Path.Combine(dataPath, "avatars");

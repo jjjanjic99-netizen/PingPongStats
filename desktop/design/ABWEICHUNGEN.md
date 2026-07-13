@@ -75,3 +75,30 @@ nötig war. Reihenfolge: chronologisch nach Phase (D1–D4).
   die in Phase D4 nicht auf die neue `CardControl` migriert werden
   (Spieler, Spiele, Head-to-Head, Einstellungen, Anmeldung), behalten
   daher die flachere `CardBorder`-Optik ohne diese Linie.
+
+## Phase D3 — Wiederverwendbare Bausteine (UserControls)
+
+- **`RowItem` deckt nur einfache Listen-Zeilen ab**: Der Baustein bildet
+  das Mockup-`.row`-Muster nach (Position, kleiner Avatar, Name, optionaler
+  Trailing-Inhalt wie eine `Pill`, mono Wert rechts, dünner Trenner unten) -
+  passend für Elo-Rangliste, Hall-of-Fame-Listen, Bilanz-Countdown u.ä.
+  Zeilen mit mehreren eigenständigen Zahlenspalten (die Liga-Tabelle mit
+  Siege/Niederlagen/Sätzen/Punkten nebeneinander) werden in Phase D4
+  weiterhin direkt von Hand als eigenes Grid gebaut, statt sie gewaltsam
+  in `RowItem`s `TrailingContent`-Slot zu pressen - das würde die
+  Spaltenausrichtung über mehrere Zeilen hinweg unnötig verkomplizieren.
+- **Avatar-Ring bei Grösse L/XL**: Das Mockup zeichnet den farbigen Ring
+  um grosse Avatare als CSS-`box-shadow`/`inset border` (liegt "in" der
+  Kreisfläche, verkleinert das sichtbare Bild leicht). WPF's `Ellipse.Stroke`
+  zentriert die Linie stattdessen auf dem geometrischen Rand (halb innen,
+  halb aussen) - eine minimale, rein optische Annäherung ohne
+  Funktionsunterschied. Falls der Ring auf einem Windows-Rechner sichtbar
+  dicker/dünner wirkt als im Mockup, lässt sich das bei Bedarf über eine
+  minimal grössere/kleinere `diameter` je Grösse feinjustieren.
+- **Avatar-Fallback-Palette**: `AvatarService.FallbackColors` wurde von den
+  ursprünglichen generischen Web-Farben auf die acht Beispiel-Avatarfarben
+  aus dem Mockup umgestellt. Die Zuordnung Spieler→Farbe (deterministisch
+  per MD5-Hash der PlayerId) bleibt unverändert - nur die Farbwerte selbst
+  ändern sich, wodurch sich bestehende Zuordnungen zwischen den Farben in
+  der Praxis verschieben können. Kein Test prüft konkrete Farbwerte, daher
+  unkritisch.

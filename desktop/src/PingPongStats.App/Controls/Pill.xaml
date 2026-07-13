@@ -1,0 +1,13 @@
+<UserControl x:Class="PingPongStats.App.Controls.Pill"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <!-- Mockup .pill / .pill.win / .pill.bad: small mono badge, Panel2 fill,
+         1px Line border, 20px radius; Win/Bad variants recolor text+border. -->
+    <Border x:Name="Bd" Background="{DynamicResource Brush.Panel2}"
+            BorderBrush="{DynamicResource Brush.Line}" BorderThickness="1"
+            CornerRadius="{DynamicResource Radius.Pill}"
+            Padding="8,3" HorizontalAlignment="Left" VerticalAlignment="Center">
+        <TextBlock x:Name="Label" FontFamily="{DynamicResource Font.Mono}" FontSize="10.5"
+                   Foreground="{DynamicResource Brush.Muted}" />
+    </Border>
+</UserControl>

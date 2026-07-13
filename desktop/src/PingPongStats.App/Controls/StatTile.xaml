@@ -1,0 +1,17 @@
+<UserControl x:Class="PingPongStats.App.Controls.StatTile"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:controls="clr-namespace:PingPongStats.App.Controls">
+    <!-- Mockup .card.center: eyebrow label + one big Display number + an
+         optional small muted caption below. Used for standalone KPI cards
+         (Dashboard's "SPIELE TOTAL" etc., Profile's "Siegquote"/"Satzdifferenz"). -->
+    <controls:CardControl>
+        <StackPanel HorizontalAlignment="Center">
+            <controls:EyebrowLabel x:Name="EyebrowControl" HorizontalAlignment="Center" Margin="0,0,0,0" />
+            <TextBlock x:Name="ValueText" Style="{StaticResource Typo.BigStat}" FontSize="32"
+                       HorizontalAlignment="Center" TextWrapping="Wrap" TextAlignment="Center" />
+            <TextBlock x:Name="SubTextBlock" Style="{StaticResource Typo.Small}"
+                       HorizontalAlignment="Center" Margin="0,5,0,0" TextWrapping="Wrap" TextAlignment="Center" />
+        </StackPanel>
+    </controls:CardControl>
+</UserControl>
