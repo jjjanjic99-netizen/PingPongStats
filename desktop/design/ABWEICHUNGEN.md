@@ -403,22 +403,29 @@ Ressourcenschlüssel-Abgleich waren möglich. Der erste echte Build in Visual
 Studio deckte drei reale Fehler auf, die diese statische Prüfung nicht
 erkennen konnte:
 
-1. **`CharacterSpacing` ist kein Property von `TextBlock`**: Anders als
-   angenommen ist `CharacterSpacing` keine eigene `TextBlock`-Eigenschaft,
-   sondern eine angehängte Eigenschaft von
-   `System.Windows.Documents.TextElement`. Ein blosses
-   `CharacterSpacing="17"` bzw. `<Setter Property="CharacterSpacing" .../>`
-   ist daher ungültig. Behoben durch die vollqualifizierte angehängte
-   Schreibweise (`xmlns:doc="clr-namespace:System.Windows.Documents;
-   assembly=PresentationFramework"`, dann `doc:TextElement.CharacterSpacing`)
-   in `DesignTokens.xaml`, `MainWindow.xaml`, `DashboardView.xaml`,
-   `MatchEditView.xaml` und `DoublesView.xaml`. Da `DesignTokens.xaml` von
-   praktisch jeder anderen Ressourcen-Datei/View transitiv geladen wird,
-   liess dieser eine Fehler dort das gesamte Ressourcen-Wörterbuch (und
-   damit fast jede `{Static/DynamicResource}`-Auflösung in der ganzen App)
-   fehlschlagen - das erklärt die grosse Zahl an "Ressource nicht
-   gefunden"/"Typ nicht gefunden"-Folgefehlern in der ursprünglichen
-   Fehlerliste.
+1. **`CharacterSpacing` existiert in WPF überhaupt nicht** - weder auf
+   `TextBlock` noch (Korrektur eines ersten, ebenfalls falschen
+   Reparaturversuchs) als angehängte Eigenschaft von
+   `System.Windows.Documents.TextElement`. Das war eine Verwechslung mit
+   `Windows.UI.Xaml.Controls.TextBlock.CharacterSpacing` aus UWP/WinUI -
+   einem anderen, unverwandten UI-Framework. WPF hat **keinen** eingebauten
+   Mechanismus für Buchstabenabstand/Tracking auf `TextBlock`, in keiner
+   .NET-Version. Der erste Reparaturversuch (`doc:TextElement.
+   CharacterSpacing`) kompilierte deshalb ebenfalls nicht ("Die Eigenschaft
+   'CharacterSpacing', die angehängt werden kann, wurde in Typ 'TextElement'
+   nicht gefunden"). Endgültig behoben durch vollständiges Entfernen jeder
+   `CharacterSpacing`-Verwendung (Attribute und Style-Setter) aus
+   `DesignTokens.xaml`, `MainWindow.xaml`, `DashboardView.xaml`,
+   `MatchEditView.xaml` und `DoublesView.xaml` - der Mockup-Buchstabenabstand
+   auf H1/Eyebrow/Sieg-Overlay-Kicker/COMEBACK-Badge wird nicht nachgebildet,
+   die Schriftgrösse/-familie/-farbe bleiben wie spezifiziert. Da
+   `DesignTokens.xaml` von praktisch jeder anderen Ressourcen-Datei/View
+   transitiv geladen wird, liess dieser eine Fehler dort das gesamte
+   Ressourcen-Wörterbuch (und damit fast jede
+   `{Static/DynamicResource}`-Auflösung in der ganzen App) fehlschlagen -
+   das erklärt die grosse Zahl an "Ressource nicht gefunden"/"Typ nicht
+   gefunden"/"Assembly kann nicht geladen werden"-Folgefehlern in beiden
+   bisherigen Fehlerlisten.
 2. **Doppelt gesetzte `Style`-Eigenschaft** (`MainWindow.xaml`, die vier
    Zeitraum-Segment-Buttons "7T"/"30T"/"90T"/"Alle"): Jeder Button hatte
    sowohl ein `Style="{StaticResource SegmentButton}"`-Attribut als auch
@@ -434,11 +441,18 @@ erkennen konnte:
    `Visibility` bereits gegenseitig ausschliessend) in ein gemeinsames
    `Grid` gepackt wurden.
 
-Alle drei Fehler wurden per statischer Analyse verifiziert (u. a. ein
+Alle drei Fehler (inkl. der korrigierten `CharacterSpacing`-Entfernung) wurden
+nach jeder Runde per statischer Analyse erneut verifiziert (u. a. ein
 Python-Skript, das jedes `DataTemplate`/`Border`/`ContentControl` im
-gesamten App-Projekt auf mehr als ein echtes Kind-Element prüft, und ein
+gesamten App-Projekt auf mehr als ein echtes Kind-Element prüft, ein
 Abgleich aller Elemente mit gleichzeitigem `Style`-Attribut und
-`*.Style`-Kind-Element) - keine weiteren Vorkommen gefunden. Ein
+`*.Style`-Kind-Element, und ein erneuter Volltext-Grep auf
+`CharacterSpacing`/`xmlns:doc`) - keine weiteren Vorkommen gefunden. Ein
 tatsächlicher `dotnet build`/Kompilierlauf war in dieser Umgebung weiterhin
-nicht möglich; die nächste Windows-Rückmeldung sollte zeigen, ob damit alle
-gemeldeten Fehler behoben sind.
+nicht möglich; alle übrigen Fehler der zweiten Fehlerliste (u. a. die
+"PingPongStats.Core kann nicht geladen werden"/"Typ nicht gefunden"/
+"Ressource hat inkompatiblen Typ"-Meldungen) betrafen ausschliesslich
+`CharacterSpacing`-Folgefehler in `DesignTokens.xaml` bzw. Dateien, die es
+transitiv laden - keine davon hatte eine eigenständige, andere Ursache. Die
+nächste Windows-Rückmeldung sollte zeigen, ob damit alle gemeldeten Fehler
+behoben sind.

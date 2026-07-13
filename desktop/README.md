@@ -718,9 +718,12 @@ Bitte auf einem Windows-Rechner mit Visual Studio/`dotnet build` sichtprüfen:
 5. **DatePicker-Kalender-Popup**: nur das Eingabefeld ist neu gestylt, das
    aufklappende Kalender-Popup selbst verwendet weiterhin WPFs
    Standard-Template - lesbar auf dunklem Grund?
-6. **CharacterSpacing-Werte** (px→WPF-Einheiten-Umrechnung für Eyebrow-Labels,
-   H1, Sieg-Overlay-Kicker) - wirken die Abstände wie im Mockup oder zu
-   eng/weit?
+6. **Kein Buchstabenabstand (Letter-Spacing/Tracking)**: WPF hat dafür keine
+   eingebaute Eigenschaft (weder auf `TextBlock` noch als angehängte
+   `TextElement`-Eigenschaft - beides schlug beim echten Build fehl, siehe
+   ABWEICHUNGEN.md). Eyebrow-Labels, H1 und der Sieg-Overlay-Kicker haben
+   daher keinen Tracking-Effekt wie im Mockup - wirkt die Schrift trotzdem
+   lesbar/stimmig genug?
 7. **Avatar-Ring bei Grösse L/XL**: `Ellipse.Stroke` liegt zentriert auf dem
    Rand statt (wie CSS `border`/`box-shadow`) innen - wirkt der Ring dünner/
    dicker als im Mockup?

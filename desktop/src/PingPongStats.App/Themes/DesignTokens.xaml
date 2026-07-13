@@ -1,7 +1,6 @@
 <ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-                    xmlns:sys="clr-namespace:System;assembly=mscorlib"
-                    xmlns:doc="clr-namespace:System.Windows.Documents;assembly=PresentationFramework">
+                    xmlns:sys="clr-namespace:System;assembly=mscorlib">
 
     <!-- ══════════════════════════════════════════════════════════════════
          Phase D1: design tokens, transcribed exactly from
@@ -75,18 +74,17 @@
     <FontFamily x:Key="Font.Body">pack://application:,,,/Assets/Fonts/#Space Grotesk, Segoe UI</FontFamily>
     <FontFamily x:Key="Font.Mono">pack://application:,,,/Assets/Fonts/#JetBrains Mono, Consolas, Segoe UI</FontFamily>
 
-    <!-- ── Typography scale (exact px/letter-spacing from the mockup) ───── -->
-    <!-- letter-spacing 0.5px @ 30px ≈ CharacterSpacing 17 (1000ths of font size,
-         WPF's unit for character spacing). This is TextElement's attached
-         property (Run/Span/Inlines), not a TextBlock-owned one - TextBlock
-         still honors it on itself via GetValue, but Style Setters and plain
-         XAML attributes both need the qualified doc:TextElement.* name;
-         the bare "CharacterSpacing" name does not resolve on TextBlock. -->
+    <!-- ── Typography scale (exact px from the mockup) ──────────────────── -->
+    <!-- Mockup's H1 has letter-spacing:.5px. WPF has no letter/character
+         spacing property at all for TextBlock (unlike UWP/WinUI's
+         TextBlock.CharacterSpacing, which does not exist in WPF - confirmed
+         by real build errors, not just a naming difference) - there is no
+         built-in way to reproduce this, so it is simply omitted. See
+         ABWEICHUNGEN.md. -->
     <Style x:Key="Typo.H1" TargetType="TextBlock">
         <Setter Property="FontFamily" Value="{StaticResource Font.Display}" />
         <Setter Property="FontWeight" Value="ExtraBold" />
         <Setter Property="FontSize" Value="30" />
-        <Setter Property="doc:TextElement.CharacterSpacing" Value="17" />
         <Setter Property="Foreground" Value="{StaticResource Brush.Chalk}" />
     </Style>
 
@@ -124,11 +122,12 @@
 
     <!-- WPF has no CSS text-transform:uppercase for arbitrary bound text, so
          actual upper-casing happens in code (see EyebrowLabel, Phase D3) -
-         this style only sets font/size/color/tracking. -->
+         this style only sets font/size/color. No letter-spacing property
+         exists in WPF at all (see Typo.H1's comment above), so the mockup's
+         1.6px eyebrow tracking is not reproduced here either. -->
     <Style x:Key="Typo.Eyebrow" TargetType="TextBlock">
         <Setter Property="FontFamily" Value="{StaticResource Font.Mono}" />
         <Setter Property="FontSize" Value="10.5" />
-        <Setter Property="doc:TextElement.CharacterSpacing" Value="152" />
         <Setter Property="Foreground" Value="{StaticResource Brush.Muted}" />
     </Style>
 
