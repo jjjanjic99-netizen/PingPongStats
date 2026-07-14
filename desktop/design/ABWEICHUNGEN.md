@@ -25,12 +25,17 @@ nötig war. Reihenfolge: chronologisch nach Phase (D1–D4).
   einem echten Windows-Rechner geprüft werden** (siehe Checkliste am Ende
   der Session) - dieser Effekt kann in der Linux-Sandbox nicht kompiliert
   oder gerendert werden.
-- **`letter-spacing` → `TextBlock.CharacterSpacing`**: CSS' `letter-spacing`
-  ist ein Pixel-Wert; WPFs `CharacterSpacing` (seit .NET Core 3.0 auf
-  `TextBlock` verfügbar) ist in 1/1000 der Schriftgrösse angegeben. Die
-  Werte in `DesignTokens.xaml` (`Typo.H1` = 17, `Typo.Eyebrow` = 152)
-  sind aus den Mockup-Px-Werten (0.5px @ 30px bzw. 1.6px @ 10.5px)
-  umgerechnet, keine erfundenen Werte.
+- ~~`letter-spacing` → `TextBlock.CharacterSpacing`~~ **(korrigiert, siehe
+  "Build-Fehler behoben" weiter unten)**: Diese Zeile behauptete
+  ursprünglich, WPF habe seit .NET Core 3.0 eine `CharacterSpacing`-
+  Eigenschaft auf `TextBlock`. Das war falsch - eine Verwechslung mit
+  `Windows.UI.Xaml.Controls.TextBlock.CharacterSpacing` aus UWP/WinUI,
+  einem anderen Framework. Der reale Windows-Build bestätigte, dass WPF
+  gar keine Buchstabenabstands-Eigenschaft kennt (weder auf `TextBlock`
+  noch als angehängte `TextElement`-Eigenschaft). Das Mockup-Letter-
+  Spacing auf H1/Eyebrow-Labels wird daher nicht nachgebildet; die
+  Werte 17/152 aus der ersten Fassung sind entfernt und keine gültige
+  WPF-Einheit für irgendetwas.
 - **`text-transform:uppercase`**: In WPF gibt es keine deklarative
   Textumwandlung für beliebig gebundenen Text. Wird durch `EyebrowLabel`
   (Phase D3) in C# gelöst (`.ToUpper()` auf den gebundenen String), nicht
