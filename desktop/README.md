@@ -667,9 +667,17 @@ stillgelegt) - die App zeigt jetzt ausschliesslich die Mockup-Palette.
 Wiederverwendbare Controls (`Controls/`): `AvatarControl` (Grössen S/M/L/XL,
 deterministische Farbe aus der Spieler-Id), `CardControl` (Panel-Fläche mit
 1px-Rahmen und der Signatur-"Tischmittellinie" als 2px-Verlaufslinie am
-unteren Rand), `EyebrowLabel`, `Pill`, `StatTile`, `BarRow`, `RowItem`. Jede
-Ansicht verwendet ausschliesslich diese Bausteine statt handgemalter
+unteren Rand), `Pill`, `StatTile`, `BarRow`, `RowItem`. Jede Ansicht
+verwendet ausschliesslich diese Bausteine statt handgemalter
 Ein-Weg-Layouts.
+
+`CardControl` ist kein `UserControl`, sondern ein lookless `ContentControl`
+mit Style/`ControlTemplate` in `Themes/Controls.xaml` - ein verschachteltes
+`UserControl` mit eigenem `x:Name` im Content eines anderen `UserControl`
+kollidiert mit dessen XAML-Namescope (MC3093); ein eigenes eyebrow-Control
+gibt es dafür nicht mehr, stattdessen der Style `Typo.Eyebrow`
+(`DesignTokens.xaml`) direkt auf einem `TextBlock`. Details und die Liste
+der geprüften Controls: `desktop/design/ABWEICHUNGEN.md`.
 
 ### Reduced Motion
 

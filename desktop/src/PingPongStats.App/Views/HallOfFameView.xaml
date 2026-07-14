@@ -18,7 +18,7 @@
 
             <controls:CardControl Grid.Column="0">
                 <StackPanel>
-                    <controls:EyebrowLabel Text="Saison-Sieger" />
+                    <TextBlock Style="{StaticResource Typo.Eyebrow}" Text="SAISON-SIEGER" />
                     <TextBlock Text="Noch keine abgeschlossene Saison." Style="{StaticResource Typo.Small}"
                                Foreground="{DynamicResource Brush.Muted}"
                                Visibility="{Binding HasCompletedSeasons, Converter={StaticResource InverseBoolToVisibilityConverter}}" />
@@ -49,7 +49,7 @@
 
             <controls:CardControl Grid.Column="2">
                 <StackPanel>
-                    <controls:EyebrowLabel Text="Turnier-Sieger" />
+                    <TextBlock Style="{StaticResource Typo.Eyebrow}" Text="TURNIER-SIEGER" />
                     <TextBlock Text="Noch kein abgeschlossenes Turnier." Style="{StaticResource Typo.Small}"
                                Foreground="{DynamicResource Brush.Muted}"
                                Visibility="{Binding HasCompletedTournaments, Converter={StaticResource InverseBoolToVisibilityConverter}}" />
@@ -77,7 +77,7 @@
              (see ABWEICHUNGEN.md). -->
         <controls:CardControl Margin="0,0,0,14">
             <StackPanel>
-                <controls:EyebrowLabel Text="Rekord-Tafel · All-Time" />
+                <TextBlock Style="{StaticResource Typo.Eyebrow}" Text="REKORD-TAFEL · ALL-TIME" />
                 <ItemsControl ItemsSource="{Binding RecordBoard}">
                     <ItemsControl.ItemTemplate>
                         <DataTemplate>
@@ -149,7 +149,7 @@
                                                                  DataPath="{Binding ElementName=Root, Path=DataContext.DataPath}"
                                                                  Size="M" />
                                         <StackPanel VerticalAlignment="Center" Margin="8,0,0,0">
-                                            <controls:EyebrowLabel Text="Sieger Einzel" Margin="0" />
+                                            <TextBlock Style="{StaticResource Typo.Eyebrow}" Text="SIEGER EINZEL" Margin="0" />
                                             <TextBlock Text="{Binding SinglesWinner.DisplayName}" FontWeight="Bold" />
                                         </StackPanel>
                                     </StackPanel>
@@ -158,13 +158,13 @@
                                                                  DataPath="{Binding ElementName=Root, Path=DataContext.DataPath}"
                                                                  Size="M" />
                                         <StackPanel VerticalAlignment="Center" Margin="8,0,0,0">
-                                            <controls:EyebrowLabel Text="Sieger Doppel" Margin="0" />
+                                            <TextBlock Style="{StaticResource Typo.Eyebrow}" Text="SIEGER DOPPEL" Margin="0" />
                                             <TextBlock Text="{Binding DoublesWinner.DisplayName}" FontWeight="Bold" />
                                         </StackPanel>
                                     </StackPanel>
                                 </Grid>
 
-                                <controls:EyebrowLabel Text="Podest (Einzel)" Margin="0,14,0,8" />
+                                <TextBlock Style="{StaticResource Typo.Eyebrow}" Text="PODEST (EINZEL)" Margin="0,14,0,8" />
                                 <ItemsControl ItemsSource="{Binding SinglesPodium}">
                                     <ItemsControl.ItemsPanel>
                                         <ItemsPanelTemplate>

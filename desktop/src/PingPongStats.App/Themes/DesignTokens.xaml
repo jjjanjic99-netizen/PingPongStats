@@ -120,15 +120,20 @@
         <Setter Property="Foreground" Value="{StaticResource Brush.Muted}" />
     </Style>
 
-    <!-- WPF has no CSS text-transform:uppercase for arbitrary bound text, so
-         actual upper-casing happens in code (see EyebrowLabel, Phase D3) -
-         this style only sets font/size/color. No letter-spacing property
-         exists in WPF at all (see Typo.H1's comment above), so the mockup's
-         1.6px eyebrow tracking is not reproduced here either. -->
+    <!-- Mockup .eyebrow (mono, small, muted, 12px bottom margin). WPF has no
+         CSS text-transform:uppercase for arbitrary bound text (fixed post-
+         MC3093: this is now a plain Style, not a UserControl - see
+         ABWEICHUNGEN.md), so upper-casing happens via UpperCaseConverter at
+         each bound call site, or as literal uppercase text for static
+         labels. No letter-spacing property exists in WPF at all (see
+         Typo.H1's comment above), so the mockup's 1.6px eyebrow tracking is
+         not reproduced either. -->
     <Style x:Key="Typo.Eyebrow" TargetType="TextBlock">
         <Setter Property="FontFamily" Value="{StaticResource Font.Mono}" />
         <Setter Property="FontSize" Value="10.5" />
         <Setter Property="Foreground" Value="{StaticResource Brush.Muted}" />
+        <Setter Property="Margin" Value="0,0,0,12" />
+        <Setter Property="TextWrapping" Value="Wrap" />
     </Style>
 
     <!-- ── Radii ─────────────────────────────────────────────────────────

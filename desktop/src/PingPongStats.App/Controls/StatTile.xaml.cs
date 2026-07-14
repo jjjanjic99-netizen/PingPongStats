@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
@@ -52,7 +53,7 @@ public partial class StatTile : UserControl
     }
 
     private static void OnLabelChanged(DependencyObject d, DependencyPropertyChangedEventArgs e) =>
-        ((StatTile)d).EyebrowControl.Text = (string)e.NewValue;
+        ((StatTile)d).EyebrowControl.Text = ((string)e.NewValue).ToUpper(CultureInfo.CurrentCulture);
 
     private static void OnValueChanged(DependencyObject d, DependencyPropertyChangedEventArgs e) =>
         ((StatTile)d).ValueText.Text = (string)e.NewValue;

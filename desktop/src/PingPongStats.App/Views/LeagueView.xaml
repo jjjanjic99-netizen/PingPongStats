@@ -12,7 +12,7 @@
 
         <controls:CardControl Visibility="{Binding HasActiveSeason, Converter={StaticResource BoolToVisibilityConverter}}">
             <StackPanel>
-                <controls:EyebrowLabel Text="{Binding ActiveSeasonLabel}" />
+                <TextBlock Style="{StaticResource Typo.Eyebrow}" Text="{Binding ActiveSeasonLabel, Converter={StaticResource UpperCaseConverter}}" />
 
                 <!-- Podium (mockup .podium): 2nd/1st/3rd order, 1st tallest and
                      Ball-accented. -->

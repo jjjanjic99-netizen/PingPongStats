@@ -25,7 +25,12 @@
 
             <TextBlock x:Name="PosBlock" Grid.Column="0" FontFamily="{DynamicResource Font.Mono}" FontSize="12"
                        Foreground="{DynamicResource Brush.Muted}" VerticalAlignment="Center" />
-            <controls:AvatarControl x:Name="Avatar" Grid.Column="2" Size="S" VerticalAlignment="Center"
+            <!-- No x:Name here: AvatarControl is a UserControl, and this
+                 name was unused in code-behind anyway - removed as the same
+                 category of namescope risk that broke StatTile/EyebrowLabel
+                 (MC3093), even though the compiler hadn't reached this file
+                 yet. See ABWEICHUNGEN.md. -->
+            <controls:AvatarControl Grid.Column="2" Size="S" VerticalAlignment="Center"
                                      Player="{Binding ElementName=Root, Path=AvatarPlayer}"
                                      DataPath="{Binding ElementName=Root, Path=AvatarDataPath}" />
             <TextBlock x:Name="NameBlock" Grid.Column="4" FontWeight="Medium" FontSize="14"

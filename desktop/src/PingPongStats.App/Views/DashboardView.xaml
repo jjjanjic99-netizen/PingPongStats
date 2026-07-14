@@ -47,7 +47,7 @@
 
             <controls:CardControl Grid.Column="0" Visibility="{Binding HasStreakAlarms, Converter={StaticResource BoolToVisibilityConverter}}">
                 <StackPanel>
-                    <controls:EyebrowLabel Text="Streak-Alarm" />
+                    <TextBlock Style="{StaticResource Typo.Eyebrow}" Text="STREAK-ALARM" />
                     <ItemsControl ItemsSource="{Binding StreakAlarms}">
                         <ItemsControl.ItemTemplate>
                             <DataTemplate>
@@ -103,7 +103,7 @@
             </controls:CardControl>
             <controls:CardControl Grid.Column="0" Visibility="{Binding HasStreakAlarms, Converter={StaticResource InverseBoolToVisibilityConverter}}">
                 <StackPanel>
-                    <controls:EyebrowLabel Text="Streak-Alarm" />
+                    <TextBlock Style="{StaticResource Typo.Eyebrow}" Text="STREAK-ALARM" />
                     <TextBlock Text="Aktuell keine Serie ab 3 Siegen in Folge." Style="{StaticResource Typo.Small}"
                                Foreground="{DynamicResource Brush.Muted}" TextWrapping="Wrap" />
                 </StackPanel>
@@ -111,7 +111,7 @@
 
             <controls:CardControl Grid.Column="2" Visibility="{Binding HasBestComeback, Converter={StaticResource BoolToVisibilityConverter}}">
                 <StackPanel>
-                    <controls:EyebrowLabel Text="Bestes Comeback" />
+                    <TextBlock Style="{StaticResource Typo.Eyebrow}" Text="BESTES COMEBACK" />
                     <!-- Only the winner's Player object is available here (no
                          opponent Player reference is plumbed through) - the
                          right-hand avatar intentionally shows no Player, which
@@ -140,7 +140,7 @@
             </controls:CardControl>
             <controls:CardControl Grid.Column="2" Visibility="{Binding HasBestComeback, Converter={StaticResource InverseBoolToVisibilityConverter}}">
                 <StackPanel>
-                    <controls:EyebrowLabel Text="Bestes Comeback" />
+                    <TextBlock Style="{StaticResource Typo.Eyebrow}" Text="BESTES COMEBACK" />
                     <TextBlock Text="Keine Spiele mit Satzdetails und mindestens 2 Sätzen Rückstand im gewählten Zeitraum."
                                Style="{StaticResource Typo.Small}" Foreground="{DynamicResource Brush.Muted}" TextWrapping="Wrap" />
                 </StackPanel>
@@ -152,7 +152,7 @@
              stands alone, full width, instead of a fabricated second card. -->
         <controls:CardControl Margin="0,0,0,14" Visibility="{Binding HasRivalryOfTheMonth, Converter={StaticResource BoolToVisibilityConverter}}">
             <StackPanel>
-                <controls:EyebrowLabel Text="Rivalität des Monats" />
+                <TextBlock Style="{StaticResource Typo.Eyebrow}" Text="RIVALITÄT DES MONATS" />
                 <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
                     <controls:AvatarControl Player="{Binding RivalryPlayer1}" DataPath="{Binding DataPath}" Size="M" />
                     <TextBlock Text="{Binding RivalryRecordLabel}" VerticalAlignment="Center" Margin="16,0" FontSize="14" />
@@ -162,7 +162,7 @@
         </controls:CardControl>
         <controls:CardControl Margin="0,0,0,14" Visibility="{Binding HasRivalryOfTheMonth, Converter={StaticResource InverseBoolToVisibilityConverter}}">
             <StackPanel>
-                <controls:EyebrowLabel Text="Rivalität des Monats" />
+                <TextBlock Style="{StaticResource Typo.Eyebrow}" Text="RIVALITÄT DES MONATS" />
                 <TextBlock Text="Noch kein Einzel-Paar mit mindestens 3 Spielen in den letzten 30 Tagen."
                            Style="{StaticResource Typo.Small}" Foreground="{DynamicResource Brush.Muted}" TextWrapping="Wrap" />
             </StackPanel>
@@ -184,7 +184,7 @@
              ABWEICHUNGEN.md). -->
         <controls:CardControl Margin="0,0,0,14">
             <StackPanel>
-                <controls:EyebrowLabel Text="Elo-Rangliste" />
+                <TextBlock Style="{StaticResource Typo.Eyebrow}" Text="ELO-RANGLISTE" />
                 <ItemsControl ItemsSource="{Binding Ranking}">
                     <ItemsControl.ItemTemplate>
                         <DataTemplate>

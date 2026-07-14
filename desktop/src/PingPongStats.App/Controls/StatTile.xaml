@@ -4,10 +4,14 @@
              xmlns:controls="clr-namespace:PingPongStats.App.Controls">
     <!-- Mockup .card.center: eyebrow label + one big Display number + an
          optional small muted caption below. Used for standalone KPI cards
-         (Dashboard's "SPIELE TOTAL" etc., Profile's "Siegquote"/"Satzdifferenz"). -->
+         (Dashboard's "SPIELE TOTAL" etc., Profile's "Siegquote"/"Satzdifferenz").
+         EyebrowLabel used to be a nested UserControl here, but giving a
+         nested UserControl an x:Name from this file's own namescope is what
+         caused MC3093 - Typo.Eyebrow is now a plain Style, so this is just a
+         plain named TextBlock (no nested-UserControl namescope involved). -->
     <controls:CardControl>
         <StackPanel HorizontalAlignment="Center">
-            <controls:EyebrowLabel x:Name="EyebrowControl" HorizontalAlignment="Center" Margin="0,0,0,0" />
+            <TextBlock x:Name="EyebrowControl" Style="{StaticResource Typo.Eyebrow}" HorizontalAlignment="Center" Margin="0,0,0,0" />
             <TextBlock x:Name="ValueText" Style="{StaticResource Typo.BigStat}" FontSize="32"
                        HorizontalAlignment="Center" TextWrapping="Wrap" TextAlignment="Center" />
             <TextBlock x:Name="SubTextBlock" Style="{StaticResource Typo.Small}"

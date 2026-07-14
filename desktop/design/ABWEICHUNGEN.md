@@ -461,3 +461,75 @@ nicht möglich; alle übrigen Fehler der zweiten Fehlerliste (u. a. die
 transitiv laden - keine davon hatte eine eigenständige, andere Ursache. Die
 nächste Windows-Rückmeldung sollte zeigen, ob damit alle gemeldeten Fehler
 behoben sind.
+
+## MC3093: CardControl und EyebrowLabel von UserControl auf Style/lookless Control umgebaut
+
+Der nächste reale Build-Fehler (MC3093, `Controls/StatTile.xaml`): "Der Wert
+'EyebrowControl' des Name-Attributs kann für das Element 'EyebrowLabel'
+nicht festgelegt werden ... bereits ein Name registriert." Ursache: sowohl
+`CardControl` als auch `EyebrowLabel` waren als `UserControl` implementiert.
+Jedes `UserControl` bringt eine eigene, beim eigenen `InitializeComponent()`
+etablierte XAML-Namescope mit. Wird eine `UserControl`-Instanz mit `x:Name`
+aus einer anderen Datei heraus in den Content eines weiteren `UserControl`
+gesetzt (hier: `StatTile.xaml` gibt der verschachtelten `EyebrowLabel`-
+Instanz `x:Name="EyebrowControl"`), kollidiert das mit dieser bereits
+etablierten Namescope - ein bekanntes, dokumentiertes WPF-Verhalten, kein
+Einzelfall-Bug. Symptomatisches Entfernen des `x:Name` wäre keine
+Ursachenbehebung gewesen (der `x:Name` wird in `StatTile.xaml.cs` für
+`EyebrowControl.Text = ...` gebraucht).
+
+**Behoben durch echten Architekturwechsel, nicht durch Entfernen von
+`x:Name`:**
+
+- **`CardControl`**: kein `UserControl` mehr, sondern ein lookless
+  `ContentControl` (`Controls/CardControl.cs`, keine eigene .xaml-Datei
+  mehr) mit einem impliziten `Style`/`ControlTemplate` in
+  `Themes/Controls.xaml` (Border mit Panel-Fläche/Line-Rahmen/Radius 12,
+  `ContentPresenter`, plus die Signatur-Tischlinie als 2px-Verlaufslinie
+  am unteren Rand - exakt dieselbe visuelle Struktur wie zuvor). Ein
+  lookless `Control` hat kein eigenes kompiliertes XAML-Dokument und
+  etabliert daher keine eigene Namescope pro Instanz - diese Fehlerklasse
+  kann so grundsätzlich nicht mehr auftreten. `Content` ist jetzt
+  `ContentControl`s eingebaute Standard-Eigenschaft (die vorherige
+  `CardContent`-Notlösung aus dem MC3093-Vorgänger-Fix, siehe oben, ist
+  damit hinfällig und wurde entfernt) - jede bestehende Verwendung
+  (`<controls:CardControl>...</controls:CardControl>`) funktioniert
+  unverändert, keine einzige der ca. 50 Aufrufstellen musste angepasst
+  werden.
+- **`EyebrowLabel`**: komplett entfernt (`Controls/EyebrowLabel.xaml`/
+  `.xaml.cs` gelöscht), ersetzt durch den bereits vorhandenen
+  `x:Key="Typo.Eyebrow"`-Style in `DesignTokens.xaml` (jetzt zusätzlich
+  mit `Margin="0,0,0,12"` und `TextWrapping="Wrap"`, was vorher im
+  `UserControl` sass). Jede Verwendungsstelle
+  (`<controls:EyebrowLabel Text="..."/>`, 28 Stellen projektweit) wurde
+  ersetzt durch `<TextBlock Style="{StaticResource Typo.Eyebrow}"
+  Text="..."/>`. Die Gross-Schreibung (CSS `text-transform:uppercase`,
+  WPF kennt das für beliebigen gebundenen Text nicht deklarativ) läuft
+  jetzt für statischen Text als literal grossgeschriebener Text direkt in
+  der XAML (z. B. `Text="STREAK-ALARM"`), für gebundenen Text über einen
+  neuen `UpperCaseConverter` (`Converters/UpperCaseConverter.cs`, App-Layer,
+  `.ToUpper(CultureInfo.CurrentCulture)` - dieselbe Kultur wie vorher im
+  `EyebrowLabel`-Code-Behind).
+- **`StatTile`**: die verschachtelte `EyebrowLabel`-Instanz wurde durch
+  eine schlichte, benannte `TextBlock Style="{StaticResource
+  Typo.Eyebrow}"` ersetzt (kein `UserControl` mehr im Content, also keine
+  Namescope-Kollision); `StatTile.xaml.cs`s `OnLabelChanged` wendet jetzt
+  selbst `.ToUpper(CultureInfo.CurrentCulture)` an, da das nicht mehr
+  automatisch durch `EyebrowLabel` passiert.
+- **`RowItem`**: dieselbe Fehlerklasse lag latent auch hier vor -
+  `<controls:AvatarControl x:Name="Avatar" .../>` (ein `UserControl` mit
+  `x:Name`, verschachtelt in einem anderen `UserControl`). Der Compiler
+  hatte diese Datei zum Zeitpunkt des gemeldeten Fehlers noch nicht
+  erreicht. Das `x:Name="Avatar"` war im Code-Behind ungenutzt (verifiziert
+  per Grep) und wurde ersatzlos entfernt - `RowItem` bleibt ansonsten
+  unverändert ein `UserControl`.
+- **`AvatarControl`, `BarRow`, `Pill`**: bleiben `UserControl`s. Geprüft
+  (`grep controls: <Datei>`): keines der drei verschachtelt einen anderen
+  benannten `UserControl` in seinem eigenen Content - reine Blattelemente
+  (`Grid`/`Ellipse`/`Border`/`TextBlock`), daher nicht von dieser
+  Fehlerklasse betroffen.
+
+Projektweite Prüfung (nicht nur die gemeldete Stelle): ein Grep über alle
+`.xaml`-Dateien nach `<controls:\w+ ... x:Name="..."` findet nach diesem
+Umbau keine einzige Stelle mehr, an der ein verschachtelter,
+selbstdefinierter Control-Typ von einer anderen Datei aus benannt wird.

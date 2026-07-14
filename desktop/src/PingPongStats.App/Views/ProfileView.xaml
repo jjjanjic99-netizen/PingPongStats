@@ -75,7 +75,7 @@
         <!-- Angstgegner / Lieblingsgegner -->
         <controls:CardControl Margin="0,0,0,14">
             <StackPanel>
-                <controls:EyebrowLabel Text="Angstgegner" />
+                <TextBlock Style="{StaticResource Typo.Eyebrow}" Text="ANGSTGEGNER" />
                 <Grid Visibility="{Binding HasNemesis, Converter={StaticResource BoolToVisibilityConverter}}">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="Auto" />
@@ -98,7 +98,7 @@
 
                 <Border Height="1" Background="{DynamicResource Brush.Line}" Margin="0,14" />
 
-                <controls:EyebrowLabel Text="Lieblingsgegner" />
+                <TextBlock Style="{StaticResource Typo.Eyebrow}" Text="LIEBLINGSGEGNER" />
                 <Grid Visibility="{Binding HasFavoriteOpponent, Converter={StaticResource BoolToVisibilityConverter}}">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="Auto" />
@@ -127,7 +127,7 @@
              Comeback card's precedent (see ABWEICHUNGEN.md). -->
         <controls:CardControl Margin="0,0,0,14">
             <StackPanel>
-                <controls:EyebrowLabel Text="Bilanz-Countdown" />
+                <TextBlock Style="{StaticResource Typo.Eyebrow}" Text="BILANZ-COUNTDOWN" />
                 <TextBlock Text="Noch keine Gegner mit genügend Spielen." Style="{StaticResource Typo.Small}"
                            Foreground="{DynamicResource Brush.Muted}"
                            Visibility="{Binding HasBalanceCountdowns, Converter={StaticResource InverseBoolToVisibilityConverter}}" />
@@ -145,7 +145,7 @@
         <!-- Siegquote nach Tageszeit (mockup .bar-row list) -->
         <controls:CardControl Margin="0,0,0,14">
             <StackPanel>
-                <controls:EyebrowLabel Text="Siegquote nach Tageszeit" />
+                <TextBlock Style="{StaticResource Typo.Eyebrow}" Text="SIEGQUOTE NACH TAGESZEIT" />
                 <ItemsControl ItemsSource="{Binding TimeOfDayChart}">
                     <ItemsControl.ItemTemplate>
                         <DataTemplate>
@@ -164,7 +164,7 @@
              internally, just wrapped in CardControl. -->
         <controls:CardControl>
             <StackPanel>
-                <controls:EyebrowLabel Text="Elo-Verlauf" />
+                <TextBlock Style="{StaticResource Typo.Eyebrow}" Text="ELO-VERLAUF" />
                 <TextBlock Text="Noch keine Spiele mit Elo-Verlauf erfasst." Style="{StaticResource Typo.Small}"
                            Foreground="{DynamicResource Brush.Muted}"
                            Visibility="{Binding HasEloHistory, Converter={StaticResource InverseBoolToVisibilityConverter}}" />

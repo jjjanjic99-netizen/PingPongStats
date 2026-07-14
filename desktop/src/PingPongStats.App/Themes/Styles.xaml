@@ -31,6 +31,7 @@
     <converters:StreakTypeToTrendBrushConverter x:Key="StreakTypeToTrendBrushConverter" />
     <converters:FirstPlayerConverter x:Key="FirstPlayerConverter" />
     <converters:FractionToGridLengthConverter x:Key="FractionToGridLengthConverter" />
+    <converters:UpperCaseConverter x:Key="UpperCaseConverter" />
 
     <!-- Shared bar-chart item template/panel, used by Dashboard and Doubles views
          so both render identical hand-rolled bar charts without duplicating XAML.
@@ -71,10 +72,10 @@
     <!-- Page titles (mockup .page-title / Typo.H1: Display ExtraBold 30px). -->
     <Style x:Key="HeadingText" TargetType="TextBlock" BasedOn="{StaticResource Typo.H1}" />
 
-    <!-- Card section headers (mockup .eyebrow: mono, small, tracked, muted -
-         text case itself is authored per call site, WPF can't transform bound
-         text declaratively; see EyebrowLabel, Phase D3, for the cases where a
-         control does it in code). -->
+    <!-- Card section headers (mockup .eyebrow: mono, small, muted - text case
+         itself is authored per call site via UpperCaseConverter for bound
+         text, or literal upper-case for static text; WPF can't transform
+         bound text declaratively). -->
     <Style x:Key="SectionLabelText" TargetType="TextBlock" BasedOn="{StaticResource Typo.Eyebrow}" />
 
     <!-- Large standalone stat numbers (mockup's 42px "grosse Kennzahl"). Many

@@ -78,7 +78,7 @@
                     </StackPanel>
                 </Grid>
 
-                <controls:EyebrowLabel Text="Team A" />
+                <TextBlock Style="{StaticResource Typo.Eyebrow}" Text="TEAM A" />
                 <Grid Margin="0,0,0,13">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="*" />
@@ -91,7 +91,7 @@
                               SelectedItem="{Binding TeamAPlayer2}" IsEnabled="{Binding ArePlayerSelectorsEnabled}" />
                 </Grid>
 
-                <controls:EyebrowLabel Text="Team B" />
+                <TextBlock Style="{StaticResource Typo.Eyebrow}" Text="TEAM B" />
                 <Grid Margin="0,0,0,13">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="*" />

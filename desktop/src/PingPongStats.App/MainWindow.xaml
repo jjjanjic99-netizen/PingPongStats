@@ -224,7 +224,7 @@
                         </StackPanel>
 
                         <Border Height="1" Background="{DynamicResource Brush.Line}" Margin="6,12" />
-                        <controls:EyebrowLabel Text="Verwaltung" Margin="10,0,0,6" />
+                        <TextBlock Style="{StaticResource Typo.Eyebrow}" Text="VERWALTUNG" Margin="10,0,0,6" />
 
                         <StackPanel>
                             <Button Content="Spieler" Style="{StaticResource NavButton}" Command="{Binding ShowPlayersCommand}" />

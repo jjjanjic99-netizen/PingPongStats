@@ -1,8 +1,0 @@
-<UserControl x:Class="PingPongStats.App.Controls.EyebrowLabel"
-             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
-    <!-- Mockup .eyebrow: mono, small, uppercase, tracked, muted. WPF can't
-         declaratively uppercase bound text, so the code-behind does it
-         (Text DependencyProperty -> Label.Text = value.ToUpperInvariant()). -->
-    <TextBlock x:Name="Label" Style="{StaticResource Typo.Eyebrow}" Margin="0,0,0,12" TextWrapping="Wrap" />
-</UserControl>

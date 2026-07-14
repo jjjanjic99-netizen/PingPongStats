@@ -22,7 +22,7 @@
              ABWEICHUNGEN.md. -->
         <controls:CardControl Margin="0,0,0,14">
             <StackPanel>
-                <controls:EyebrowLabel Text="Offene Partien" />
+                <TextBlock Style="{StaticResource Typo.Eyebrow}" Text="OFFENE PARTIEN" />
                 <TextBlock Text="Aktuell keine offenen Partien." Style="{StaticResource Typo.Small}"
                            Foreground="{DynamicResource Brush.Muted}"
                            Visibility="{Binding HasOpenPendingMatches, Converter={StaticResource InverseBoolToVisibilityConverter}}" />
@@ -99,7 +99,7 @@
              top scorer and a hit-rate pill otherwise). -->
         <controls:CardControl Margin="0,0,0,14">
             <StackPanel>
-                <controls:EyebrowLabel Text="Tipp-Rangliste" />
+                <TextBlock Style="{StaticResource Typo.Eyebrow}" Text="TIPP-RANGLISTE" />
                 <ItemsControl ItemsSource="{Binding Leaderboard}">
                     <ItemsControl.ItemTemplate>
                         <DataTemplate>
@@ -123,7 +123,7 @@
              blocks, structure unchanged. -->
         <controls:CardControl>
             <StackPanel>
-                <controls:EyebrowLabel Text="Neue Partie zum Tippen anlegen" />
+                <TextBlock Style="{StaticResource Typo.Eyebrow}" Text="NEUE PARTIE ZUM TIPPEN ANLEGEN" />
                 <CheckBox Content="Doppel" IsChecked="{Binding IsDoublesMode}" Margin="0,0,0,12" />
 
                 <Grid Margin="0,0,0,12" Visibility="{Binding IsDoublesMode, Converter={StaticResource InverseBoolToVisibilityConverter}}">

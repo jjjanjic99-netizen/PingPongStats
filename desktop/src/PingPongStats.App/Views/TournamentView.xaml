@@ -11,7 +11,7 @@
         <controls:CardControl Margin="0,0,0,14"
                                Visibility="{Binding HasActiveTournament, Converter={StaticResource InverseBoolToVisibilityConverter}}">
             <StackPanel>
-                <controls:EyebrowLabel Text="Neues Turnier starten" />
+                <TextBlock Style="{StaticResource Typo.Eyebrow}" Text="NEUES TURNIER STARTEN" />
 
                 <TextBlock Text="Turnier-Name" Style="{StaticResource Typo.Small}" Foreground="{DynamicResource Brush.Muted}" Margin="0,0,0,4" />
                 <TextBox Text="{Binding NewTournamentName, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,12" />
@@ -86,7 +86,7 @@
                                Visibility="{Binding ViewingTournamentLabel, Converter={StaticResource StringToVisibilityConverter}}">
             <StackPanel Orientation="Horizontal">
                 <StackPanel>
-                    <controls:EyebrowLabel Text="Laufendes Turnier" Margin="0,0,0,5" />
+                    <TextBlock Style="{StaticResource Typo.Eyebrow}" Text="LAUFENDES TURNIER" Margin="0,0,0,5" />
                     <TextBlock Text="{Binding ViewingTournamentLabel}" FontFamily="{DynamicResource Font.Display}"
                                FontWeight="ExtraBold" FontSize="26" />
                 </StackPanel>
@@ -109,7 +109,7 @@
                     <ItemsControl.ItemTemplate>
                         <DataTemplate>
                             <StackPanel Margin="0,0,20,0" MinWidth="186">
-                                <controls:EyebrowLabel Text="{Binding RoundLabel}" Margin="0,0,0,2" />
+                                <TextBlock Style="{StaticResource Typo.Eyebrow}" Text="{Binding RoundLabel, Converter={StaticResource UpperCaseConverter}}" Margin="0,0,0,2" />
                                 <ItemsControl ItemsSource="{Binding Slots}">
                                     <ItemsControl.ItemTemplate>
                                         <DataTemplate>
