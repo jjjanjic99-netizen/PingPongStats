@@ -7,6 +7,17 @@ using PingPongStats.Core.Services;
 
 namespace PingPongStats.Core.ViewModels;
 
+/// <summary>Dashboard drill-down (R3): restricts the "Spieler"-filtered
+/// matches to only that player's wins or only their losses. Independent of
+/// <see cref="MatchesViewModel.FilterWinner"/>, which is a separate,
+/// pre-existing "any player won" filter with its own UI control.</summary>
+public enum MatchResultFilter
+{
+    All,
+    WinsOnly,
+    LossesOnly,
+}
+
 public partial class MatchesViewModel : ObservableObject
 {
     private readonly PingPongDataService _dataService;
@@ -18,6 +29,11 @@ public partial class MatchesViewModel : ObservableObject
     [ObservableProperty] private DateTime? filterTo;
     [ObservableProperty] private bool sortDescending = true;
 
+    /// <summary>Set together with <see cref="FilterPlayer"/> via
+    /// <see cref="SetPlayerResultFilter"/> when navigating here from the
+    /// Dashboard ranking's clickable S/N values (R3).</summary>
+    [ObservableProperty] private MatchResultFilter resultFilter = MatchResultFilter.All;
+
     public ObservableCollection<Player> FilterablePlayers { get; } = new();
     public ObservableCollection<MatchRow> Matches { get; } = new();
 
@@ -26,6 +42,15 @@ public partial class MatchesViewModel : ObservableObject
     public IRelayCommand<MatchRow> EditCommand { get; }
     public IRelayCommand<MatchRow> DeleteCommand { get; }
     public IRelayCommand RefreshCommand { get; }
+
+    /// <summary>True while a Dashboard S/N drill-down (R3) is active, so the
+    /// Matches page can show a removable filter chip.</summary>
+    public bool HasResultFilterChip => FilterPlayer is not null && ResultFilter != MatchResultFilter.All;
+
+    /// <summary>E.g. "Marco · nur Siege" for the removable filter chip (R3).</summary>
+    public string ResultFilterChipLabel => HasResultFilterChip
+        ? $"{FilterPlayer!.DisplayName} · {(ResultFilter == MatchResultFilter.WinsOnly ? "nur Siege" : "nur Niederlagen")}"
+        : string.Empty;
 
     /// <summary>Raised when the user wants to edit a match; MainViewModel
     /// subscribes to navigate to a MatchEditViewModel for that match.</summary>
@@ -53,6 +78,16 @@ public partial class MatchesViewModel : ObservableObject
         ApplyFilter();
     }
 
+    /// <summary>Dashboard drill-down (R3): shows only the given player's
+    /// matches, restricted to their wins or their losses.</summary>
+    public void SetPlayerResultFilter(Player player, bool winsOnly)
+    {
+        FilterPlayer = player;
+        FilterWinner = null;
+        ResultFilter = winsOnly ? MatchResultFilter.WinsOnly : MatchResultFilter.LossesOnly;
+        ApplyFilter();
+    }
+
     private void ApplyFilter()
     {
         var playersById = _dataService.Players.ToDictionary(p => p.Id);
@@ -61,6 +96,15 @@ public partial class MatchesViewModel : ObservableObject
         if (FilterPlayer is not null)
         {
             query = query.Where(m => m.PlayerAId == FilterPlayer.Id || m.PlayerBId == FilterPlayer.Id);
+
+            if (ResultFilter == MatchResultFilter.WinsOnly)
+            {
+                query = query.Where(m => m.WinnerId == FilterPlayer.Id);
+            }
+            else if (ResultFilter == MatchResultFilter.LossesOnly)
+            {
+                query = query.Where(m => m.WinnerId != FilterPlayer.Id);
+            }
         }
         if (FilterWinner is not null)
         {
@@ -97,7 +141,20 @@ public partial class MatchesViewModel : ObservableObject
         FilterFrom = null;
         FilterTo = null;
         SortDescending = true;
+        ResultFilter = MatchResultFilter.All;
         ApplyFilter();
+    }
+
+    partial void OnFilterPlayerChanged(Player? value)
+    {
+        OnPropertyChanged(nameof(HasResultFilterChip));
+        OnPropertyChanged(nameof(ResultFilterChipLabel));
+    }
+
+    partial void OnResultFilterChanged(MatchResultFilter value)
+    {
+        OnPropertyChanged(nameof(HasResultFilterChip));
+        OnPropertyChanged(nameof(ResultFilterChipLabel));
     }
 
     private void Delete(MatchRow row)

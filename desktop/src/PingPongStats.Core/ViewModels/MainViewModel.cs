@@ -129,6 +129,8 @@ public partial class MainViewModel : ObservableObject
         Players = new PlayersViewModel(_dataService, _notifications, _settingsRepository, _filePicker, _avatarImageService);
         Matches = new MatchesViewModel(_dataService, _notifications);
         Matches.EditRequested += OnEditMatchRequested;
+        Dashboard.PlayerWinsRequested += id => OnPlayerResultDrillDownRequested(id, winsOnly: true);
+        Dashboard.PlayerLossesRequested += id => OnPlayerResultDrillDownRequested(id, winsOnly: false);
         Doubles = new DoublesViewModel(_dataService, _notifications, RangeFilter);
         Doubles.MatchSaved += OnMatchSaved;
         HeadToHead = new HeadToHeadViewModel(_dataService);
@@ -263,6 +265,18 @@ public partial class MainViewModel : ObservableObject
         editVm.MatchSaved += OnMatchSaved;
         ActiveSection = "Spiel bearbeiten";
         CurrentViewModel = editVm;
+    }
+
+    /// <summary>The user clicked a player's S or N value in the Dashboard's
+    /// Elo-Rangliste (R3) - navigate to Matches pre-filtered to that player
+    /// and only their wins or only their losses.</summary>
+    private void OnPlayerResultDrillDownRequested(Guid playerId, bool winsOnly)
+    {
+        var player = _dataService.Players.FirstOrDefault(p => p.Id == playerId);
+        if (player is null) return;
+
+        Matches.SetPlayerResultFilter(player, winsOnly);
+        Navigate("Spiele", Matches, () => Matches.Load());
     }
 
     /// <summary>Phase 12: the user clicked a playable bracket slot on the

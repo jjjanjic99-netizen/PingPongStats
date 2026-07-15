@@ -217,6 +217,21 @@
         <Setter Property="FontSize" Value="12" />
     </Style>
 
+    <!-- Elo-Rangliste drill-down chips (R3): clickable pill-like buttons for
+         a player's S (Siege)/N (Niederlagen) values, colored like the Win/Bad
+         Pill variants. Based on CompactSecondaryButton rather than Pill,
+         since Pill is a display-only UserControl with no Command. -->
+    <Style x:Key="WinStatButton" TargetType="Button" BasedOn="{StaticResource CompactSecondaryButton}">
+        <Setter Property="Foreground" Value="{DynamicResource Brush.Win}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource Brush.Win}" />
+        <Setter Property="Margin" Value="0,0,6,0" />
+    </Style>
+
+    <Style x:Key="LossStatButton" TargetType="Button" BasedOn="{StaticResource CompactSecondaryButton}">
+        <Setter Property="Foreground" Value="{DynamicResource Brush.Lose}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource Brush.Lose}" />
+    </Style>
+
     <!-- Topbar global refresh button (R2): spins the whole button via
          RenderTransform while MainViewModel.IsRefreshing is true, giving a
          subtle spinner without any external library. -->

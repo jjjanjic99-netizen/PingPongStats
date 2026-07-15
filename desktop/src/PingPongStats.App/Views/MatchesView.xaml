@@ -4,6 +4,18 @@
     <StackPanel>
         <TextBlock Text="Spiele" Style="{StaticResource HeadingText}" Margin="0,0,0,16" />
 
+        <!-- Dashboard S/N drill-down filter chip (R3): shown while a player +
+             result-type filter set from the Elo-Rangliste is active; removing
+             it clears the whole filter form via the existing ClearFilterCommand. -->
+        <Border Style="{StaticResource CardBorder}" Margin="0,0,0,16" Padding="10,8" HorizontalAlignment="Left"
+                Visibility="{Binding HasResultFilterChip, Converter={StaticResource BoolToVisibilityConverter}}">
+            <StackPanel Orientation="Horizontal">
+                <TextBlock Text="{Binding ResultFilterChipLabel}" VerticalAlignment="Center" FontWeight="SemiBold" />
+                <Button Content="✕" Style="{StaticResource CompactSecondaryButton}" Margin="10,0,0,0"
+                        Command="{Binding ClearFilterCommand}" />
+            </StackPanel>
+        </Border>
+
         <Border Style="{StaticResource CardBorder}" Margin="0,0,0,16">
             <StackPanel>
                 <Grid>

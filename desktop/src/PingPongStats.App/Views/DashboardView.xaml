@@ -192,7 +192,19 @@
                                                AvatarDataPath="{Binding DataContext.DataPath, ElementName=Root}"
                                                NameText="{Binding DisplayName}">
                                 <controls:RowItem.TrailingContent>
-                                    <controls:Pill Text="{Binding BadgeIconsLabel}" ToolTip="{Binding BadgeNamesTooltip}" />
+                                    <StackPanel Orientation="Horizontal">
+                                        <controls:Pill Text="{Binding BadgeIconsLabel}" ToolTip="{Binding BadgeNamesTooltip}" Margin="0,0,10,0" />
+                                        <!-- R3: click S/N to jump to Matches, pre-filtered to this
+                                             player's wins/losses. R4 adds a match-detail ToolTip here. -->
+                                        <Button Content="{Binding Stats.Wins, StringFormat=S {0}}"
+                                                Style="{StaticResource WinStatButton}"
+                                                Command="{Binding DataContext.ShowPlayerWinsCommand, ElementName=Root}"
+                                                CommandParameter="{Binding Stats.PlayerId}" />
+                                        <Button Content="{Binding Stats.Losses, StringFormat=N {0}}"
+                                                Style="{StaticResource LossStatButton}"
+                                                Command="{Binding DataContext.ShowPlayerLossesCommand, ElementName=Root}"
+                                                CommandParameter="{Binding Stats.PlayerId}" />
+                                    </StackPanel>
                                 </controls:RowItem.TrailingContent>
                                 <controls:RowItem.ValueText>
                                     <MultiBinding StringFormat="{}{0} {1}">

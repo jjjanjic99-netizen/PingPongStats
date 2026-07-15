@@ -70,6 +70,14 @@ public partial class DashboardViewModel : ObservableObject
 
     public IRelayCommand RefreshCommand { get; }
 
+    /// <summary>Elo-Rangliste drill-down (R3): clicking a player's S (Siege)
+    /// or N (Niederlagen) value raises these for MainViewModel to navigate to
+    /// the Matches page pre-filtered to that player + result type.</summary>
+    public IRelayCommand<Guid> ShowPlayerWinsCommand { get; }
+    public IRelayCommand<Guid> ShowPlayerLossesCommand { get; }
+    public event Action<Guid>? PlayerWinsRequested;
+    public event Action<Guid>? PlayerLossesRequested;
+
     public DashboardViewModel(
         PingPongDataService dataService, DashboardRangeFilter rangeFilter, ISettingsRepository settingsRepository)
     {
@@ -78,6 +86,8 @@ public partial class DashboardViewModel : ObservableObject
         RangeFilter = rangeFilter;
         RangeFilter.Changed += Load;
         RefreshCommand = new RelayCommand(Load);
+        ShowPlayerWinsCommand = new RelayCommand<Guid>(id => PlayerWinsRequested?.Invoke(id));
+        ShowPlayerLossesCommand = new RelayCommand<Guid>(id => PlayerLossesRequested?.Invoke(id));
         Load();
     }
 
