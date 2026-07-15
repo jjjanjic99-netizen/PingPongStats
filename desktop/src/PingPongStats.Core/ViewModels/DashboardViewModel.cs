@@ -131,6 +131,14 @@ public partial class DashboardViewModel : ObservableObject
                 Stats = p,
                 Player = playersById.GetValueOrDefault(p.PlayerId),
                 Badges = BadgeEngine.EvaluateForPlayer(p.PlayerId, badgeContext),
+                // R4: same matchesInRange the ranking/Stats.Wins-Losses are built
+                // from, so the S/N tooltip's row count always matches the
+                // displayed number. No doubles here - the Elo-Rangliste (and its
+                // Wins/Losses) is singles-only, see ABWEICHUNGEN.md.
+                WinsDetail = PlayerResultDetailService.GetRecentResults(
+                    _dataService.Players, matchesInRange, Array.Empty<DoubleMatch>(), p.PlayerId, winsOnly: true),
+                LossesDetail = PlayerResultDetailService.GetRecentResults(
+                    _dataService.Players, matchesInRange, Array.Empty<DoubleMatch>(), p.PlayerId, winsOnly: false),
             });
         }
 

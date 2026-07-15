@@ -533,3 +533,20 @@ Projektweite Prüfung (nicht nur die gemeldete Stelle): ein Grep über alle
 `.xaml`-Dateien nach `<controls:\w+ ... x:Name="..."` findet nach diesem
 Umbau keine einzige Stelle mehr, an der ein verschachtelter,
 selbstdefinierter Control-Typ von einer anderen Datei aus benannt wird.
+
+## R4: S/N-Tooltip im Dashboard-Ranking ist absichtlich nur Einzel
+
+Die Elo-Rangliste im Dashboard (und damit `Stats.Wins`/`Stats.Losses`,
+die "S"/"N"-Werte) basiert ausschliesslich auf Einzel-`Match`es
+(`DashboardService.BuildDashboard(players, matchesInRange)` bekommt nie
+`DoubleMatch`es übergeben) - Doppel hat eine eigene separate Rangliste
+auf der "Doppel"-Seite. Der neue `PlayerResultDetailService.GetRecentResults`
+(Core) unterstützt Doppel-Partien korrekt (Team-/Gegner-Team-Label statt
+Einzelgegner, siehe `PlayerResultDetailServiceTests.
+GetRecentResults_HandlesDoublesWithTeamLabelsFromEitherSide`), aber der
+Dashboard-Aufruf übergibt bewusst eine leere Doppel-Liste: Der S/N-Tooltip
+zeigt genau die Spiele, aus denen der angezeigte S/N-Wert berechnet wurde
+(gleicher `matchesInRange`), sonst wäre die Anzahl der Tooltip-Zeilen
+grösser als die angezeigte Zahl. Klick auf S/N (R3) navigiert ebenfalls
+zur Einzel-Spiele-Seite ("Spiele"), nicht zu "Doppel" - konsistent mit
+demselben Scope.

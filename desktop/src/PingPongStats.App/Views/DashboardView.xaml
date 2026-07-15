@@ -195,15 +195,77 @@
                                     <StackPanel Orientation="Horizontal">
                                         <controls:Pill Text="{Binding BadgeIconsLabel}" ToolTip="{Binding BadgeNamesTooltip}" Margin="0,0,10,0" />
                                         <!-- R3: click S/N to jump to Matches, pre-filtered to this
-                                             player's wins/losses. R4 adds a match-detail ToolTip here. -->
+                                             player's wins/losses. R4: mouseover shows the last
+                                             games behind that number (dark ToolTip style is the
+                                             app-wide default, see Themes/Controls.xaml). -->
                                         <Button Content="{Binding Stats.Wins, StringFormat=S {0}}"
                                                 Style="{StaticResource WinStatButton}"
                                                 Command="{Binding DataContext.ShowPlayerWinsCommand, ElementName=Root}"
-                                                CommandParameter="{Binding Stats.PlayerId}" />
+                                                CommandParameter="{Binding Stats.PlayerId}">
+                                            <Button.ToolTip>
+                                                <ToolTip>
+                                                    <StackPanel MaxWidth="260">
+                                                        <TextBlock Text="Keine Spiele in diesem Zeitraum." FontStyle="Italic"
+                                                                   Visibility="{Binding HasWinsGames, Converter={StaticResource InverseBoolToVisibilityConverter}}" />
+                                                        <ItemsControl ItemsSource="{Binding WinsDetail.Rows}">
+                                                            <ItemsControl.ItemTemplate>
+                                                                <DataTemplate>
+                                                                    <Grid Margin="0,0,0,4">
+                                                                        <Grid.ColumnDefinitions>
+                                                                            <ColumnDefinition Width="*" />
+                                                                            <ColumnDefinition Width="Auto" />
+                                                                        </Grid.ColumnDefinitions>
+                                                                        <TextBlock Grid.Column="0" Text="{Binding OpponentLabel}"
+                                                                                   TextTrimming="CharacterEllipsis" Margin="0,0,10,0" />
+                                                                        <TextBlock Grid.Column="1" FontFamily="{DynamicResource Font.Mono}" FontSize="11.5">
+                                                                            <Run Text="{Binding ScoreLabel, Mode=OneWay}" />
+                                                                            <Run Text=" · " />
+                                                                            <Run Text="{Binding PlayedAt, StringFormat=dd.MM.yyyy, Mode=OneWay}" />
+                                                                        </TextBlock>
+                                                                    </Grid>
+                                                                </DataTemplate>
+                                                            </ItemsControl.ItemTemplate>
+                                                        </ItemsControl>
+                                                        <TextBlock Text="{Binding WinsOverflowLabel}" FontStyle="Italic" Opacity="0.7" Margin="0,4,0,0"
+                                                                   Visibility="{Binding HasWinsOverflow, Converter={StaticResource BoolToVisibilityConverter}}" />
+                                                    </StackPanel>
+                                                </ToolTip>
+                                            </Button.ToolTip>
+                                        </Button>
                                         <Button Content="{Binding Stats.Losses, StringFormat=N {0}}"
                                                 Style="{StaticResource LossStatButton}"
                                                 Command="{Binding DataContext.ShowPlayerLossesCommand, ElementName=Root}"
-                                                CommandParameter="{Binding Stats.PlayerId}" />
+                                                CommandParameter="{Binding Stats.PlayerId}">
+                                            <Button.ToolTip>
+                                                <ToolTip>
+                                                    <StackPanel MaxWidth="260">
+                                                        <TextBlock Text="Keine Spiele in diesem Zeitraum." FontStyle="Italic"
+                                                                   Visibility="{Binding HasLossesGames, Converter={StaticResource InverseBoolToVisibilityConverter}}" />
+                                                        <ItemsControl ItemsSource="{Binding LossesDetail.Rows}">
+                                                            <ItemsControl.ItemTemplate>
+                                                                <DataTemplate>
+                                                                    <Grid Margin="0,0,0,4">
+                                                                        <Grid.ColumnDefinitions>
+                                                                            <ColumnDefinition Width="*" />
+                                                                            <ColumnDefinition Width="Auto" />
+                                                                        </Grid.ColumnDefinitions>
+                                                                        <TextBlock Grid.Column="0" Text="{Binding OpponentLabel}"
+                                                                                   TextTrimming="CharacterEllipsis" Margin="0,0,10,0" />
+                                                                        <TextBlock Grid.Column="1" FontFamily="{DynamicResource Font.Mono}" FontSize="11.5">
+                                                                            <Run Text="{Binding ScoreLabel, Mode=OneWay}" />
+                                                                            <Run Text=" · " />
+                                                                            <Run Text="{Binding PlayedAt, StringFormat=dd.MM.yyyy, Mode=OneWay}" />
+                                                                        </TextBlock>
+                                                                    </Grid>
+                                                                </DataTemplate>
+                                                            </ItemsControl.ItemTemplate>
+                                                        </ItemsControl>
+                                                        <TextBlock Text="{Binding LossesOverflowLabel}" FontStyle="Italic" Opacity="0.7" Margin="0,4,0,0"
+                                                                   Visibility="{Binding HasLossesOverflow, Converter={StaticResource BoolToVisibilityConverter}}" />
+                                                    </StackPanel>
+                                                </ToolTip>
+                                            </Button.ToolTip>
+                                        </Button>
                                     </StackPanel>
                                 </controls:RowItem.TrailingContent>
                                 <controls:RowItem.ValueText>

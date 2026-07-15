@@ -157,6 +157,15 @@ public class PlayerRankingRow
     public Player? Player { get; init; }
     public List<BadgeAward> Badges { get; init; } = new();
 
+    /// <summary>Match-detail list behind the clickable/hoverable S (Siege)
+    /// value (R3/R4): same singles matches (respecting the Dashboard's
+    /// current time-range filter) that <see cref="Stats"/>.Wins is computed
+    /// from, so the tooltip's row count always matches the displayed number.</summary>
+    public required PlayerResultDetail WinsDetail { get; init; }
+
+    /// <summary>Same as <see cref="WinsDetail"/> but for the N (Niederlagen) value.</summary>
+    public required PlayerResultDetail LossesDetail { get; init; }
+
     public string BadgeIconsLabel => string.Join(" ", Badges.Select(b => b.Icon));
     public string? BadgeNamesTooltip => Badges.Count == 0 ? null : string.Join("\n", Badges.Select(b => $"{b.Icon} {b.BadgeName}: {b.Description}"));
     public string DisplayName => Stats.DisplayName;
@@ -164,6 +173,14 @@ public class PlayerRankingRow
     public int EloRounded => (int)Math.Round(Stats.EloRating);
     public int Played => Stats.Played;
     public string RecordLabel => $"{Stats.Wins} / {Stats.Losses}";
+
+    public bool HasWinsGames => WinsDetail.Rows.Count > 0;
+    public bool HasLossesGames => LossesDetail.Rows.Count > 0;
+    public bool HasWinsOverflow => WinsDetail.OverflowCount > 0;
+    public bool HasLossesOverflow => LossesDetail.OverflowCount > 0;
+    public string WinsOverflowLabel => $"… und {WinsDetail.OverflowCount} weitere";
+    public string LossesOverflowLabel => $"… und {LossesDetail.OverflowCount} weitere";
+
     public string WinRateLabel => $"{Stats.WinRatePct:F1}%";
     public string WinRateLast30dLabel => $"{Stats.WinRateLast30dPct:F1}%";
     public string StreakLabel => Stats.CurrentStreak.Type switch
