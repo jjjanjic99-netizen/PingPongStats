@@ -3,9 +3,10 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:controls="clr-namespace:PingPongStats.App.Controls">
     <StackPanel>
-        <TextBlock Text="Anmeldung" Style="{StaticResource HeadingText}" Margin="0,0,0,8" />
+        <TextBlock Text="Anmeldung" FontFamily="{DynamicResource Font.Display}" FontWeight="Bold" FontSize="34"
+                   Foreground="{DynamicResource Brush.Chalk}" Margin="0,0,0,10" />
         <TextBlock Text="Bequemlichkeit, kein Schutz: Die Daten bleiben für alle mit Zugriff auf den Datenordner lesbar."
-                   Style="{StaticResource StatLabelText}" TextWrapping="Wrap" Margin="0,0,0,16" MaxWidth="500" />
+                   Style="{StaticResource StatLabelText}" TextWrapping="Wrap" Margin="0,0,0,24" MaxWidth="640" />
 
         <Border Style="{StaticResource CardBorder}" Margin="0,0,0,16" MaxWidth="360" HorizontalAlignment="Left"
                 Visibility="{Binding IsPinPromptOpen, Converter={StaticResource BoolToVisibilityConverter}}">
@@ -38,7 +39,7 @@
             </ItemsControl.ItemsPanel>
             <ItemsControl.ItemTemplate>
                 <DataTemplate>
-                    <Border Style="{StaticResource CardBorder}" Width="140" Margin="0,0,16,16" Cursor="Hand">
+                    <Border Style="{StaticResource CardBorder}" Width="220" Margin="0,0,24,24" Padding="20,24" Cursor="Hand">
                         <Border.InputBindings>
                             <MouseBinding MouseAction="LeftClick"
                                           Command="{Binding DataContext.SelectPlayerCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
@@ -47,8 +48,10 @@
                         <StackPanel HorizontalAlignment="Center">
                             <controls:AvatarControl Player="{Binding}"
                                                      DataPath="{Binding DataContext.DataPath, RelativeSource={RelativeSource AncestorType=UserControl}}"
-                                                     Size="M" HorizontalAlignment="Center" />
-                            <TextBlock Text="{Binding DisplayName}" HorizontalAlignment="Center" Margin="0,8,0,0"
+                                                     Size="XL" HorizontalAlignment="Center" />
+                            <TextBlock Text="{Binding DisplayName}" HorizontalAlignment="Center" Margin="0,14,0,0"
+                                       FontFamily="{DynamicResource Font.Display}" FontWeight="Bold" FontSize="22"
+                                       Foreground="{DynamicResource Brush.Chalk}"
                                        TextWrapping="Wrap" TextAlignment="Center" />
                         </StackPanel>
                     </Border>
