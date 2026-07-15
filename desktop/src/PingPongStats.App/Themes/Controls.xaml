@@ -217,6 +217,34 @@
         <Setter Property="FontSize" Value="12" />
     </Style>
 
+    <!-- Topbar global refresh button (R2): spins the whole button via
+         RenderTransform while MainViewModel.IsRefreshing is true, giving a
+         subtle spinner without any external library. -->
+    <Style x:Key="RefreshIconButton" TargetType="Button" BasedOn="{StaticResource SecondaryButton}">
+        <Setter Property="Padding" Value="10,8" />
+        <Setter Property="RenderTransformOrigin" Value="0.5,0.5" />
+        <Setter Property="RenderTransform">
+            <Setter.Value>
+                <RotateTransform Angle="0" />
+            </Setter.Value>
+        </Setter>
+        <Style.Triggers>
+            <DataTrigger Binding="{Binding IsRefreshing}" Value="True">
+                <DataTrigger.EnterActions>
+                    <BeginStoryboard x:Name="RefreshSpinBeginStoryboard">
+                        <Storyboard>
+                            <DoubleAnimation Storyboard.TargetProperty="RenderTransform.Angle"
+                                             From="0" To="360" Duration="0:0:0.6" RepeatBehavior="Forever" />
+                        </Storyboard>
+                    </BeginStoryboard>
+                </DataTrigger.EnterActions>
+                <DataTrigger.ExitActions>
+                    <StopStoryboard BeginStoryboardName="RefreshSpinBeginStoryboard" />
+                </DataTrigger.ExitActions>
+            </DataTrigger>
+        </Style.Triggers>
+    </Style>
+
     <!-- ── TextBox ───────────────────────────────────────────────────────── -->
     <Style TargetType="TextBox">
         <Setter Property="Padding" Value="10,9" />

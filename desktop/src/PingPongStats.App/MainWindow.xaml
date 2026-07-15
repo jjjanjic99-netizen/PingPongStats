@@ -258,6 +258,8 @@
                         <ColumnDefinition Width="Auto" />
                         <ColumnDefinition Width="14" />
                         <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="14" />
+                        <ColumnDefinition Width="Auto" />
                     </Grid.ColumnDefinitions>
 
                     <TextBlock Grid.Column="0" Text="{Binding ActiveSection}" Style="{StaticResource Typo.H1}"
@@ -320,7 +322,11 @@
                         </StackPanel>
                     </Border>
 
-                    <Button Grid.Column="3" Content="+ Spiel erfassen" Style="{StaticResource PrimaryButton}"
+                    <Button Grid.Column="3" Content="&#x27F3;" FontSize="16" ToolTip="Aktualisieren"
+                            Style="{StaticResource RefreshIconButton}"
+                            Command="{Binding RefreshCommand}" />
+
+                    <Button Grid.Column="5" Content="+ Spiel erfassen" Style="{StaticResource PrimaryButton}"
                             Command="{Binding ShowNewMatchCommand}" />
                 </Grid>
             </Border>

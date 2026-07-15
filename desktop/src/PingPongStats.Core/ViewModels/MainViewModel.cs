@@ -26,6 +26,7 @@ public partial class MainViewModel : ObservableObject
     private readonly SynchronizationContext? _uiContext;
     private System.Threading.Timer? _statusClearTimer;
     private System.Threading.Timer? _winAnimationTimer;
+    private System.Threading.Timer? _refreshIndicatorTimer;
 
     /// <summary>"{playerId}:{badgeId}" keys for badges already known to be held,
     /// seeded once at startup so Phase 14's "badge neu verdient" sound only fires
@@ -37,6 +38,11 @@ public partial class MainViewModel : ObservableObject
     [ObservableProperty] private bool isErrorStatus;
     [ObservableProperty] private string activeSection = "Dashboard";
     [ObservableProperty] private Player? currentPlayer;
+
+    /// <summary>Topbar-Refresh (R2): true for a brief moment after the global
+    /// refresh button is clicked, so the button can show visual feedback even
+    /// when the underlying XML reload is fast enough to be otherwise invisible.</summary>
+    [ObservableProperty] private bool isRefreshing;
 
     /// <summary>Phase 6 win/confetti overlay state, shown for ~3s after a
     /// successful match save (singles or doubles) when enabled in Settings.</summary>
@@ -89,6 +95,12 @@ public partial class MainViewModel : ObservableObject
     /// always-visible topbar control works regardless of which page is
     /// currently shown.</summary>
     public IRelayCommand<DashboardRangePreset> SelectRangeCommand { get; }
+
+    /// <summary>Topbar-Refresh (R2): re-reads the XML store from disk and
+    /// re-invokes whichever page's own (already-existing) RefreshCommand is
+    /// currently visible, so "Aktualisieren" works from any page without a
+    /// per-view button.</summary>
+    public IRelayCommand RefreshCommand { get; }
 
     public MainViewModel(
         PingPongDataService dataService,
@@ -155,6 +167,7 @@ public partial class MainViewModel : ObservableObject
         ShowBettingCommand = new RelayCommand(() => Navigate("Tippspiel", Betting, () => Betting.Load()));
         ShowHallOfFameCommand = new RelayCommand(() => Navigate("Hall of Fame", HallOfFame, () => HallOfFame.Load()));
         SelectRangeCommand = new RelayCommand<DashboardRangePreset>(preset => RangeFilter.SelectedPreset = preset);
+        RefreshCommand = new RelayCommand(RefreshCurrentView, () => !IsRefreshing);
 
         CurrentViewModel = Dashboard;
         InitializeKnownBadges();
@@ -198,6 +211,40 @@ public partial class MainViewModel : ObservableObject
         refresh?.Invoke();
         ActiveSection = section;
         CurrentViewModel = viewModel;
+    }
+
+    partial void OnIsRefreshingChanged(bool value) => RefreshCommand.NotifyCanExecuteChanged();
+
+    /// <summary>Re-reads all XML files from disk, then reloads whichever page
+    /// is currently on screen via that page's own RefreshCommand/Load(), so
+    /// the topbar button works generically regardless of the active section.
+    /// IsRefreshing is held true for a short moment purely as UI feedback,
+    /// since a local-disk reload can otherwise be too fast to notice.</summary>
+    private void RefreshCurrentView()
+    {
+        _dataService.Reload();
+
+        switch (CurrentViewModel)
+        {
+            case DashboardViewModel: Dashboard.RefreshCommand.Execute(null); break;
+            case MatchesViewModel: Matches.RefreshCommand.Execute(null); break;
+            case DoublesViewModel: Doubles.RefreshCommand.Execute(null); break;
+            case PlayersViewModel: Players.RefreshCommand.Execute(null); break;
+            case LeagueViewModel: League.RefreshCommand.Execute(null); break;
+            case TournamentViewModel: Tournament.RefreshCommand.Execute(null); break;
+            case BettingViewModel: Betting.RefreshCommand.Execute(null); break;
+            case HallOfFameViewModel: HallOfFame.RefreshCommand.Execute(null); break;
+            case ProfileViewModel: Profile?.RefreshCommand.Execute(null); break;
+            case HeadToHeadViewModel: HeadToHead.Load(); break;
+        }
+
+        IsRefreshing = true;
+        _refreshIndicatorTimer?.Dispose();
+        _refreshIndicatorTimer = new System.Threading.Timer(_ =>
+        {
+            if (_uiContext is not null) _uiContext.Post(_ => IsRefreshing = false, null);
+            else IsRefreshing = false;
+        }, null, TimeSpan.FromMilliseconds(450), Timeout.InfiniteTimeSpan);
     }
 
     private void ShowNewMatch()
