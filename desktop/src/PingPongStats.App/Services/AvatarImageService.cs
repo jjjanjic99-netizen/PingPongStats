@@ -3,6 +3,7 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using PingPongStats.Core.Services;
 using PingPongStats.Core.ViewModels;
+using System.IO;
 
 namespace PingPongStats.App.Services;
 

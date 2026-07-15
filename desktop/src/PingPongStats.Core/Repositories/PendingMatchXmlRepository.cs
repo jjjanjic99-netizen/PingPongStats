@@ -1,5 +1,6 @@
 using System.Xml.Serialization;
 using PingPongStats.Core.Models;
+using System.IO;
 
 namespace PingPongStats.Core.Repositories;
 
